@@ -1,81 +1,146 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/img/aeternum_logo.png";
 import "../../assets/css/dashboard_user.css";
 
-const Header = ({ onSearch, onLogout }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const [query, setQuery] = useState("");
-  const navigate = useNavigate();
+// Recibimos la nueva prop onRedirectToLogin
+const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin }) => { 
+    
+    const location = useLocation();
+    const [showMenu, setShowMenu] = useState(false);
+    const [query, setQuery] = useState("");
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    const navbar = document.getElementById("navbar");
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        navbar.classList.add("sticky");
-      } else {
-        navbar.classList.remove("sticky");
-      }
+    const isActive = (path) => location.pathname === path;
+
+    useEffect(() => {
+        const navbar = document.querySelector(".header"); 
+        
+        const handleScroll = () => {
+            if (navbar) {
+                if (window.scrollY > 50) {
+                    navbar.classList.add("sticky");
+                } else {
+                    navbar.classList.remove("sticky");
+                }
+            }
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (onSearch) onSearch(query);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (onSearch) onSearch(query);
-  };
+    const handleQueryChange = (e) => {
+        const newQuery = e.target.value;
+        setQuery(newQuery);
 
-  const handleLogout = () => {
-    if (onLogout) onLogout();
-    navigate("/");
-  };
+        if (newQuery.length === 0 && onSearch) {
+            onSearch(newQuery);
+        }
+    };
+    
+    // ✅ Lógica de redirección CLAVE: Si no hay usuario, redirige INMEDIATAMENTE
+    const handleUserIconClick = () => {
+        if (!usuario && onRedirectToLogin) {
+            onRedirectToLogin();
+            return; // Detiene la ejecución aquí
+        } 
+        
+        // Si hay usuario, alterna el menú
+        setShowMenu(!showMenu);
+    };
+    
+    const handleLogout = () => {
+        if (onLogout) onLogout();
+        // Nota: onLogout ya debería limpiar el token y navegar en el componente padre (Catalogo)
+        setShowMenu(false);
+    };
 
-  return (
-    <header className="header" id="navbar">
-      <div className="header-content">
-        <div className="logo">
-          <img src={logo} alt="logo" />
-        </div>
+    const handleNavigate = (path) => {
+        navigate(path);
+        setShowMenu(false);
+    };
 
-        <nav className="nav">
-          <ul>
-            <li><a href="#"><i className="bx bx-home"></i> Inicio</a></li>
-            <li><a href="#"><i className="bx bx-book"></i> Catálogo</a></li>
-            <li><a href="#"><i className="bx bx-star"></i> Lista de Deseos</a></li>
-          </ul>
-        </nav>
+    return (
+        <header className="header" id="navbar">
+            <div className="header-content">
+                <div
+                    className="logo"
+                    onClick={() => handleNavigate("/loyout_user/dashboard_user")}
+                    style={{ cursor: "pointer" }}
+                >
+                    <img src={logo} alt="logo" />
+                </div>
 
-        <form className="search-bar" onSubmit={handleSearch}>
-          <input
-            type="text"
-            placeholder="Buscar libros..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <button type="submit">
-            <i className="bx bx-search"></i>
-          </button>
-        </form>
+                <nav className="nav">
+                    <ul>
+                        <li 
+                            onClick={() => handleNavigate("/loyout_user/dashboard_user")}
+                            className={isActive("/loyout_user/dashboard_user") ? 'active' : ''}
+                        >
+                            <i className="bx bx-home"></i> Inicio
+                        </li>
+                        <li 
+                            onClick={() => handleNavigate("/catalogo")}
+                            className={isActive("/catalogo") ? 'active' : ''}
+                        >
+                            <i className="bx bx-book"></i> Catálogo
+                        </li>
+                        <li 
+                            onClick={() => handleNavigate("/loyout_user/lista_deseos")}
+                            className={isActive("/loyout_user/lista_deseos") ? 'active' : ''}
+                        >
+                            <i className="bx bx-star"></i> Lista de Deseos
+                        </li>
+                    </ul>
+                </nav>
 
-        <div className="user-menu">
-          <i
-            className="bx bx-user-circle user-icon"
-            onClick={() => setShowMenu(!showMenu)}
-          ></i>
+                {/* Barra de búsqueda */}
+                <form className="search-bar" onSubmit={handleSearch}>
+                    <input
+                        type="text"
+                        placeholder="Buscar libros..."
+                        value={query}
+                        onChange={handleQueryChange}
+                    />
+                    <button type="submit">
+                        <i className="bx bx-search"></i>
+                    </button>
+                </form>
 
-          {showMenu && (
-            <ul className="dropdown">
-              <li><a href="#"><i className="bx bx-user"></i> Perfil</a></li>
-              <li onClick={handleLogout}>
-                <i className="bx bx-log-out"></i> Cerrar sesión
-              </li>
-            </ul>
-          )}
-        </div>
-      </div>
-    </header>
-  );
+                <div className="user-menu">
+                    <i
+                        className="bx bx-user-circle user-icon"
+                        onClick={handleUserIconClick}
+                        style={{ cursor: "pointer" }}
+                    ></i>
+                    {usuario && showMenu && (
+                        <ul className="dropdown">
+                            <li className="user-info"> 
+                                <i className='bx bx-user'></i> {usuario.nombre} {usuario.apellido}
+                            </li>
+                            
+                            <li onClick={() => handleNavigate("/loyout_user/perfil")}>
+                                <i className='bxr bx-face'></i> Perfil
+                            </li>
+
+                            <li onClick={() => handleNavigate("/loyout_user/mis_prestamos")}>
+                                <i class='bxr  bx-book-library'    ></i>  Mis Prestamos
+                            </li>
+                            
+                            <li onClick={handleLogout}>
+                                <i className="bx bx-log-out"></i> Cerrar sesión
+                            </li>
+                        </ul>
+                    )}
+                </div>
+            </div>
+        </header>
+    );
 };
 
 export default Header;

@@ -1,0 +1,302 @@
+/* ============================================
+   MODAL DE PRÉSTAMO FÍSICO
+   ============================================ */
+
+.physical-loan-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center; /* ✅ Asegura centrado vertical */
+    z-index: 9999 !important;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.physical-loan-content {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    max-width: 800px;
+    width: 100%;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: scaleIn 0.3s ease-out;
+    margin: auto; /* ✅ Centra horizontalmente si el flex falla */
+}
+
+.physical-loan-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #333;
+    line-height: 1;
+    z-index: 10;
+    transition: color 0.3s ease;
+}
+
+.physical-loan-close:hover {
+    color: #B6407D;
+}
+
+.physical-loan-title {
+    text-align: center;
+    color: #B6407D;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    margin-top: 0;
+}
+
+.physical-loan-body {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.physical-loan-image {
+    flex-shrink: 0;
+}
+
+.physical-loan-image img {
+    width: 180px;
+    height: 270px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.physical-loan-info {
+    flex-grow: 1;
+}
+
+.loan-info-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.loan-info-section:last-child {
+    border-bottom: none;
+}
+
+.loan-info-section h3 {
+    font-size: 1.2em;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.loan-info-section p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.loan-info-section p strong {
+    color: #333;
+}
+
+/* ============================================
+   FORMULARIO
+   ============================================ */
+
+.loan-form {
+    margin-top: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 1em;
+}
+
+.form-group label i {
+    margin-right: 5px;
+    color: #B6407D;
+}
+
+.form-group input[type="date"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.form-group input[type="date"]:focus {
+    outline: none;
+    border-color: #B6407D;
+}
+
+.form-group small {
+    display: block;
+    color: #999;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+.devolucion-info {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #B6407D;
+}
+
+.fecha-calculada {
+    background-color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 1.1em;
+    color: #B6407D;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 8px;
+    text-transform: capitalize;
+}
+
+.prestamo-duracion {
+    color: #666 !important;
+    font-weight: 600;
+    text-align: center;
+    display: block;
+    margin-top: 10px;
+}
+
+/* ============================================
+   BOTONES DE ACCIÓN
+   ============================================ */
+
+.loan-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.loan-actions button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-cancel {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.btn-cancel:hover {
+    background-color: #d0d0d0;
+}
+
+.btn-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-confirm {
+    background-color: #B6407D;
+    color: white;
+}
+
+.btn-confirm:hover:not(:disabled) {
+    background-color: #a1366b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(182, 64, 125, 0.3);
+}
+
+.btn-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px); /* ✅ Mejora la animación */
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.bx-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .physical-loan-body {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .physical-loan-image img {
+        width: 150px;
+        height: 225px;
+    }
+
+    .loan-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .physical-loan-content {
+        padding: 20px;
+        max-height: 95vh; /* ✅ Aprovecha más espacio en móvil */
+    }
+
+    .physical-loan-title {
+        font-size: 1.4em;
+    }
+}
+
+/* ✅ Para asegurar que se superpone a otros modales */
+.physical-loan-overlay {
+    z-index: 9999 !important;
+}

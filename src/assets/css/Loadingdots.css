@@ -1,0 +1,47 @@
+.loading-dots-container {
+    display: flex;
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 40px; 
+    font-size: 1.4rem; 
+    color: #333; 
+    font-weight: 500;
+}
+
+.loading-dots-animation {
+    display: flex;
+    gap: 12px; /* Espacio entre los puntos */
+}
+
+.loading-dot {
+    width: 16px; 
+    height: 16px; 
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both; 
+}
+
+.dot-1 {
+    background: linear-gradient(135deg, #B6407D, #d946a6);
+    animation-delay: -0.32s;
+}
+
+.dot-2 {
+    background: linear-gradient(135deg, #d946a6, #ef53ec);
+    animation-delay: -0.16s;
+}
+
+.dot-3 {
+    background: linear-gradient(135deg, #ef53ec, #ff6edb);
+    animation-delay: 0s;
+}
+/* Definición de la Animación de Carga */
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0); 
+    }
+    40% {
+        transform: scale(1); 
+    }
+}

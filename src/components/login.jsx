@@ -37,36 +37,49 @@ const Login = () => {
       });
 
       const data = await response.json();
+      console.log("📦 Respuesta del backend:", data);
 
       if (response.ok) {
-        // Guardar token en localStorage
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("userRole", data.rol);
-        localStorage.setItem("userData", JSON.stringify(data.user));
-
-        alert("Inicio de sesión exitoso");
-        // console.log("Token recibido:", data.access_token);
-
-         if (data.rol === "bibliotecario") {
-            navigate("/loyout_librarian/dashboard_librarian"); 
-        } else if (data.rol === "usuario") {
-            navigate("/loyout_user/dashboard_user"); 
-        } 
-      } else {
-        setError(data.detail || "Error al iniciar sesión. Intentalo de nuevo."); 
+      // ✅ CAMBIO AQUÍ: data.token → data.access_token
+      if (!data.access_token) {
+        console.error("❌ No se recibió token:", data);
+        setError("Error del servidor: token no disponible");
+        return;
       }
-    } catch (err) {
-      console.error("Error de conexión:", err);
-      setError("No se pudo conectar con el servidor");
+
+      // Guardar token en localStorage
+      localStorage.setItem("token", data.access_token); // 👈 CAMBIO: data.token → data.access_token
+      localStorage.setItem("userRole", data.rol);
+      
+      // ✅ Guardar user solo si existe
+      if (data.user) {
+        localStorage.setItem("userData", JSON.stringify(data.user));
+      }
+
+      console.log("✅ Token guardado:", data.access_token.substring(0, 30) + '...');
+
+      alert("Inicio de sesión exitoso");
+
+      if (data.rol === "bibliotecario") {
+        navigate("/loyout_librarian/dashboard_librarian"); 
+      } else if (data.rol === "usuario") {
+        navigate("/loyout_user/dashboard_user"); 
+      } 
+    } else {
+      setError(data.detail || "Error al iniciar sesión. Intentalo de nuevo."); 
     }
-  };
+  } catch (err) {
+    console.error("Error de conexión:", err);
+    setError("No se pudo conectar con el servidor");
+  }
+};
 
   return (
     <div className="login-page">
       <div className="login-container">
         <div className="login-section">
           <a href="/" className="login-back-button">
-            <i className="bx bx-left-arrow-alt"></i>
+            <i className="bx bx-chevron-left"></i>
           </a>
           <h1>Inicio de Sesión</h1>
           <p>Inicia sesión con tu cuenta de <strong>Aeternum.</strong></p>
@@ -88,7 +101,7 @@ const Login = () => {
               <label>Contraseña</label>
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Escribe tu contraseña aquí"
+                placeholder="Escribe tu contraseña"
                 value={clave}
                 onChange={(e) => setClave(e.target.value)}
               />
@@ -107,10 +120,10 @@ const Login = () => {
 
           <div className="login-register-options">
             <p>
-              ¿No tienes cuenta? <a href="#">Regístrate</a>
+              ¿No tienes cuenta? <a href="./register">Regístrate</a>
             </p>
             <p>
-              ¿Se te olvido la contraseña? <a href="#">¡Recuperala!</a>
+              ¿Se te olvido la contraseña? <a href="./restablecer-contrasena">¡Recuperala!</a>
             </p>
           </div>
         </div>

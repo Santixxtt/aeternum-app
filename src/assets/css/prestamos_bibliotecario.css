@@ -1,0 +1,559 @@
+/* 🎨 Contenedor principal */
+.prestamos-container {
+  background-color: #f2f2f2;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* 📋 Header */
+.prestamos-header {
+  background: #fff;
+  padding: 2rem 2rem 1.5rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.prestamos-header h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #b150a8;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* 📑 Tabs */
+.prestamos-tabs {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 800px;
+}
+
+.tab-btn {
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.tab-btn i {
+  font-size: 1.3rem;
+}
+
+.tab-btn:hover {
+  background: #e8e8e8;
+  transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #b150a8 0%, #8a3d80 100%);
+  color: #fff;
+  border-color: #b150a8;
+}
+
+/* 📊 Tarjetas de estadísticas */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card i {
+  font-size: 3rem;
+  opacity: 0.8;
+}
+
+.stat-card h3 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.stat-card p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.stat-card.pending {
+  border-left: 4px solid #ff9800;
+}
+
+.stat-card.pending i {
+  color: #ff9800;
+}
+
+.stat-card.active {
+  border-left: 4px solid #4caf50;
+}
+
+.stat-card.active i {
+  color: #4caf50;
+}
+
+.stat-card.pickup {
+  border-left: 4px solid #2196f3;
+}
+
+.stat-card.pickup i {
+  color: #2196f3;
+}
+
+.stat-card.overdue {
+  border-left: 4px solid #f44336;
+}
+
+.stat-card.overdue i {
+  color: #f44336;
+}
+
+/* 🔍 Búsqueda y Filtros */
+.prestamos-actions {
+  background: #fff;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filtros-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.prestamos-search {
+  position: relative;
+  flex: 1;
+  min-width: 300px;
+}
+
+.prestamos-search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #b150a8;
+}
+
+.prestamos-search input {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 2.8rem;
+  border: 2px solid #b150a8;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fff;
+  transition: all 0.3s ease;
+}
+
+.prestamos-search input:focus {
+  outline: none;
+  border-color: #8a3d80;
+  box-shadow: 0 0 0 3px rgba(177, 80, 168, 0.1);
+}
+
+/* 🔽 Filtros select */
+.filtro-select {
+  padding: 0.8rem 1rem;
+  border: 2px solid #b150a8;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  color: #b150a8;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.filtro-select:hover {
+  background: #f3e5f5;
+}
+
+.filtro-select:focus {
+  outline: none;
+  border-color: #8a3d80;
+  box-shadow: 0 0 0 3px rgba(177, 80, 168, 0.1);
+}
+
+/* ⏳ Loading */
+.prestamos-loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #b150a8;
+  padding: 3rem;
+  font-weight: 500;
+}
+
+/* 🧾 Tabla */
+.prestamos-table-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 500px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.prestamos-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prestamos-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #b150a8;
+  color: #fff;
+}
+
+.prestamos-table th {
+  padding: 1rem;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.prestamos-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.prestamos-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.prestamos-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.prestamos-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 👤 Info de usuario en tabla */
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.user-info strong {
+  color: #333;
+}
+
+.user-info small {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+/* 🏷️ Estado del préstamo */
+.prestamo-estado {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+/* 🔘 Select de estado en tabla */
+.estado-select,
+.estado-select-small {
+  padding: 0.5rem 0.8rem;
+  border: 2px solid #b150a8;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  color: #b150a8;
+  transition: all 0.3s ease;
+}
+
+.estado-select-small {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.estado-select:hover:not(:disabled),
+.estado-select-small:hover:not(:disabled) {
+  background: #f3e5f5;
+  transform: scale(1.05);
+}
+
+.estado-select:disabled,
+.estado-select-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 🔘 Acciones */
+.prestamos-actions-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 🔗 Link de OpenLibrary */
+.openlibrary-link {
+  color: #2196f3;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.3s ease;
+}
+
+.openlibrary-link:hover {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.openlibrary-link i {
+  font-size: 1.1rem;
+}
+
+/* 📊 Contenedor de digitales */
+.digital-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section-title {
+  color: #2196f3;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.mt-3 {
+  margin-top: 2rem;
+}
+
+/* 📭 Mensaje vacío */
+.prestamos-empty {
+  text-align: center;
+  padding: 3rem !important;
+  color: #666;
+  font-style: italic;
+}
+
+/* 🔄 Procesando */
+.prestamos-table tbody tr.processing {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.bx-spin {
+  animation: spin 1s linear infinite;
+  font-size: 1.5rem;
+  color: #b150a8;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 🔔 Notificaciones */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.notification.error {
+  background: #f44336;
+}
+
+/* 📊 Sección de estadísticas */
+.estadisticas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.chart-card {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card h3 {
+  color: #b150a8;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.chart-card.half {
+  min-height: 400px;
+}
+
+/* 📭 Estado vacío */
+.empty-state {
+  background: #fff;
+  padding: 4rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.empty-state h3 {
+  color: #b150a8;
+  margin: 1rem 0;
+  font-size: 1.8rem;
+}
+
+.empty-state p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* 📱 Responsividad */
+@media (max-width: 1024px) {
+  .stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .prestamos-container {
+    padding: 1rem;
+  }
+
+  .prestamos-header {
+    padding: 1rem;
+  }
+
+  .prestamos-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .prestamos-tabs {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .prestamos-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .prestamos-table {
+    font-size: 0.85rem;
+    min-width: 900px;
+  }
+
+  .prestamos-table th,
+  .prestamos-table td {
+    padding: 0.6rem;
+  }
+
+  .chart-card {
+    padding: 1rem;
+  }
+
+  .charts-row {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .prestamos-table th,
+  .prestamos-table td {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-card i {
+    font-size: 2rem;
+  }
+
+  .stat-card h3 {
+    font-size: 1.5rem;
+  }
+}

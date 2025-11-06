@@ -1,6 +1,8 @@
-/* Envoltorio principal del login */
+.login * {
+    font-family: poppins, sans-serif;
+}
+
 .login-page {
-    font-family: sans-serif;
     margin: 0;
     background-color: #1a1a1a;
     color: #e0e0e0;
@@ -128,6 +130,7 @@
 
 .login-register-options a:hover {
     text-decoration: underline;
+    color: #EF53EC;
 }
 
 /* Imagen */

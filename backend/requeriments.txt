@@ -1,0 +1,37 @@
+# Frameworks
+fastapi[all]
+flask
+flask-cors
+flask-jwt-extended
+flask-mail
+
+# Seguridad y autenticación
+passlib
+bcrypt
+pyjwt
+python-jose
+
+# Utilidades
+python-dotenv
+email-validator
+requests
+werkzeug
+recharts
+
+# Base de datos
+sqlalchemy
+mysql-connector-python
+aiomysql
+pymongo
+
+# Caché
+fastapi-cache2
+redis
+
+# Ciencia de datos
+pandas
+numpy
+
+# Validación y tipos
+pydantic
+starlette

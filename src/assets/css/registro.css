@@ -1,0 +1,335 @@
+/*
+|----------------------------------------------------------
+| Base Styles (Universal and Body)
+|----------------------------------------------------------
+*/
+.register * {
+    font-family: poppins, sans-serif;
+    /* This background is set again on .register-body for better control, but kept for general elements */
+    background-color: #1a1a1a; 
+    min-height: 100vh;
+}
+
+.register-body {
+    font-family: poppins, sans-serif; /* Using poppins as defined in .register * */
+    margin: 0;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/*
+|----------------------------------------------------------
+| Container and Layout
+|----------------------------------------------------------
+*/
+.register-container {
+    display: flex;
+    width: 90%; 
+    max-width: 1200px;
+    min-height: 80vh; 
+    height: auto;
+    /* Using the slightly lighter background from the second block */
+    background-color: #292929; 
+    border-radius: 10px;
+    overflow: hidden;
+    margin: auto;
+}
+
+.register-login-section {
+    flex: 1;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    margin: 0 auto; 
+}
+
+/* Back Button */
+.register-back-button {
+    color: #e0e0e0;
+    font-size: 3em;
+    text-decoration: none;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+
+.register-back-button i {
+    vertical-align: middle;
+}
+
+/* Titles and Text */
+.register-login-section h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    color: #f0f0f0;
+}
+
+.register-login-section p {
+    color: #ccc;
+    margin-bottom: 30px;
+    font-size: 0.9em;
+}
+
+/* Image Section */
+.register-image-section {
+    flex: 1;
+    overflow: hidden;
+}
+
+.register-image-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/*
+|----------------------------------------------------------
+| Form Elements
+|----------------------------------------------------------
+*/
+.register-form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.register-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #bbb;
+    font-size: 0.95em;
+}
+
+/* Input Fields (Text, Password, etc.) */
+.register-form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background-color: #333;
+    color: #e0e0e0;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+.register-form-group input::placeholder {
+    color: #777;
+}
+
+.register-form-group input:focus {
+    background-color: #444;
+    border-color: #993A90; /* Accent Color */
+    outline: none;
+    box-shadow: 0 0 5px #EF53EC; /* Accent Color */
+}
+
+/* Select Field */
+.register-form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background-color: #333;
+    color: #e0e0e0;
+    font-size: 1em;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    /* Custom down arrow icon */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='%23bbb' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 18px 18px;
+}
+
+.register-form-group select:focus {
+    background-color: #444;
+    border-color: #993A90; /* Accent Color */
+    outline: none;
+    box-shadow: 0 0 5px #EF53EC; /* Accent Color */
+}
+
+/* Password Visibility Toggle Icon */
+.register-toggle-password {
+    position: absolute;
+    top: 40px;
+    right: 15px;
+    font-size: 1.3em;
+    color: #993A90;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* Error Messages */
+.register-error-message {
+    color: #dc3545; /* Red */
+    font-size: 0.85em;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+/*
+|----------------------------------------------------------
+| Consent Checkbox
+|----------------------------------------------------------
+*/
+.register-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 15px 0;
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.register-consent input[type="checkbox"] {
+    margin-top: 3px;
+    cursor: pointer;
+}
+
+.register-consent label {
+    cursor: pointer;
+    color: white;
+}
+
+.register-consent a {
+    color: #993A90; /* Accent Color */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.register-consent a:hover {
+    text-decoration: underline;
+}
+
+/*
+|----------------------------------------------------------
+| Buttons and Links
+|----------------------------------------------------------
+*/
+.register-login-button {
+    background-image: linear-gradient(to right, #EF53EC, #993A90); /* Gradient Accent */
+    color: #fff;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-image 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 20px;
+}
+
+.register-login-button:hover {
+    background-image: linear-gradient(to right, #f779f5, #b150a8);
+}
+
+.register-register-link {
+    margin-top: 30px;
+    font-size: 0.9em;
+    color: #ccc;
+    text-align: center;
+}
+
+.register-register-link a {
+    color: #EF53EC; /* Accent Color */
+    text-decoration: none;
+}
+
+.register-register-link a:hover {
+    text-decoration: underline;
+    color: #EF53EC;
+}
+
+/*
+|----------------------------------------------------------
+| Password Strength Indicator
+|----------------------------------------------------------
+*/
+.register-password-strength-container {
+    margin-top: 5px;
+    background-color: #292929; 
+    border-radius: 5px;
+}
+
+.register-password-strength {
+    height: 8px;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    transition: background 0.3s ease, width 0.4s ease-in-out; 
+    width: 0%; 
+}
+
+/* Bar Progress Colors */
+.register-password-strength.weak {
+    background-color: #dc3545; /* Red */
+}
+
+.register-password-strength.medium {
+    background-color: #ffc107; /* Yellow */
+}
+
+.register-password-strength.strong {
+    background-color: #28a745; /* Green */
+}
+
+.register-password-strength.very-strong { 
+    background-color: #B6407D; /* Brand Color */
+}
+
+/* Strength Text */
+.register-strength-text {
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 5px;
+    color: #bbb;
+}
+
+.register-strength-text.strength-1 {
+    color: #dc3545; 
+}
+
+.register-strength-text.strength-2 {
+    color: #ffc107; 
+}
+
+.register-strength-text.strength-3 {
+    color: #28a745; 
+}
+
+.register-strength-text.strength-4 {
+    color: #B6407D; 
+}
+
+/*
+|----------------------------------------------------------
+| Responsive Design
+|----------------------------------------------------------
+*/
+@media (max-width: 768px) {
+    .register-container {
+        flex-direction: column;
+        width: 95%;
+        min-height: auto; 
+        height: auto; 
+        margin: 20px auto; 
+    }
+
+    .register-image-section {
+        /* Hide the image on small screens */
+        display: none; 
+    }
+
+    .register-login-section {
+        padding: 30px;
+        max-width: none; 
+        margin: 0;
+    }
+}

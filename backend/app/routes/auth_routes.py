@@ -1,52 +1,58 @@
 from fastapi import APIRouter, HTTPException, Request
-from app.models.user_model import get_user_by_email, reset_login_attempts, increment_login_attempts
-from app.utils.security import verify_password, hash_password, create_access_token
-from datetime import datetime, timedelta
-from app.schemas.user_schema import UserLogin, UserRegister
 from app.models import user_model
+from app.utils.security import verify_password, hash_password, create_access_token
+from datetime import datetime
+from app.schemas.user_schema import UserLogin, UserRegister
+from app.dependencias.redis import r  
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 MAX_ATTEMPTS = 3
-LOCK_TIME_MINUTES = 5
+LOCK_TIME_SECONDS = 15 * 60  # 15 min
 
 @router.post("/login")
-def login(user_data: UserLogin):
-    user = get_user_by_email(user_data.correo)
+async def login(user_data: UserLogin):
+    user = await user_model.get_user_by_email(user_data.correo)
     if not user:
-        raise HTTPException(status_code=401, detail="El correo no está registrado, revise nuevamente o cree una cuenta.")
-    #  Verificar bloqueo
-    if user["bloqueado_hasta"] and datetime.now() < user["bloqueado_hasta"]:
-        raise HTTPException(status_code=403, detail="Cuenta bloqueada. Intenta más tarde.")
-    
+        raise HTTPException(status_code=401, detail="Correo o contraseña son incorrectos.")
 
-    attempts = user.get("intentos_fallidos") if isinstance(user, dict) else user["intentos_fallidos"]
-    attempts = int(attempts or 0)
+    if user.get("estado") == "Desactivado":
+        raise HTTPException(status_code=403, detail="Correo o contraseña son incorrectos.")
 
-    #  Validar clave
+    user_id = user["id"]
+    attempts_key = f"login_attempts:{user_id}"
+    lock_key = f"account_locked:{user_id}"
+
+    # Verificar si la cuenta está bloqueada en Redis
+    if r.get(lock_key):
+        raise HTTPException(status_code=403, detail="Cuenta bloqueada temporalmente. Intenta más tarde.")
+
+    # Intentos fallidos actuales
+    attempts = int(r.get(attempts_key) or 0)
+
+    # Contraseña incorrecta
     if not verify_password(user_data.clave, user["clave"]):
-        remaining = MAX_ATTEMPTS - (user["intentos_fallidos"] + 1)
-        increment_login_attempts(user["id"], MAX_ATTEMPTS, LOCK_TIME_MINUTES)
+        attempts += 1
+        r.setex(attempts_key, LOCK_TIME_SECONDS, attempts)  # guarda intentos y expira en 15 min
 
-        if remaining > 0:
-            raise HTTPException(status_code=401, detail=f"Clave incorrecta. Intentos restantes: {remaining}")
-        else:
+        remaining = MAX_ATTEMPTS - attempts
+
+        if attempts >= MAX_ATTEMPTS:
+            r.setex(lock_key, LOCK_TIME_SECONDS, "1")  # bloquea la cuenta
             raise HTTPException(status_code=403, detail="Cuenta bloqueada por intentos fallidos.")
 
-    # Login correcto → resetear intentos
-    reset_login_attempts(user["id"])
+        raise HTTPException(status_code=401, detail=f"Clave incorrecta. Intentos restantes: {remaining}")
 
-    #  Generar token JWT
-    token = create_access_token(
-        data={"sub": str(user["id"]), "correo": user["correo"], "rol": user["rol"]}
-    )
-    safe_user = {
-    "id": user["id"],
-    "nombre": user["nombre"],
-    "apellido": user["apellido"],
-    "correo": user["correo"],
-    "rol": user["rol"]
-    }
+    # Login correcto, limpiar intentos
+    r.delete(attempts_key)
+    r.delete(lock_key)
+
+    token = create_access_token({
+        "sub": str(user_id),
+        "correo": user["correo"],
+        "rol": user["rol"]
+    })
+
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -54,25 +60,21 @@ def login(user_data: UserLogin):
     }
 
 
-
+# 🔹 REGISTER
 @router.post("/register")
-def register_user(user: UserRegister, request: Request):
-    # Validación de consentimiento
+async def register_user(user: UserRegister, request: Request):
     if not user.consent:
         raise HTTPException(status_code=400, detail="Debes aceptar la Política de Privacidad.")
 
-    # Verificar email duplicado
-    if user_model.email_exists(user.correo):
+    # Verificar duplicados
+    if await user_model.email_exists(user.correo):
         raise HTTPException(status_code=400, detail="El correo ya está registrado.")
-
-    # Verificar número de identificación duplicado
-    if user_model.id_exists(user.num_identificacion):
+    if await user_model.id_exists(user.num_identificacion):
         raise HTTPException(status_code=400, detail="El número de identificación ya está registrado.")
 
     hashed = hash_password(user.clave)
 
-    # Insertar usuario
-    user_id = user_model.create_user({
+    user_id = await user_model.create_user({
         "nombre": user.nombre,
         "apellido": user.apellido,
         "tipo_identificacion": user.tipo_identificacion,
@@ -83,9 +85,9 @@ def register_user(user: UserRegister, request: Request):
     })
 
     # Guardar consentimiento
-    consent_text = f"Acepto la Política de Privacidad de Aeternum (v1) - {datetime.now().strftime('%Y-%m-%d')}"
+    consent_text = f"Acepto la Política de Privacidad de Aeternum (v1) - {datetime.now():%Y-%m-%d}"
     ip = request.client.host
     user_agent = request.headers.get("user-agent", "")[:255]
-    user_model.save_consent(user_id, consent_text, ip, user_agent)
+    await user_model.save_consent(user_id, consent_text, ip, user_agent)
 
     return {"message": "¡Cuenta creada con éxito!", "user_id": user_id}

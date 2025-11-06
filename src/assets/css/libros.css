@@ -1,0 +1,542 @@
+/* 🎨 Contenedor principal */
+.libros-container {
+  background-color: #f2f2f2;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* 📋 Header de la página */
+.libros-header {
+  background: #fff;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.libros-header h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #b150a8;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* 🔍 Acciones (búsqueda y exportación) */
+.libros-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.libros-search {
+  position: relative;
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.libros-search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #b150a8;
+}
+
+.libros-search input {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 2.8rem;
+  border: 2px solid #b150a8;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fff;
+  transition: all 0.3s ease;
+}
+
+.libros-search input:focus {
+  outline: none;
+  border-color: #8a3d80;
+  box-shadow: 0 0 0 3px rgba(177, 80, 168, 0.1);
+}
+
+/* 📤 Botones de exportación */
+.libros-btn {
+  background-color: #b150a8;
+  color: #fff;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.libros-btn:hover {
+  background-color: #8a3d80;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(177, 80, 168, 0.3);
+}
+
+
+.libros-btn.create:hover {
+  background-color: #00bfff;
+}
+
+.libros-btn.excel:hover {
+  background-color: #217346;
+}
+
+.libros-btn.pdf:hover {
+  background-color: #d32f2f;
+}
+
+/* ⏳ Loading */
+.libros-loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #b150a8;
+  padding: 3rem;
+  font-weight: 500;
+}
+
+/* 🧾 Tabla */
+.libros-table-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 500px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.libros-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.libros-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #b150a8;
+  color: #fff;
+}
+
+.libros-table th {
+  padding: 1rem;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.libros-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.libros-table td.text-center {
+  text-align: center;
+  font-weight: 600;
+  color: #b150a8;
+}
+
+.libros-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.libros-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.libros-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 🏷️ Estado del libro */
+.libros-estado {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.libros-estado.activo {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.libros-estado.inactivo {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* 🔘 Botones de acción en tabla */
+.libros-actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.libros-icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.8rem;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.libros-icon-btn.edit {
+  color: #b150a8;
+}
+
+.libros-icon-btn.edit:hover {
+  background-color: #f3e5f5;
+  transform: scale(1.15);
+}
+
+.libros-icon-btn.toggle.active {
+  color: #4caf50;
+}
+
+.libros-icon-btn.toggle.inactive {
+  color: #9e9e9e;
+}
+
+.libros-icon-btn.toggle:hover {
+  background-color: #f5f5f5;
+  transform: scale(1.15);
+}
+
+/* 📭 Mensaje cuando no hay libros */
+.libros-empty {
+  text-align: center;
+  padding: 3rem !important;
+  color: #666;
+  font-style: italic;
+}
+
+/* 🪟 Modal */
+.libros-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.libros-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.libros-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #b150a8 0%, #8a3d80 100%);
+  color: #fff;
+  border-radius: 16px 16px 0 0;
+}
+
+.libros-modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.libros-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.libros-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.libros-modal-body {
+  padding: 2rem;
+}
+
+.libros-modal-body label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.libros-modal-body input,
+.libros-modal-body select,
+.libros-modal-body textarea {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1.2rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.libros-modal-body textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.libros-modal-body input:focus,
+.libros-modal-body select:focus,
+.libros-modal-body textarea:focus {
+  outline: none;
+  border-color: #b150a8;
+  box-shadow: 0 0 0 3px rgba(177, 80, 168, 0.1);
+}
+
+.libros-modal-body select {
+  cursor: pointer;
+  background-color: #fff;
+}
+
+.libros-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 2px solid #f0f0f0;
+  background-color: #fafafa;
+  border-radius: 0 0 16px 16px;
+}
+
+.libros-modal-btn {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.libros-modal-btn.save {
+  background-color: #b150a8;
+  color: #fff;
+}
+
+.libros-modal-btn.save:hover {
+  background-color: #8a3d80;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(177, 80, 168, 0.3);
+}
+
+.libros-modal-btn.cancel {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.libros-modal-btn.cancel:hover {
+  background-color: #545b62;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+/* 🔄 Estado de procesamiento */
+.libros-table tbody tr.processing {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.libros-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bx-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 🔔 Notificaciones Toast */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.notification.error {
+  background: #f44336;
+}
+
+.notification.warning {
+  background: #ff9800;
+}
+
+/* 📱 Responsividad */
+@media (max-width: 1024px) {
+  .libros-table {
+    font-size: 0.9rem;
+  }
+
+  .libros-table th,
+  .libros-table td {
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .libros-container {
+    padding: 1rem;
+  }
+
+  .libros-header {
+    padding: 1rem;
+  }
+
+  .libros-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .libros-actions {
+    flex-direction: column;
+  }
+
+  .libros-search {
+    width: 100%;
+    max-width: none;
+  }
+
+  .libros-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .libros-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .libros-table {
+    font-size: 0.85rem;
+    min-width: 900px;
+  }
+
+  .libros-table th,
+  .libros-table td {
+    padding: 0.6rem;
+  }
+
+  .libros-modal {
+    width: 95%;
+  }
+
+  .libros-modal-body {
+    padding: 1.5rem;
+  }
+
+  .libros-modal-footer {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .libros-modal-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .libros-table th,
+  .libros-table td {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+
+  .libros-icon-btn {
+    font-size: 1.5rem;
+  }
+}

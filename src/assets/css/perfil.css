@@ -1,0 +1,323 @@
+.perfil-hero-aurora {
+                    padding: 100px 20px 40px;
+                    text-align: center;
+                    background: radial-gradient(circle at 10% 20%, rgba(255,0,150,0.2), transparent 40%),
+                          radial-gradient(circle at 80% 30%, rgba(0,200,255,0.2), transparent 40%),
+                          radial-gradient(circle at 50% 80%, rgba(255,255,0,0.15), transparent 40%),
+                          #000;
+                    background-size: 200% 200%;
+                    animation: aurora 15s ease infinite;
+                    color: #fff;
+                }
+
+                @keyframes aurora {
+                    0%  { background-position: 0% 0%; }
+                    50% { background-position: 100% 100%; }
+                    100% { background-position: 0% 0%; }
+                }
+
+                .perfil-hero-aurora h1 {
+                    font-size: 2.5rem;
+                    margin: 0 0 10px;
+                    font-weight: 700;
+                }
+
+                .perfil-hero-aurora p {
+                    font-size: 1.1rem;
+                    opacity: 0.9;
+                }
+
+                    .perfil-content {
+                        max-width: 800px;
+                        margin: 40px auto;
+                        padding: 0 20px;
+                    }
+
+                    .perfil-card {
+                        background: white;
+                        border-radius: 12px;
+                        padding: 40px;
+                        box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+                        margin-left: auto;
+                        margin-right: auto;
+                    }
+
+                .perfil-header-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                    margin-bottom: 30px;
+                }
+
+                .avatar-circle {
+                    width: 80px;
+                    height: 80px;
+                    background: #B6407D;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .avatar-circle i {
+                    font-size: 45px;
+                    color: white;
+                }
+
+                .user-info h2 {
+                    margin: 0 0 8px;
+                    font-size: 1.8rem;
+                    color: #333;
+                }
+
+                .user-role {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: #B6407D;
+                    color: white;
+                    padding: 6px 16px;
+                    border-radius: 20px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                }
+
+                .action-buttons-bottom {
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                    margin-top: 30px; /* Separación después de la línea divisoria */
+                }
+
+                .btn-primary, .btn-secondary, .btn-danger {
+                    padding: 12px 20px;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s;
+                }
+
+                .btn-primary {
+                    background: #B6407D;
+                    color: white;
+                }
+
+                .btn-primary:hover {
+                    background: #EF53EC;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(107, 91, 149, 0.4);
+                }
+
+                .btn-secondary {
+                    background: #B6407D;
+                    color: white;
+                }
+
+                .btn-secondary:hover {
+                    background: #2980b9;
+                    transform: translateY(-2px);
+                }
+
+                .btn-danger {
+                    background: #B6407D;
+                    color: white;
+                }
+
+                .btn-danger:hover {
+                    background: #c0392b;
+                    transform: translateY(-2px);
+                }
+
+                .divider {
+                    border: none;
+                    border-top: 2px solid #e0e0e0;
+                    margin: 0 0 30px;
+                }
+
+                .info-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+
+                .info-item {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 15px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    transition: background 0.2s;
+                }
+
+                .info-item:hover {
+                    background: #f0f0f0;
+                }
+
+                .info-item > i {
+                    font-size: 24px;
+                    color: #B6407D;
+                    margin-top: 2px;
+                }
+
+                .info-item div {
+                    flex: 1;
+                }
+
+                .info-item label {
+                    display: block;
+                    font-size: 0.85rem;
+                    color: #666;
+                    margin-bottom: 5px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .info-item p {
+                    font-size: 1.05rem;
+                    color: #333;
+                    margin: 0;
+                    font-weight: 500;
+                }
+
+                .edit-form-modern {
+                    margin-top: 20px;
+                }
+
+                .form-row {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 20px;
+                }
+
+                .form-group {
+                    margin-bottom: 20px;
+                }
+
+                .form-group label {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 8px;
+                }
+
+                .form-group input,
+                .form-group select {
+                    width: 100%;
+                    padding: 12px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    transition: border-color 0.3s;
+                }
+
+                .form-group input:focus,
+                .form-group select:focus {
+                    outline: none;
+                    border-color: #6B5B95;
+                }
+
+                .form-actions {
+                    display: flex;
+                    gap: 15px;
+                    justify-content: flex-start;
+                    margin-top: 30px;
+                }
+
+                .btn-save {
+                    background: #6B5B95;
+                    color: white;
+                    padding: 12px 30px;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s;
+                }
+
+                .btn-save:hover {
+                    background: #5a4a7f;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(107, 91, 149, 0.4);
+                }
+
+                .btn-cancel {
+                    background: #95a5a6;
+                    color: white;
+                    padding: 12px 30px;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s;
+                }
+
+                .btn-cancel:hover {
+                    background: #7f8c8d;
+                    transform: translateY(-2px);
+                }
+
+                @media (max-width: 768px) {
+                    .perfil-hero-aurora h1 {
+                        font-size: 2rem;
+                    }
+
+                    .perfil-card {
+                        padding: 25px;
+                    }
+
+                    .perfil-header-info {
+                        flex-direction: column;
+                        text-align: center;
+                    }
+
+                    .user-info h2 {
+                        font-size: 1.5rem;
+                    }
+
+                    .action-buttons-bottom { /
+                        flex-direction: column;
+                        margin-top: 20px; 
+                    }
+
+                    .btn-primary, .btn-secondary, .btn-danger {
+                        width: 100%;
+                        justify-content: center;
+                    }
+
+                    .btn-primary, .btn-secondary, .btn-danger {
+                        width: 100%;
+                        justify-content: center;
+                    }
+
+                    .form-row {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .form-actions {
+                        flex-direction: column;
+                    }
+
+                    .btn-save, .btn-cancel {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }

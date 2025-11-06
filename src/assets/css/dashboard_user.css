@@ -1,274 +1,762 @@
-/* =============================
-   HEADER
-============================= */
-.dashboard-user .header {
-  background-color: #ffffff;
-  padding: 10px 0;
-  width: 100%;
-  transition: all 0.4s ease;
-  z-index: 1000;
-  position: relative;
-}
-
-.dashboard-user .header.sticky {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.dashboard-user .header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 0px;
+.dashboard-user *{
+ font-family: poppins, sans-serif;
 }
 
 .dashboard-user .logo img {
-  height: 50px;
+ height: 50px;
 }
 
 /* Nav */
 .dashboard-user .nav ul {
-  display: flex;
-  gap: 40px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+ display: flex;
+ gap: 40px;
+ list-style: none;
+ margin: 0;
+ padding: 0;
 }
 
 .dashboard-user .nav a {
-  color: #000;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
+ color: #000;
+ text-decoration: none;
+ font-weight: 500;
+ transition: color 0.3s ease;
 }
 
-.dashboard-user .nav a:hover {
-  color: #B6407D;
+.dashboard-user .nav a.active {
+    color: #B6407D; /* Color del texto primario */
+    font-weight: 600;
+    border-bottom: 2px solid #B6407D; /* Indicador visual */
+    padding-bottom: 5px; /* Pequeño espacio para el borde */
+}
+
+/* Aseguramos que el hover siga funcionando pero sin conflicto */
+.dashboard-user .nav a:not(.active):hover {
+    color: #B6407D;
+}
+
+/* ================================================= */
+/* ESTILOS DEL HEADER Y NAVEGACIÓN ACTIVA          */
+/* ================================================= */
+
+/* Estilo base para los elementos de navegación */
+.dashboard-user .nav ul li {
+    /* Convierte el li en un contenedor flexible para el contenido y el borde */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0 5px; /* Pequeño relleno para el hover */
+    transition: color 0.3s ease;
+}
+
+/* Hover effect for navigation items */
+.dashboard-user .nav ul li:hover {
+    color: #B6407D;
+}
+
+/* Estilo para el enlace de navegación ACTIVO */
+.dashboard-user .nav ul li.active {
+    color: #B6407D; /* Color del texto primario */
+    font-weight: 600;
+    /* Indicador visual: borde inferior morado */
+    border-bottom: 2px solid #B6407D; 
+    /* Necesitas que el elemento padre (li) tenga el padding adecuado si quieres que el borde se vea bien */
+}
+
+/* Aseguramos que el color del texto del link dentro del li activo sea morado */
+.dashboard-user .nav ul li.active a {
+    color: #B6407D;
 }
 
 /* Search Bar */
 .dashboard-user .search-bar {
-  display: flex;
-  align-items: center;
-  background: #f2f2f2;
-  border: 1px solid #ddd;
-  border-radius: 20px;
+ display: flex;
+ align-items: center;
+ background: #f2f2f2;
+ border: 1px solid #ddd;
+ border-radius: 20px;
 }
 
 .dashboard-user .search-bar input {
-  border: none;
-  outline: none;
-  background: transparent;
-  padding: 6px 10px;
-  font-size: 14px;
-  color: #000;
+ border: none;
+ outline: none;
+ background: transparent;
+ padding: 6px 10px;
+ font-size: 14px;
+ color: #000;
 }
 
 .dashboard-user .search-bar button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 18px;
-  color: #555;
+ border: none;
+ background: transparent;
+ cursor: pointer;
+ font-size: 18px;
+ color: #555;
 }
 
 .dashboard-user .search-bar button:hover {
-  color: #B6407D;
+ color: #B6407D;
 }
 
 /* User menu */
 .dashboard-user .user-menu {
-  position: relative;
+ position: relative;
 }
 
 .dashboard-user .user-icon {
-  font-size: 32px;
-  color: #333;
-  cursor: pointer;
-  transition: color 0.3s ease, transform 0.2s ease;
+ font-size: 32px;
+ color: #333;
+ cursor: pointer;
+ transition: color 0.3s ease, transform 0.2s ease;
 }
 
 .dashboard-user .user-icon:hover {
-  color: #B6407D;
-  transform: scale(1.1);
+ color: #B6407D;
+ transform: scale(1.1);
 }
 
 .dashboard-user .dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 180px;
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 10px;
-  padding: 8px 0;
-  box-shadow: 0 8px 24px rgba(0,0,0,.08);
-  animation: fadeIn 0.2s ease;
+ position: absolute;
+ top: calc(100% + 8px);
+ right: 0;
+ min-width: 180px;
+ background: #fff;
+ border: 1px solid #e5e5e5;
+ border-radius: 10px;
+ padding: 8px 0;
+ box-shadow: 0 8px 24px rgba(0,0,0,.08);
+ animation: fadeIn 0.2s ease;
 }
 
 .dashboard-user .dropdown li {
-  list-style: none;
+ list-style: none;
 }
 
 .dashboard-user .dropdown a, 
 .dashboard-user .dropdown li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  color: #333;
-  text-decoration: none;
-  font-size: 14px;
-  cursor: pointer;
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ padding: 10px 14px;
+ color: #333;
+ text-decoration: none;
+ font-size: 14px;
+ cursor: pointer;
 }
 
 .dashboard-user .dropdown a:hover,
 .dashboard-user .dropdown li:hover {
-  background: #f5f5f5;
-  color: #B6407D;
+ background: #f5f5f5;
+ color: #B6407D;
 }
 
-/* =============================
-   HERO
-============================= */
 .dashboard-user .dashboard-hero {
-  padding: 100px 20px 40px;
-  text-align: center;
-  background: radial-gradient(circle at 10% 20%, rgba(255,0,150,0.2), transparent 40%),
-              radial-gradient(circle at 80% 30%, rgba(0,200,255,0.2), transparent 40%),
-              radial-gradient(circle at 50% 80%, rgba(255,255,0,0.15), transparent 40%),
-              #000;
-  background-size: 200% 200%;
-  animation: aurora 15s ease infinite;
-  color: #fff;
+ padding: 100px 20px 40px;
+ text-align: center;
+ background: radial-gradient(circle at 10% 20%, rgba(255,0,150,0.2), transparent 40%),
+       radial-gradient(circle at 80% 30%, rgba(0,200,255,0.2), transparent 40%),
+       radial-gradient(circle at 50% 80%, rgba(255,255,0,0.15), transparent 40%),
+       #000;
+ background-size: 200% 200%;
+ animation: aurora 15s ease infinite;
+ color: #fff;
 }
 
 @keyframes aurora {
-  0%   { background-position: 0% 0%; }
-  50%  { background-position: 100% 100%; }
-  100% { background-position: 0% 0%; }
+ 0%  { background-position: 0% 0%; }
+ 50% { background-position: 100% 100%; }
+ 100% { background-position: 0% 0%; }
 }
 
 
 .dashboard-user .dashboard-hero h1 {
-  font-size: 2em;
-  margin-bottom: 30px;
-  font-weight: 700;
+ font-size: 2em;
+ margin-bottom: 30px;
+ font-weight: 700;
 }
 
 .dashboard-user .dashboard-hero p {
-  font-size: 1.4em;
-  padding: 0 50px;
-  margin-bottom: 30px;
+ font-size: 1.4em;
+ padding: 0 50px;
+ margin-bottom: 30px;
 }
 
-/* =============================
-   BOOK LISTS (Resultados y Recomendados)
-============================= */
+.dashboard-user .mi-span{
+ padding: 10px;
+ font-size: 3rem;
+ display: block;
+ text-align: center;
+}
+
+.dashboard-user .recommendations-title {
+    text-align: center;
+    font-size: 2em; 
+    margin-top: 50px; 
+    margin-bottom: 20px; 
+}
+
 .dashboard-user .dashboard-book-list {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 60px;
-  padding: 30px 90px;
+ display: grid;
+ grid-template-columns: repeat(4, 1fr);
+ gap: 60px;
+ padding: 30px 90px;
 }
 
-.dashboard-user .dashboard-book-list h2{
-  justify-content: center;
-  margin-bottom: 90px;
-}
-
-/* Book Card */
 .dashboard-user .book-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  text-align: center;
+ background: #fff;
+ border-radius: 20px;
+ padding: 10px;
+ box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+ transition: transform 0.2s ease, box-shadow 0.2s ease;
+ text-align: center;
 }
 
 .dashboard-user .book-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+ transform: translateY(-4px);
+ box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
 .dashboard-user .book-card img {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 6px;
-  margin-bottom: 10px;
+ width: 100%;
+ height: 220px;
+ object-fit: cover;
+ border-radius: 6px;
+ margin-bottom: 10px;
 }
 
 .dashboard-user .book-card h3 {
-  font-size: 1em;
-  margin: 8px 0;
-  font-weight: 600;
+ font-size: 1em;
+ margin: 8px 0;
+ font-weight: 600;
 }
 
 .dashboard-user .book-card p {
-  font-size: 0.9em;
-  color: #666;
+ font-size: 0.9em;
+ color: #666;
 }
 
-/* Acciones */
 .dashboard-user .card-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
+ display: flex;
+ justify-content: center;
+ gap: 10px;
+ margin-top: 10px;
 }
 
 .dashboard-user .card-actions button {
-  border: none;
-  background: #B6407D;
-  padding: 6px 10px;
-  border-radius: 6px;
-  color: #333;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s ease, color 0.3s ease;
+ border: none;
+ background: #B6407D;
+ padding: 6px 10px;
+ border-radius: 6px;
+ color: #333;
+ cursor: pointer;
+ font-size: 16px;
+ transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Modal */
+
+.modal-overlay {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050; 
+    padding: 20px; 
+
+.modal-content {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    max-width: 900px; 
+    width: 100%;
+    position: relative;
+    max-height: 95vh;
+    overflow-y: auto; 
+    animation: scaleIn 0.3s ease-out; 
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #333;
+    line-height: 1; 
+    z-index: 10; 
+}
+
+.modal-close:hover {
+    color: #B6407D;
+}
+
+.modal-body {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    padding-top: 10px; 
+}
+
+.modal-image {
+    flex-shrink: 0; /* Evita que la imagen se achique */
+}
+
+.modal-image img {
+    width: 250px;
+    height: 380px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* ... dentro de dashboard_user.css (Sección Modal) ... */
+
+/* Estilos de la Información del Modal */
+.modal-info {
+  flex-grow: 1;
+  /* Añadimos algo de relleno para evitar que el texto toque el borde si es necesario */
+  padding: 0 10px;
+}
+
+.modal-info h2 {
+  font-size: 2.2em; /* Ligeramente más grande para que destaque */
+  margin-top: 0;
+  margin-bottom: 5px; /* Menos margen inferior para el autor */
+}
+
+.modal-info .author {
+    font-size: 1.1em;
+    color: #666;
+    margin-bottom: 25px; /* Espacio después del autor */
+}
+
+/* Agrupación de Calificación */
+.modal-rating-group {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.modal-rating-group h3 {
+    font-size: 1.4em;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* Estilo para los elementos de calificación */
+.modal-rating-group .rating-details {
+    margin-bottom: 15px; /* Espacio debajo de la calificación promedio */
+}
+
+.modal-description {
+    margin-bottom: 20px;
+}
+
+.modal-description h3 {
+    font-size: 1.4em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* Estilo para la sección de Comentarios (Si es un título H2 o H3, ajusta) */
+.modal-info .comments-section {
+    font-size: 1.4em;
+    margin-top: 30px; /* Separación después del resumen */
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* Mantenemos el diseño de los botones de acción sin cambios si funciona bien en 2 columnas */
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  gap: 15px; 
+  margin-top: 25px;
+  width: 100%;
+}}
+
+.modal-actions button {
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    background: #B6407D;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background 0.3s ease;
+}
+
+.modal-actions button:hover {
+    background: #d5d5d5; 
+    color: black;
+    box-shadow: 
+        0 0 0 3px #B6407D, /* Borde interior de color primario */
+        0 0 10px 3px rgba(182, 64, 125, 0.7)
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .dashboard-user .card-actions .btn-borrow:hover {
-  background: #ef53ec;
-  color: #fff;
+ background: #ef53ec;
+ color: #fff;
 }
 
 .dashboard-user .card-actions .btn-wishlist:hover {
-  background: #ef53ec;
-  color: #fff;
+ background: #ef53ec;
+ color: #fff;
 }
 
-/* =============================
-   LOADER
-============================= */
 .dashboard-user .loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #B6407D;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  animation: spin 1s linear infinite;
-  margin: 50px auto;
+ border: 6px solid #f3f3f3;
+ border-top: 6px solid #B6407D;
+ border-radius: 50%;
+ width: 48px;
+ height: 48px;
+ animation: spin 1s linear infinite;
+ margin: 50px auto;
 }
 
+/* Sección de Comentarios */
+.modal-comments {
+    margin-top: 20px;
+    padding-bottom: 20px; 
+}
+
+.comments-feed-box {
+    max-height: 280px; /* Altura máxima para el historial de chat */
+    overflow-y: auto;
+    padding: 10px;
+    margin-bottom: 15px;
+    /* Estilo sutil de caja para el feed de mensajes */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.comments-list .comment-item {
+    background-color: #ffffff; 
+    border: none !important; 
+    padding: 10px 15px;
+    margin-bottom: 8px !important; 
+    border-radius: 18px; 
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    max-width: 90%;
+    text-align: left;
+}
+
+.comments-list .comment-item strong {
+    color: #B6407D; 
+    display: block; 
+    margin-bottom: 2px;
+}
+
+.comments-list .comment-item small {
+    display: block;
+    text-align: right;
+    color: #999;
+    font-size: 0.75em;
+    margin-top: 5px;
+}
+
+.comment-form {
+    display: flex;
+    align-items: flex-end; 
+    gap: 10px;
+    padding: 10px 0 0; 
+    margin-top: 0 !important;
+}
+
+/* Estilo base para botones de acción (Enviar/Cancelar) */
+.comment-form .submit-button,
+.comment-form .cancel-button {
+    flex-shrink: 0; 
+    width: 40px; 
+    height: 40px;
+    padding: 0; 
+    border-radius: 50%; 
+    font-size: 1.2em; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    
+    /* Ocultamos el texto "Enviar" que tienes en tu JSX para dejar solo el icono */
+    line-height: 0; 
+    text-indent: -9999px; 
+    position: relative;
+}
+
+/* Estilo para el botón de Enviar/Guardar (Color principal) */
+.comment-form .submit-button {
+    background: #B6407D; 
+    color: #fff;
+}
+
+.comment-form .submit-button:hover {
+    background: #a1366b; 
+    transform: scale(1.05);
+}
+
+/* 🆕 Estilo para el botón de Cancelar/Cerrar (Color secundario) */
+.comment-form .cancel-button {
+    background: #ccc; /* Gris para cancelar */
+    color: #555;
+}
+
+.comment-form .cancel-button:hover {
+    background: #bbb; 
+    transform: scale(1.05);
+}
+
+/* Ajuste del icono dentro del botón (Asegura que solo el icono sea visible) */
+.comment-form .submit-button i,
+.comment-form .cancel-button i {
+    font-size: 1.2em; 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-indent: 0; 
+}
+
+.comments-list .comment-item {
+    position: relative; /* Crucial para el posicionamiento absoluto del menú */
+}
+
+.comment-form textarea {
+    flex-grow: 1; 
+    min-height: 40px; 
+    max-height: 100px; 
+    resize: vertical; 
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 20px; /* Borde muy redondeado */
+    font-size: 1em;
+    resize: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comment-form textarea:focus {
+    border-color: #B6407D;
+    box-shadow: 0 0 0 1px #B6407D;
+    outline: none;
+}
+
+/* Estilo base para los botones del menú desplegable */
+.comment-menu button {
+    border-radius: 0; 
+    font-size: 0.9em;
+    color: #333;
+}
+
+.comment-menu button:hover {
+    background-color: #f0f0f0;
+}
+
+.comment-menu button i {
+    margin-right: 5px;
+}
+
+.comment-item {
+    /* Necesario para posicionar el menú de opciones de forma absoluta */
+    position: relative;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.comment-options {
+    /* Icono de los tres puntos (vertical-rounded) */
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.comment-menu {
+    /* Contenedor del menú desplegable */
+    position: absolute;
+    top: 30px; /* Debajo del icono */
+    right: 5px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10; /* Asegura que esté por encima de otros elementos */
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+}
+
+.comment-menu button {
+    /* Estilos generales para los botones dentro del menú */
+    padding: 8px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.comment-menu button:hover {
+    background-color: #f5f5f5;
+}
+
+.comment-menu .btn-delete {
+    /* Estilo específico para el botón de eliminar */
+    color: red;
+}
+
+.comment-menu .btn-delete:hover {
+    background-color: #ffe8e8; /* Un fondo rojo claro al pasar el mouse */
+}
+
+.star-rating .star-active {
+    /* Estilo de la estrella ya calificada */
+    cursor: pointer;
+    font-size: 24px;
+    margin: 0 2px;
+    color: #ffc107; /* Color dorado */
+}
+
+.star-rating .star-inactive {
+    /* Estilo de la estrella no calificada */
+    cursor: pointer;
+    font-size: 24px;
+    margin: 0 2px;
+    color: #ccc; /* Color gris */
+}
+
+/* --- Animaciones Auxiliares (Originales) --- */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+ 0% { transform: rotate(0deg); }
+ 100% { transform: rotate(360deg); }
 }
 
-/* =============================
-   ANIMACIONES
-============================= */
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+ from { opacity: 0; transform: translateY(-6px); }
+ to { opacity: 1; transform: translateY(0); }
+}
+
+/*  Responsive */
+
+@media (max-width: 1200px) {
+    /* Ajuste de Hero para pantallas medianas */
+    .dashboard-user .dashboard-hero p {
+        padding: 0 20px;
+        font-size: 1.2em;
+    }
+
+    /* Reducir el gap y padding de la lista de libros */
+    .dashboard-user .dashboard-book-list {
+        grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+        gap: 40px;
+        padding: 30px 40px;
+    }
+
+    /* Reducir el tamaño de la imagen del modal para pantallas medianas */
+    .modal-image img {
+        width: 200px;
+        height: 300px;
+    }
+}
+
+/* --- Móvil Horizontal y Tablet Pequeña (Max 768px) --- */
+@media (max-width: 768px) {
+    /* Reducir el padding de la sección principal */
+    .dashboard-user .dashboard-hero {
+        padding: 60px 10px 30px;
+    }
+    
+    .dashboard-user .dashboard-hero h1 {
+        font-size: 1.8em;
+    }
+
+    /* Ajuste para el listado de libros (2 columnas) */
+    .dashboard-user .dashboard-book-list {
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+        gap: 20px;
+        padding: 20px 15px;
+    }
+    
+    /* El MODAL se adapta: la imagen se va arriba del texto */
+    .modal-content {
+        max-width: 90%;
+        padding: 20px;
+    }
+    
+    .modal-body {
+        flex-direction: column; /* Apila imagen y contenido */
+        gap: 20px;
+        align-items: center;
+        padding-top: 0;
+    }
+
+    .modal-image img {
+        width: 150px; /* Tamaño de imagen amigable para móvil */
+        height: 230px;
+    }
+
+    .modal-info h2 {
+        font-size: 1.5em;
+        text-align: center;
+    }
+
+    /* Los botones de acción del modal a una sola columna */
+    .modal-actions {
+        grid-template-columns: 1fr; 
+        gap: 10px;
+    }
+}
+
+/* --- Móvil Vertical (Max 480px) --- */
+@media (max-width: 480px) {
+    /* Reducción de tamaños de texto del Hero */
+    .dashboard-user .dashboard-hero h1 {
+        font-size: 1.6em;
+    }
+    
+    .dashboard-user .dashboard-hero p {
+        font-size: 1em;
+        padding: 0 5px;
+    }
+
+    /* En pantallas muy pequeñas, 1 sola columna para los libros */
+    .dashboard-user .dashboard-book-list {
+        grid-template-columns: 1fr; 
+        gap: 15px;
+        padding: 10px;
+    }
+
+    /* Ajustes finos para la tarjeta */
+    .dashboard-user .book-card h3 {
+        font-size: 0.9em;
+    }
+
+    /* Asegurar que el modal se vea bien en pantallas muy pequeñas */
+    .modal-content {
+        max-width: 100%;
+        border-radius: 0; /* Opcional: Modal a pantalla completa */
+        max-height: 100vh;
+    }
 }

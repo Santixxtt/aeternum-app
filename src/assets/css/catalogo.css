@@ -1,0 +1,268 @@
+.catalogo-container {
+    display: flex;
+    padding: 20px 50px 50px 50px; 
+    gap: 40px;
+    align-items: flex-start; 
+}
+
+.catalogo-container .filtros {
+    position: sticky; 
+    top: 100px; 
+    width: 250px;
+    flex-shrink: 0;
+    padding: 20px;
+    border-right: 1px solid #eee; 
+}
+
+.catalogo-container .filtros h2 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.catalogo-container .categoria-buttons {
+    display: flex; 
+    flex-direction: column;
+    gap: 8px; 
+}
+
+.catalogo-container .categoria-buttons button {
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+
+.catalogo-container .categoria-buttons button:hover:not(.active) {
+    background: #f0f0f0;
+    color: #000;
+}
+
+.catalogo-container .categoria-buttons .active {
+    background: #B6407D; 
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(182, 64, 125, 0.3);
+}
+
+.loading-area {
+    width: 100%;
+    text-align: center;
+}
+
+.catalogo-content .text-center h2 {
+    font-size: 2em;
+    margin-top: 30px;
+}
+
+.catalogo-book-grid {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    min-height: 500px;
+}
+
+.loading-center-content {
+    text-align: center;
+    width: 100%;
+}
+
+.catalogo-book-grid .dashboard-book-list {
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 80px;
+    padding: 0; 
+}
+
+/* ✅ Estilos para los mensajes flotantes */
+
+/* Mensaje base */
+.mensaje-flotante {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 2.2s forwards;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Mensaje de éxito (verde) - Para agregar a wishlist */
+.mensaje-flotante.exito {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+/* Mensaje de eliminación (rojo/naranja) - Para quitar de wishlist */
+.mensaje-flotante.eliminado {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+/* Mensaje de información (azul) */
+.mensaje-flotante.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+/* Mensaje de advertencia (amarillo) */
+.mensaje-flotante.advertencia {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+/* Animaciones */
+@keyframes slideDown {
+    from {
+        top: -100px;
+        opacity: 0;
+    }
+    to {
+        top: 100px;
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        top: 80px;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mensaje-flotante {
+        top: 80px;
+        left: 20px;
+        right: 20px;
+        transform: none;
+        font-size: 14px;
+        padding: 12px 20px;
+    }
+
+    @keyframes slideDown {
+        from {
+            top: -100px;
+            opacity: 0;
+        }
+        to {
+            top: 80px;
+            opacity: 1;
+        }
+    }
+}
+
+/* ALTERNATIVA: Si prefieres mantener el nombre "mensaje-exito" */
+.mensaje-exito {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 2.2s forwards;
+}
+
+/* Para el mensaje de eliminación con clase diferente */
+.mensaje-eliminado {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 2.2s forwards;
+}
+
+@media (max-width: 1200px) {
+    /* En catálogo, bajamos a 2 columnas */
+    .catalogo-book-grid .dashboard-book-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .catalogo-book-grid .dashboard-book-list {
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 20px;
+    }
+}
+
+@media (max-width: 992px) {
+    .catalogo-container {
+        flex-direction: column; 
+        padding: 20px;
+        gap: 20px;
+    }
+    
+    .catalogo-container .filtros {
+        position: static;
+        width: 100%;
+        padding: 0;
+        border-right: none;
+        border-bottom: 1px solid #eee; 
+        padding-bottom: 20px;
+    }
+
+    .catalogo-container .categoria-buttons {
+        flex-direction: row; 
+        flex-wrap: wrap; 
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .catalogo-container .categoria-buttons button {
+        text-align: center;
+        flex-grow: 1;
+        max-width: 150px;
+    }
+
+    .dashboard-user .dashboard-book-list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        padding: 0;
+    }
+}
+
+
+@media (max-width: 576px) {
+    .dashboard-user .dashboard-book-list {
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 15px;
+    }
+    
+    .catalogo-container .categoria-buttons button {
+        max-width: none; 
+        padding: 8px 10px;
+        font-size: 0.9em;
+    }
+}

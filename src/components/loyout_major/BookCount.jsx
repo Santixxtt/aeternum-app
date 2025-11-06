@@ -5,7 +5,7 @@ function BookCount() {
       <p data-aos="fade-up">
         Disfruta de los beneficios de registrarte, compartiendo opiniones con más lectores.
       </p>
-      <a href="../src/Models/login.php" className="cta-button" data-aos="zoom-in">
+      <a href="/catalogo" className="cta-button" data-aos="zoom-in">
         Explora →
       </a>
     </section>

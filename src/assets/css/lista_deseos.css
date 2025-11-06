@@ -1,0 +1,118 @@
+/* =======================================
+   ESTILOS GENERALES DE LISTA DE DESEOS
+   ======================================= */
+
+.wishlist-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.lista-deseos-hero {
+    padding: 40px 20px;
+    background-color: #f8f9fa; /* Fondo suave para el encabezado */
+}
+
+.lista-deseos-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #343a40;
+    margin-bottom: 5px;
+}
+
+.lista-deseos-hero p {
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.wishlist-separator {
+    margin: 40px auto;
+    border-color: #dee2e6;
+    max-width: 1100px;
+}
+
+
+/* =======================================
+   ESTILO DE LA GRILLA (GRID)
+   ======================================= */
+
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 250px);
+    justify-content: center !important;
+    gap: 30px;
+    padding: 20px 0;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+
+/* =======================================
+   ESTADO VACÍO Y CARTA (Asumiendo BookCard)
+   ======================================= */
+
+.empty-state {
+    padding: 60px 20px;
+    border: 1px dashed #ced4da;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.empty-state h2 {
+    color: #495057;
+    margin-bottom: 15px;
+}
+
+.empty-state .cta-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+
+.empty-state .cta-button:hover {
+    background-color: #0056b3;
+}
+
+.mensaje-exito {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #6a0dad; /* morado como tus botones */
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  z-index: 9999;
+  animation: aparecer 0.4s ease, desaparecer 0.4s ease 2.1s forwards;
+}
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes desaparecer {
+  to { opacity: 0; transform: translate(-50%, -20px); }
+}
+
+@media (max-width: 768px) {
+    .lista-deseos-hero {
+        padding: 20px 10px;
+    }
+    
+    .wishlist-container {
+        padding: 10px;
+    }
+
+    .wishlist-grid {
+        /* Permite que las tarjetas sean un poco más pequeñas en móvil */
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+    }
+}
