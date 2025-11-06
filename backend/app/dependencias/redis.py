@@ -2,20 +2,23 @@ import redis
 import os
 from dotenv import load_dotenv
 
-# Cargar .env
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+# Cargar .env solo si existe (para desarrollo local)
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
 
-IS_LOCAL = os.getenv("RAILWAY_ENVIRONMENT") is None
+# Detectar si estamos en Railway
+IS_RAILWAY = os.getenv("RAILWAY_ENVIRONMENT") is not None
 
 try:
     r = redis.Redis(
         host=os.getenv("REDIS_HOST"),
         port=int(os.getenv("REDIS_PORT")),
         password=os.getenv("REDIS_PASSWORD"),
-        ssl=not IS_LOCAL,
-        socket_timeout=3,
+        ssl=IS_RAILWAY,           # usar SSL solo en Railway
+        socket_timeout=2,         # tiempo de espera más corto
+        socket_connect_timeout=2, # evita bloqueos prolongados
     )
-
     r.ping()
     print("✅ Redis conectado exitosamente")
 
