@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"; 
 import logo from "../../assets/img/aeternum_logo.png";
 
-const HeaderMovil = ({ onLogout }) => {
+// ✅ 1. Recibir la prop 'usuario'
+const HeaderMovil = ({ usuario }) => { 
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   
@@ -11,7 +12,11 @@ const HeaderMovil = ({ onLogout }) => {
   const location = useLocation(); 
 
   const handleLogout = () => {
-    if (onLogout) onLogout();
+    // Si usas onLogout desde el padre, descomenta esto y comenta las líneas de localStorage
+    // if (onLogout) onLogout(); 
+    
+    localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
     navigate("/");
   };
   
@@ -47,7 +52,7 @@ const HeaderMovil = ({ onLogout }) => {
             onClick={() => navigate("/loyout_librarian/dashboard_librarian")}
           />
 
-          {/* Icono hamburguesa */}
+          {/* Icono hamburguesa (usa bx-user/bx-x para indicar el menú de usuario) */}
           <button
             className="menu-toggle"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -59,7 +64,7 @@ const HeaderMovil = ({ onLogout }) => {
               color: "#333",
             }}
           >
-            <i className={`bx ${menuOpen ? "bx-x" : "bx-menu"} text-3xl`}></i>
+            <i className={`bx ${menuOpen ? "bx-x" : "bx-user"} text-3xl`}></i>
           </button>
         </div>
 
@@ -75,10 +80,25 @@ const HeaderMovil = ({ onLogout }) => {
               boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
               borderRadius: "10px",
               padding: "8px 0",
-              width: "150px",
+              width: "180px", // Aumentado ligeramente para el nombre
               zIndex: 999,
             }}
           >
+                {/* ✅ 2. Mostrar la información del bibliotecario */}
+                {usuario && ( 
+                      <li
+                        style={{
+                          listStyle: "none",
+                          padding: "10px 16px",
+                          borderBottom: "1px solid #eee",
+                          fontSize: "13px",
+                          color: "#666",
+                        }}
+                      >
+                        <i className="bx bx-user"></i> {usuario.nombre} {usuario.apellido}
+                      </li>
+                )}
+
             <li
               style={{
                 listStyle: "none",

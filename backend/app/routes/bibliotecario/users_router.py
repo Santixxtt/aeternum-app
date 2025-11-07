@@ -1,12 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict
 from app.utils.security import get_current_user
-from app.models.user_model import (
-    get_user_by_id,
-    update_user_by_id,
-    deactivate_user_by_id,
-    reactivate_user_by_id,
-)
 from app.config.database import get_cursor
 
 router = APIRouter(prefix="/admin/users", tags=["Admin - Users"])
@@ -18,7 +12,7 @@ def verify_librarian_role(current_user: dict):
         raise HTTPException(status_code=403, detail="Acceso denegado: se requiere rol de bibliotecario.")
 
 
-# 📋 Obtener todos los usuarios
+# 📋 Obtener todos los usuarios (OPTIMIZADO)
 @router.get("/")
 async def get_all_users(current_user: dict = Depends(get_current_user)):
     verify_librarian_role(current_user)
@@ -34,7 +28,7 @@ async def get_all_users(current_user: dict = Depends(get_current_user)):
     return {"total": len(users), "usuarios": users}
 
 
-# 🔍 Obtener un usuario por ID
+# 🔍 Obtener un usuario por ID (OPTIMIZADO)
 @router.get("/{user_id}")
 async def get_user_by_admin(
     user_id: int,
@@ -42,13 +36,21 @@ async def get_user_by_admin(
 ):
     verify_librarian_role(current_user)
 
-    user = await get_user_by_id(user_id)
+    async with get_cursor() as (conn, cursor):
+        await cursor.execute("""
+            SELECT id, nombre, apellido, correo, rol, estado, tipo_identificacion, num_identificacion
+            FROM usuarios
+            WHERE id = %s
+        """, (user_id,))
+        user = await cursor.fetchone()
+
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    
     return user
 
 
-# ✏️ Actualizar cualquier usuario
+# ✏️ Actualizar cualquier usuario (OPTIMIZADO)
 @router.put("/{user_id}")
 async def update_user_by_admin(
     user_id: int,
@@ -66,23 +68,43 @@ async def update_user_by_admin(
     if not nombre or not apellido or not correo:
         raise HTTPException(status_code=400, detail="Faltan campos requeridos: nombre, apellido y correo")
 
-    updated = await update_user_by_id(
-        user_id=user_id,
-        nombre=nombre,
-        apellido=apellido,
-        correo=correo,
-        tipo_identificacion=tipo_identificacion,
-        num_identificacion=num_identificacion
-    )
+    async with get_cursor() as (conn, cursor):
+        try:
+            # Verificar que existe
+            await cursor.execute("SELECT id FROM usuarios WHERE id = %s", (user_id,))
+            if not await cursor.fetchone():
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    if not updated:
-        raise HTTPException(status_code=500, detail="No se pudo actualizar el usuario.")
+            # Actualizar directamente
+            await cursor.execute("""
+                UPDATE usuarios 
+                SET nombre = %s, 
+                    apellido = %s, 
+                    correo = %s,
+                    tipo_identificacion = %s,
+                    num_identificacion = %s
+                WHERE id = %s
+            """, (nombre, apellido, correo, tipo_identificacion, num_identificacion, user_id))
+            
+            await conn.commit()
 
-    user = await get_user_by_id(user_id)
-    return {"status": "success", "usuario": user}
+            # Obtener usuario actualizado
+            await cursor.execute("""
+                SELECT id, nombre, apellido, correo, rol, estado, tipo_identificacion, num_identificacion
+                FROM usuarios
+                WHERE id = %s
+            """, (user_id,))
+            user = await cursor.fetchone()
+
+            return {"status": "success", "usuario": user}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await conn.rollback()
+            raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")
 
 
-# 🚫 Desactivar un usuario
 @router.put("/desactivar/{user_id}")
 async def deactivate_user_by_admin(
     user_id: int,
@@ -90,14 +112,38 @@ async def deactivate_user_by_admin(
 ):
     verify_librarian_role(current_user)
 
-    result = await deactivate_user_by_id(user_id)
-    if not result:
-        raise HTTPException(status_code=500, detail="No se pudo desactivar el usuario.")
+    async with get_cursor() as (conn, cursor):
+        try:
+            # Verificar que existe
+            await cursor.execute("SELECT id, estado FROM usuarios WHERE id = %s", (user_id,))
+            user = await cursor.fetchone()
+            
+            if not user:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    return {"status": "success", "message": f"Usuario {user_id} desactivado correctamente."}
+            if user["estado"] == "Desactivado":
+                return {"status": "warning", "message": "El usuario ya está desactivado"}
+
+            # Desactivar directamente
+            await cursor.execute("""
+                UPDATE usuarios 
+                SET estado = 'Desactivado'
+                WHERE id = %s
+            """, (user_id,))
+            user = await cursor.fetchone()
+            
+            await conn.commit()
+
+            return {"status": "success", "message": f"Usuario {user_id} desactivado correctamente"}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await conn.rollback()
+            raise HTTPException(status_code=500, detail=f"Error al desactivar: {str(e)}")
 
 
-# ✅ Reactivar un usuario
+# ✅ Reactivar un usuario (OPTIMIZADO)
 @router.put("/reactivar/{user_id}")
 async def reactivate_user_by_admin(
     user_id: int,
@@ -105,15 +151,31 @@ async def reactivate_user_by_admin(
 ):
     verify_librarian_role(current_user)
 
-    user = await get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    async with get_cursor() as (conn, cursor):
+        try:
+            # Verificar que existe
+            await cursor.execute("SELECT id, estado FROM usuarios WHERE id = %s", (user_id,))
+            user = await cursor.fetchone()
+            
+            if not user:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    if user["estado"] == "Activo":
-        return {"status": "warning", "message": "El usuario ya está activo."}
+            if user["estado"] == "Activo":
+                return {"status": "warning", "message": "El usuario ya está activo"}
 
-    result = await reactivate_user_by_id(user_id)
-    if not result:
-        raise HTTPException(status_code=500, detail="No se pudo reactivar el usuario.")
+            # Reactivar directamente
+            await cursor.execute("""
+                UPDATE usuarios 
+                SET estado = 'Activo'
+                WHERE id = %s
+            """, (user_id,))
+            
+            await conn.commit()
 
-    return {"status": "success", "message": f"Usuario {user_id} reactivado correctamente."}
+            return {"status": "success", "message": f"Usuario {user_id} reactivado correctamente"}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await conn.rollback()
+            raise HTTPException(status_code=500, detail=f"Error al reactivar: {str(e)}")

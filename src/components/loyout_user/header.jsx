@@ -49,7 +49,6 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin }) => {
             onRedirectToLogin();
             return; // Detiene la ejecución aquí
         } 
-        
         // Si hay usuario, alterna el menú
         setShowMenu(!showMenu);
     };

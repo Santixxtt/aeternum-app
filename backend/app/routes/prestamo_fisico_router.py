@@ -13,6 +13,28 @@ from app.dependencias.redis import r
 
 router = APIRouter(prefix="/prestamos-fisicos", tags=["Préstamos Físicos"])
 
+# 🧹 Función helper para limpiar cachés relacionados
+def limpiar_cache_prestamos(usuario_id: int = None, prestamo_id: int = None):
+    """Limpia cachés de préstamos de forma eficiente"""
+    try:
+        if prestamo_id:
+            r.delete(f"prestamo:{prestamo_id}")
+        
+        if usuario_id:
+            r.delete(f"prestamos_fisicos_usuario:{usuario_id}")
+        
+        # Limpiar estadísticas globales
+        r.delete("estadisticas:bibliotecario")
+        r.delete("prestamos:recientes")
+        
+        # Limpiar gráficas
+        pattern = "grafica_prestamos:*"
+        for key in r.scan_iter(pattern):
+            r.delete(key)
+    except Exception as e:
+        print(f"⚠️ Error limpiando caché: {e}")
+
+
 @router.post("/solicitar")
 async def solicitar_prestamo_fisico(
     data: PrestamoFisicoRequest,
@@ -43,9 +65,9 @@ async def solicitar_prestamo_fisico(
     )
 
     if resultado.get("status") == "success":
-        cache_key = f"prestamos_fisicos_usuario:{usuario_id}"
-        r.delete(cache_key)  # ❌ Limpiar caché para que recargue la lista
-
+        # 🧹 Limpiar TODOS los cachés relacionados inmediatamente
+        limpiar_cache_prestamos(usuario_id=int(usuario_id))
+        
         return {
             "status": "success",
             "message": "📚 Préstamo físico solicitado exitosamente",
@@ -61,21 +83,11 @@ async def mis_prestamos_fisicos(current_user: dict = Depends(get_current_user)):
     if not usuario_id:
         raise HTTPException(status_code=401, detail="Usuario no autenticado")
 
-    cache_key = f"prestamos_fisicos_usuario:{usuario_id}"
-
-    # ✅ Intentar leer de Redis
-    cache = r.get(cache_key)
-    if cache:
-        try:
-            return {"status": "success", "prestamos": eval(cache)}
-        except:
-            pass  # Si algo falla, vamos a BD y reescribimos cache
-
-    # ❌ No cache → buscar BD
+    # ❌ NO usar caché - siempre traer datos frescos de BD
+    # Esto asegura que SIEMPRE se vean los cambios más recientes
     resultado = await obtener_prestamos_usuario(int(usuario_id))
 
     if resultado.get("status") == "success":
-        r.setex(cache_key, 300, str(resultado["prestamos"]))  # ✅ 5 min cache
         return resultado
 
     raise HTTPException(status_code=400, detail=resultado.get("message"))
@@ -90,8 +102,9 @@ async def cancelar_prestamo(prestamo_id: int, current_user: dict = Depends(get_c
     resultado = await cancelar_prestamo_fisico(prestamo_id=prestamo_id, usuario_id=int(usuario_id))
 
     if resultado.get("status") == "success":
-        r.delete(f"prestamo:{prestamo_id}")
-        r.delete(f"prestamos_fisicos_usuario:{usuario_id}")  # ✅ limpiar cache del usuario
+        # 🧹 Limpiar cachés relacionados
+        limpiar_cache_prestamos(usuario_id=int(usuario_id), prestamo_id=prestamo_id)
+        
         return {"status": "success", "message": resultado.get("message")}
 
     raise HTTPException(status_code=400, detail=resultado.get("message"))
@@ -115,7 +128,13 @@ async def cambiar_estado_prestamo(
     resultado = await actualizar_estado_prestamo(prestamo_id, data.estado)
 
     if resultado.get("status") == "success":
-        r.delete(f"prestamo:{prestamo_id}")  # borrar cache del prestamo si existiera
+        # 🧹 Limpiar TODOS los cachés relacionados
+        limpiar_cache_prestamos(prestamo_id=prestamo_id)
+        
+        # Limpiar todos los cachés de usuarios (para que todos vean el cambio)
+        pattern = "prestamos_fisicos_usuario:*"
+        for key in r.scan_iter(pattern):
+            r.delete(key)
 
         return resultado
 

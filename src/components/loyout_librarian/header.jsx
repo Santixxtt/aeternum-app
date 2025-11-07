@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/img/aeternum_logo.png";
 import "../../assets/css/dashboard_user.css";
 
-const Header = ({ onSearch, onLogout }) => {
+const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin}) => {
   const [showMenu, setShowMenu] = useState(false);
   const [query] = useState("");
   const navigate = useNavigate();
@@ -30,6 +30,15 @@ const Header = ({ onSearch, onLogout }) => {
     navigate(path);
     setShowMenu(false);
   };
+
+      const handleUserIconClick = () => {
+        if (!usuario && onRedirectToLogin) {
+            onRedirectToLogin();
+            return; // Detiene la ejecución aquí
+        } 
+        // Si hay usuario, alterna el menú
+        setShowMenu(!showMenu);
+    };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -91,18 +100,22 @@ const Header = ({ onSearch, onLogout }) => {
 
           <i
             className="bx bx-user-circle user-icon"
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={handleUserIconClick}
+            style={{ cursor: "pointer" }}
           ></i>
 
-          {showMenu && (
-            <ul className="dropdown">
-              <li onClick={() => handleNavigate("/loyout_librarian/perfil")}>
-                <i className="bx bx-user"></i> Perfil
-              </li>
-              <li onClick={handleLogoutClick}>
-                <i className="bx bx-log-out"></i> Cerrar sesión
-              </li>
-            </ul>
+          {usuario && showMenu && (
+              <ul className="dropdown">
+                  <li className="user-info"> 
+                      <i className='bx bx-user'></i> {usuario.nombre} {usuario.apellido}
+                  </li>
+                  <li onClick={() => handleNavigate("/loyout_librarian/perfil")}>
+                      <i className="bx bx-user"></i> Perfil
+                  </li>
+                  <li onClick={handleLogoutClick}>
+                      <i className="bx bx-log-out"></i> Cerrar sesión
+                  </li>
+              </ul>
           )}
         </div>
       </div>

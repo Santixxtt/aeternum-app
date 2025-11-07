@@ -63,7 +63,7 @@ const DashboardLibrarian = () => {
     <div className="dashboard-user">
       {/* 🔹 Header cambia automáticamente según el dispositivo */}
       {isMobile ? (
-        <HeaderMovil onLogout={handleLogout} />
+        <HeaderMovil onLogout={handleLogout} usuario={usuario}/>
       ) : (
         <Header onLogout={handleLogout} usuario={usuario} />
       )}

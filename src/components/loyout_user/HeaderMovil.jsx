@@ -78,7 +78,7 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
               color: "#333",
             }}
           >
-            <i className={`bx ${menuOpen ? "bx-x" : "bx-menu"} text-3xl`}></i>
+            <i className={`bx ${menuOpen ? "bx-x" : "bx-user"} text-3xl`}></i>
           </button>
         </div>
 
@@ -178,8 +178,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
             >
               <i className="bx bx-face"></i> Perfil
             </li>
-            
-            {/* ❌ QUITADO: Mis Préstamos (ya está en la barra inferior) */}
             
             {/* Cerrar sesión */}
             <li

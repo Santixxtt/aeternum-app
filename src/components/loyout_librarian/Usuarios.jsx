@@ -78,6 +78,9 @@ const Usuarios = () => {
   }, []);
 
   const handleToggleStatus = async (usuario) => {
+    // 🔒 Prevenir clicks múltiples
+    if (processingId === usuario.id) return;
+
     const isActive = usuario.estado === "Activo";
     const action = isActive ? "desactivar" : "reactivar";
     const message = isActive ? "desactivar" : "reactivar";
@@ -86,41 +89,50 @@ const Usuarios = () => {
 
     setProcessingId(usuario.id);
 
-    const nuevoEstado = isActive ? "Desactivado" : "Activo";
-    setUsuarios((prev) =>
-      prev.map((u) =>
-        u.id === usuario.id ? { ...u, estado: nuevoEstado } : u
-      )
-    );
-
     try {
       const token = getToken();
       const res = await fetch(`${ADMIN_USERS_BASE}/${action}/${usuario.id}`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
       });
 
       if (!res.ok) {
-        setUsuarios((prev) =>
-          prev.map((u) =>
-            u.id === usuario.id ? { ...u, estado: usuario.estado } : u
-          )
-        );
-        const errorText = await res.text();
-        throw new Error(errorText || `Error ${res.status}`);
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || `Error ${res.status}`);
       }
 
-      showNotification(
-        `Usuario ${nuevoEstado.toLowerCase()} correctamente`,
-        "success"
-      );
+      const data = await res.json();
+      
+      // ✅ Actualizar DESPUÉS de confirmar con el backend
+      if (data.status === "success") {
+        const nuevoEstado = isActive ? "Desactivado" : "Activo";
+        setUsuarios((prev) =>
+          prev.map((u) =>
+            u.id === usuario.id ? { ...u, estado: nuevoEstado } : u
+          )
+        );
+        showNotification(
+          `Usuario ${nuevoEstado.toLowerCase()} correctamente`,
+          "success"
+        );
+      } else if (data.status === "warning") {
+        // 🔄 Si el backend dice que ya está en ese estado, recargar
+        await fetchUsuarios();
+        showNotification(data.message || "Estado ya actualizado", "info");
+      }
     } catch (err) {
       console.error("handleToggleStatus error:", err);
-      alert(`Error al ${message} usuario: ` + err.message);
+      showNotification(`Error al ${message} usuario: ${err.message}`, "error");
+      // 🔄 Recargar en caso de error
+      await fetchUsuarios();
     } finally {
       setProcessingId(null);
     }
   };
+
 
   const handleEdit = (usuario) => {
     setEditingUser(usuario);
@@ -167,6 +179,7 @@ const Usuarios = () => {
       num_identificacion: formData.num_identificacion,
     };
 
+    // ✅ Actualización optimista
     setUsuarios((prev) =>
       prev.map((u) => (u.id === editingUser.id ? updatedData : u))
     );
@@ -190,15 +203,16 @@ const Usuarios = () => {
       });
 
       if (!res.ok) {
+        // ❌ Revertir si falla
         await fetchUsuarios();
-        const msg = await res.text();
-        throw new Error(msg || `Error ${res.status}`);
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || `Error ${res.status}`);
       }
 
       showNotification("Usuario actualizado correctamente", "success");
     } catch (err) {
       console.error("handleSave error:", err);
-      alert("Error al actualizar usuario: " + err.message);
+      showNotification("Error al actualizar usuario: " + err.message, "error");
     }
   };
 
@@ -242,6 +256,8 @@ const Usuarios = () => {
       }
 
       const newUser = await res.json();
+      
+      // ✅ Agregar optimistamente
       setUsuarios((prev) => [
         {
           id: newUser.user_id || Date.now(),
@@ -253,10 +269,11 @@ const Usuarios = () => {
 
       showNotification("Usuario creado correctamente", "success");
 
+      // ✅ Recargar después de 1 segundo para sincronizar
       setTimeout(() => fetchUsuarios(), 1000);
     } catch (err) {
       console.error("handleCreateUser error:", err);
-      alert("Error al crear usuario: " + err.message);
+      showNotification("Error al crear usuario: " + err.message, "error");
       await fetchUsuarios();
     }
   };
@@ -288,19 +305,18 @@ const Usuarios = () => {
       )
     : [];
 
-    const [isMobile, setIsMobile] = useState(false);
-      useEffect(() => {
-        const checkDevice = () => {
-          const mobile =
-            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-            window.innerWidth < 768;
-          setIsMobile(mobile);
-        };
-        checkDevice();
-        window.addEventListener("resize", checkDevice);
-        return () => window.removeEventListener("resize", checkDevice);
-      }, []);
-
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkDevice = () => {
+      const mobile =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
 
   return (
     <>
@@ -397,9 +413,7 @@ const Usuarios = () => {
                               ></i>
                             )}
                             <span>
-                              {u.estado === "Activo"
-                                ? "Activo"
-                                : "Inactivo"}
+                              {u.estado === "Activo" ? "Activo" : "Inactivo"}
                             </span>
                           </button>
                         </div>
@@ -441,10 +455,7 @@ const Usuarios = () => {
                     ? "Crear Usuario"
                     : `Editar Usuario #${editingUser.id}`}
                 </h3>
-                <button
-                  className="usuarios-modal-close"
-                  onClick={closeModal}
-                >
+                <button className="usuarios-modal-close" onClick={closeModal}>
                   <FaTimes />
                 </button>
               </div>
