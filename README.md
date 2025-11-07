@@ -71,3 +71,24 @@ Con esto tendrás instalado todo lo necesario para el proyecto.
 Como te darás cuenta cuando abres nuestro archivo ```database.py``` los puertos y contraseñas están encriptados, lo mismo pasa con ```redis.py``` y ``` security.py```. Para que sirvan estas variables tienes que crear una base de datos o contactar con nosotros para tener acceso a esta. Nosotros usamos **Railway**, tú puedes usar el de tu preferencia.
 
 Para conectarlo de forma correcta puedes usar las mismas variables o las de tu preferencia pero recuerda cambiarlas en el código; tendras que crear un archivo ```.env```.
+```bash
+cd backend 
+.env #Es el que tienes que crear
+```
+Una vez hecho esto el proyecto estará conectado a la base de datos 🥳.
+Aún así cuando se levanta abran una serie de **logs** que te dirán si quedo bien conectado.
+
+## ✈️ Despliegue de Proyecto
+Una vez ya tengamos todo instalado y configurado toca levantar el **Frontend** y el **Backend**, tendrás que abrir dos terminales en bash y poner los siguientes comandos, una en cada una:
+
+### Frontend 
+```bash
+npm run dev
+```
+### Backend 
+```bash
+cd backend
+uvicorn app.main:app --reload 
+```
+
+Con estos comandos ya se abra desplegado el proyecto localmente.
