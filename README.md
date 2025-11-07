@@ -19,9 +19,8 @@ https://www.python.org/downloads/
 - ### NodeJS
 ```bash
 node --v
-npm --v
 ```
-En el proyecto usaremos npm para el despliegue del front, por eso toca verificar si lo tenemos. Si no, asegúrate de instarlo en la página oficial.
+Asegúrate de instarlo en la página oficial si no lo tienes aún instalado.
 ```bash
 https://nodejs.org/es/download
 ```
@@ -40,3 +39,30 @@ https://code.visualstudio.com/download
 ```
 ## 🔩 Configuration de Entorno 
 Una vez tengas todo instalado podemos iniciar a desplegar el proyecto localmente, para eso tendremos que instalar con una serie de comandos.
+
+Abre una consola en **Visual** o en su defecto en **Git** y tendrás que clonar el repositorio 
+```bash
+git clone https://github.com/Santixxtt/aeternum-app.git
+```
+Después descargaras y extraeras la carpeta **ZIP** en tu computador y lo abrirás en visual.
+
+
+Abrirás una terminal en **Visual** o también puedes en **Git**, solo asegúrate de estar en la URL del proyecto.
+
+#### Ejemplo 
+```bash
+C:/User/Desktop/aeternum
+```
+
+Una vez hecho esto tendremos que instalar en visual o en tu editor de código los módulos de node.
+```bash
+npm install
+```
+Con esto verás que en el menú lateral izquierdo se habrá creado una carpeta llamada **node_modules** significa que ya quedó.
+
+Ahora instalaremos lo necesario para la página, para eso tenemos ```bash requirements.txt ```.  Lo instalarlas de la siguiente forma.
+```bash
+cd backend 
+pip install -r requirements.txy
+```
+Con esto tendrás instalado todo lo necesario para el proyecto.
