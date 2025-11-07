@@ -9,15 +9,16 @@ Nos enfocamos en tu seguridad, por eso este proyecto sigue en crecimiento para t
 Para poder iniciar a desplegar nuestro proyecto localmente primero necesitas las siguientes tecnologías.
 
 - ### Python 
-  ```bash
-     Python --version
-  ```
+```bash
+Python --version
+  
+```
 Asegúrate de instalarlo en su página oficial y no olvides instalar el **PATH** para que funcione correctamente la instalación de dependencias
-  ```bash
-     https://www.python.org/downloads/
-  ```
+```bash
+https://www.python.org/downloads/
+```
 - ### NodeJS
-   ```bash
-      node --v
-      npm --v
-    ```
+```bash
+node --v
+npm --v
+```
