@@ -30,3 +30,4 @@ numpy
 # Validación y tipos
 pydantic
 starlette
+

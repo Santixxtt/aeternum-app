@@ -132,8 +132,18 @@ async def register_user(user: UserRegister, request: Request):
         if await user_model.id_exists(user.num_identificacion):
             raise HTTPException(status_code=400, detail="El número de identificación ya está registrado.")
 
-        # Hash de contraseña
-        hashed = hash_password(user.clave)
+        # Hash de contraseña con logging
+        print(f"🔐 Hasheando contraseña...")
+        print(f"   Longitud: {len(user.clave)}")
+        print(f"   Bytes UTF-8: {len(user.clave.encode('utf-8'))}")
+        
+        try:
+            hashed = hash_password(user.clave)
+            print(f"   ✅ Hash generado: {len(hashed)} caracteres")
+            print(f"   ✅ Prefijo: {hashed[:10]}")
+        except Exception as e:
+            print(f"   ❌ Error al hashear: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error al procesar contraseña: {str(e)}")
 
         # Crear usuario
         user_id = await user_model.create_user({
