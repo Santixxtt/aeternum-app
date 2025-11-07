@@ -92,3 +92,31 @@ uvicorn app.main:app --reload
 ```
 
 Con estos comandos ya se abra desplegado el proyecto localmente.
+
+## ⚠️ Posibles Errores
+
+Si cuando ejecutas el comando para desplegar el **Backend** aparece:
+```bash
+$ uvicorn: command not found 
+```
+Significa que se instaló de forma incorrecta o interrumpida **Python** o no has instalado ```requirements.txt```
+
+### Formas de soluciónarlo
+
+1. Para solucionarlo debes revisar que hayas instalado el **PATH** cuando hayas instalado **Python**.
+2. Asegúrate que hayas instalado ```requirements.txt``` si es así y sigue apareciendo este error prueba instalar ```uvicorn``` directamente.
+```bash
+pip install uvicorn
+```
+3. Si ninguna de las anteriores funcióna puedes desplegarlo con Python así:
+```bash
+python -u uvicorn app.main:app --reload
+```
+**Nota:**
+Revisa que no se esté usando el puerto en otro servicio, dependiendo del que uses.
+## Recomendaciones
+- Sigue en orden estos pasos para asegurar al 100% que el programa va a correr de forma correcta.
+- No uses más de un servicio a la vez si trabajas en otros proyectos, puede causar error localmente.
+- Si usas **VS Code** te recomendamos instalar extensiones como Python y Node pueden causar fallos si no están las extensiones.
+##### Versión: 1.0
+##### Manual de Usuario:[acorta_link](https://santixxtt.github.io/Documentacion-Aeternum/)
