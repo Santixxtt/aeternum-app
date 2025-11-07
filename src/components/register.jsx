@@ -3,7 +3,6 @@ import axios from "axios";
 import "../../src/assets/css/registro.css";
 import Registerimg from "../../src/assets/img/registro.jpg";
 import { useNavigate } from "react-router-dom";
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Registro() {
   const navigate = useNavigate();
@@ -89,7 +88,7 @@ export default function Registro() {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${API_URL}/auth/register`,
+        "http://127.0.0.1:8000/auth/register",
         form
       );
       alert(response.data.message || "¡Cuenta creada con éxito!");

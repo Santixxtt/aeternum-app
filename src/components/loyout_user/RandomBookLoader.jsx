@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback} from 'react';
 import Recomendados from './Recomendados'; 
 import LoadingDots from '../loyout_reusable/LoadingDots'; 
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, handleGuestAction }) {
   const [libros, setLibros] = useState([]);
@@ -67,7 +66,7 @@ const handleAddToWishlist = useCallback(async (book) => {
 
         console.log("📦 Datos formateados para enviar:", libroData);
 
-        const res = await fetch(`${API_URL}/wishlist/add`, {
+        const res = await fetch("http://127.0.0.1:8000/wishlist/add", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

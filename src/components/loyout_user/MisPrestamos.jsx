@@ -6,7 +6,6 @@
     import defaultImage from "../../assets/img/book-placeholder.png";
     import "../../assets/css/dashboard_user.css";
     import "../../assets/css/prestamos.css";
-    const API_URL = import.meta.env.VITE_API_URL;
 
     export default function Prestamos({ isMobile }) {
         const navigate = useNavigate();
@@ -28,7 +27,7 @@
             if (!token) return;
 
             try {
-                const res = await fetch(`${API_URL}/users/me`, {
+                const res = await fetch("http://127.0.0.1:8000/users/me", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -50,7 +49,7 @@
             if (!token) return;
 
             try {
-                const res = await fetch(`${API_URL}/prestamos-fisicos/mis-prestamos`, {
+                const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/mis-prestamos", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -80,7 +79,7 @@
             setLoadingCancelar(prestamoId);
 
             try {
-                const res = await fetch(`${API_URL}/prestamos-fisicos/cancelar/${prestamoId}`, {
+                const res = await fetch(`http://127.0.0.1:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
                     method: "PUT",
                     headers: { Authorization: `Bearer ${token}` }
                 });

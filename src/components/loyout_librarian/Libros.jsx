@@ -10,8 +10,6 @@ import "../../assets/css/libros.css";
 import Header from "./header";
 import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
-const API_URL = import.meta.env.VITE_API_URL;
-
 
 const Libros = () => {
   const [libros, setLibros] = useState([]);
@@ -35,7 +33,7 @@ const Libros = () => {
     cover_id: "",
   });
 
-  const API_BASE = `${API_URL}`;
+  const API_BASE = "http://127.0.0.1:8000";
   const BOOKS_BASE = `${API_BASE}/admin/books`;
 
   const getToken = () =>

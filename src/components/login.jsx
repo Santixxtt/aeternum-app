@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import loginImage from "../assets/img/login.jpg";
 import "../assets/css/login-module.css";
-const API_URL = import.meta.env.VITE_API_URL;
 
 const Login = () => {
   const navigate = useNavigate();
@@ -31,7 +30,7 @@ const Login = () => {
 
     try {
       // Llamada al backend de Python
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch("http://127.0.0.1:8000/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, clave }),

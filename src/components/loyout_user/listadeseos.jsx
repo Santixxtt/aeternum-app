@@ -7,7 +7,6 @@ import BookCard from "./BookCard";
 import BookModal from "./BookModal"; 
 import "../../assets/css/dashboard_user.css";
 import "../../assets/css/lista_deseos.css";
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function ListaDeseos({ isMobile }) {
     const navigate = useNavigate();
@@ -29,7 +28,7 @@ export default function ListaDeseos({ isMobile }) {
 
         const fetchUserData = async () => {
             try {
-                const res = await fetch(`${API_URL}/users/me`, {
+                const res = await fetch("http://127.0.0.1:8000/users/me", {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -60,7 +59,7 @@ export default function ListaDeseos({ isMobile }) {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_URL}/wishlist/list`, {
+            const res = await fetch("http://127.0.0.1:8000/wishlist/list", {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -111,7 +110,7 @@ export default function ListaDeseos({ isMobile }) {
     setSelectedBook(null);
 
     try {
-        const res = await fetch(`${API_URL}/wishlist/delete/${bookId}`, {
+        const res = await fetch(`http://127.0.0.1:8000/wishlist/delete/${bookId}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
         });

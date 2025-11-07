@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "./header";
+import HeaderMovil from "./HeaderMovil"; 
 import Footer from "../loyout_reusable/footer";
 import "../../assets/css/perfil.css";
-const API_URL = import.meta.env.VITE_API_URL;
 
-
-export default function Perfil() {
+export default function Perfil({ isMobile }) {
     const navigate = useNavigate();
     const [usuario, setUsuario] = useState(null);
     const [editMode, setEditMode] = useState(false);
@@ -34,7 +33,7 @@ export default function Perfil() {
         setLoading(true);
 
         try {
-            const res = await fetch(`${API_URL}/users/me`, {
+            const res = await fetch("http://127.0.0.1:8000/users/me", {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -80,7 +79,7 @@ export default function Perfil() {
         try {
             console.log("📤 Enviando datos:", formData);
             
-            const res = await fetch(`${API_URL}/users/me`, {
+            const res = await fetch("http://127.0.0.1:8000/users/me", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -129,7 +128,7 @@ export default function Perfil() {
         const token = localStorage.getItem("token");
         
         try {
-            const res = await fetch(`${API_URL}/users/me`, {
+            const res = await fetch("http://127.0.0.1:8000/users/me", {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -153,7 +152,18 @@ export default function Perfil() {
     if (loading) {
         return (
             <div className="dashboard-user">
-                <Header onSearch={(q) => console.log(q)} onLogout={handleLogout} usuario={usuario}/> 
+                {isMobile ? (
+                    <HeaderMovil
+                        onLogout={handleLogout}
+                        usuario={usuario}
+                    />
+                    ) : (
+                    <Header  
+                        onLogout={handleLogout} 
+                        usuario={usuario} 
+                        onRedirectToLogin={handleRedirectToLogin} 
+                    />
+                )} 
                 <main>
                     <div className="loading">
                         <i className="bx bx-loader-alt bx-spin"></i>

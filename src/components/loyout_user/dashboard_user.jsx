@@ -6,7 +6,6 @@ import Footer from "../loyout_reusable/footer";
 import SearchResults from "./SearchResults";
 import RandomBookLoader from "./RandomBookLoader";
 import "../../assets/css/dashboard_user.css";
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function DashboardUser({ isMobile }) {
   const [usuario, setUsuario] = useState(null);
@@ -25,7 +24,7 @@ export default function DashboardUser({ isMobile }) {
 
     const fetchUserData = async () => {
       try {
-        const res = await fetch(`${API_URL}/users/me`, {
+        const res = await fetch("http://127.0.0.1:8000/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -92,7 +91,7 @@ export default function DashboardUser({ isMobile }) {
     };
 
     try {
-      const res = await fetch(`${API_URL}/wishlist/add`, {
+      const res = await fetch("http://127.0.0.1:8000/wishlist/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
