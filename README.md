@@ -12,3 +12,12 @@ Para poder iniciar a desplegar nuestro proyecto localmente primero necesitas las
   ```bash
      Python --version
   ```
+Asegúrate de instalarlo en su página oficial y no olvides instalar el **PATH** para que funcione correctamente la instalación de dependencias
+  ```bash
+     https://www.python.org/downloads/
+  ```
+- ### NodeJS
+   ```bash
+      node --v
+      npm --v
+    ```
