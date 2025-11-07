@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../../assets/css/dashboard_librarian.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const LibrosPopulares = ({ tipo = "prestamos" }) => {
   const [libros, setLibros] = useState([]);
@@ -19,7 +20,7 @@ const LibrosPopulares = ({ tipo = "prestamos" }) => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://127.0.0.1:8000/estadisticas/bibliotecario/libros-populares?tipo=${tipo}`,
+        `${API_URL}/estadisticas/bibliotecario/libros-populares?tipo=${tipo}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

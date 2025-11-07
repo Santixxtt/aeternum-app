@@ -30,11 +30,10 @@ app = FastAPI(title="Aeternum API", version="1.0.0")
 # Configuración CORS
 
 origins = [
-    "http://localhost",
     "http://localhost:5173",
-    "http://127.0.0.1:8000",
     "http://127.0.0.1:5173",
-    "http://192.168.1.2:8000"
+    "https://aeternum.vercel.app",  # 👈 agrega aquí el dominio del frontend si lo vas a subir
+    "https://aeternum-app-production.up.railway.app"
 ]
 
 app.add_middleware(

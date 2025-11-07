@@ -7,6 +7,7 @@ import Alertas from "./Alertas";
 import GraficaPrestamos from "./GraficaPrestamos";
 import Footer from "../loyout_reusable/footer";
 import LibrosPopulares from "./LibrosPopulares";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const DashboardLibrarian = () => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const DashboardLibrarian = () => {
 
     const fetchUser = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/users/me", {
+        const response = await fetch(`${API_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

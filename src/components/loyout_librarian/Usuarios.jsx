@@ -10,6 +10,7 @@ import "../../assets/css/usuarios.css";
 import Header from "./header";
 import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Usuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -28,7 +29,7 @@ const Usuarios = () => {
     num_identificacion: "",
   });
 
-  const API_BASE = "http://127.0.0.1:8000";
+  const API_BASE = `${API_URL}`;
   const ADMIN_USERS_BASE = `${API_BASE}/admin/users`;
   const REGISTER_BASE = `${API_BASE}/auth/register`;
 

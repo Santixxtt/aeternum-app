@@ -5,6 +5,7 @@ import HeaderMovil from "../loyout_user/HeaderMovil";
 import Footer from "../loyout_reusable/footer";
 import SearchResults from "../loyout_user/SearchResults";
 import "../../assets/css/catalogo.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Catalogo({ isMobile }) {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function Catalogo({ isMobile }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://127.0.0.1:8000/users/me", {
+      fetch(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => (res.ok ? res.json() : Promise.reject("Token inválido")))
@@ -176,7 +177,7 @@ export default function Catalogo({ isMobile }) {
 
         // ✅ PASO 3: Enviar al backend
         console.log("📡 Enviando al backend...");
-        const res = await fetch("http://127.0.0.1:8000/wishlist/add", {
+        const res = await fetch(`${API_URL}/wishlist/add`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
