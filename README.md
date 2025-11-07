@@ -119,4 +119,4 @@ Revisa que no se esté usando el puerto en otro servicio, dependiendo del que us
 - No uses más de un servicio a la vez si trabajas en otros proyectos, puede causar error localmente.
 - Si usas **VS Code** te recomendamos instalar extensiones como Python y Node pueden causar fallos si no están las extensiones.
 ##### Versión: 1.0
-##### Manual de Usuario:[acorta_link](https://santixxtt.github.io/Documentacion-Aeternum/)
+##### [Manual de Usuario](https://santixxtt.github.io/Documentacion-Aeternum/)
