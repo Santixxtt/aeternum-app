@@ -27,7 +27,7 @@
             if (!token) return;
 
             try {
-                const res = await fetch("http://127.0.0.1:8000/users/me", {
+                const res = await fetch("http://192.168.1.2:8000/users/me", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -49,7 +49,7 @@
             if (!token) return;
 
             try {
-                const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/mis-prestamos", {
+                const res = await fetch("http://192.168.1.2:8000/prestamos-fisicos/mis-prestamos", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -79,7 +79,7 @@
             setLoadingCancelar(prestamoId);
 
             try {
-                const res = await fetch(`http://127.0.0.1:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
+                const res = await fetch(`http://192.168.1.2:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
                     method: "PUT",
                     headers: { Authorization: `Bearer ${token}` }
                 });

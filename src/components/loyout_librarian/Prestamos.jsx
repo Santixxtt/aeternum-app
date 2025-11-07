@@ -34,7 +34,8 @@ const Prestamos = () => {
   const [activeTab, setActiveTab] = useState("fisicos");
   const [processingId, setProcessingId] = useState(null);
 
-  const API_BASE = "http://127.0.0.1:8000";
+  // const API_BASE = "http://192.168.1.2:8000";
+   const API_BASE = "http://192.168.1.2:8000";
   const PRESTAMOS_BASE = `${API_BASE}/prestamos-fisicos`;
   const STATS_BASE = `${API_BASE}/estadisticas/bibliotecario`;
 

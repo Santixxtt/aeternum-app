@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import '../assets/css/reset_password.css';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "http://192.168.1.2:8000";
 
 const App = () => {
     const [view, setView] = useState('loading'); 

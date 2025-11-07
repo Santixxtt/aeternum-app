@@ -23,37 +23,45 @@ from app.config.database import init_db, close_db
 from app.dependencias.redis import r
 
 # Inicialización principal de la aplicación FastAPI
+
 app = FastAPI(title="Aeternum API", version="1.0.0")
 
-# ✅ Configuración CORS (solo orígenes del frontend)
+
+# Configuración CORS
+
 origins = [
-    "http://localhost:5173",           # desarrollo local
-    "http://127.0.0.1:5173",           # alternativa local
-    "https://aeternum.vercel.app",     # producción (frontend en Vercel)
+    "http://localhost",
+    "http://localhost:5173",
+    "http://192.168.1.2:8000",
+    "http://127.0.0.1:5173",
+    "http://192.168.1.2:8000"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,             # dominios permitidos
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 # Eventos de inicio y cierre
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 Iniciando aplicación Aeternum...")
+    print(" Iniciando aplicación Aeternum...")
     await init_db(app)
     FastAPICache.init(InMemoryBackend())  # cache local segura
-    print("🧠 Cache en memoria inicializada.")
+    print(" Cache en memoria inicializada.")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await close_db()
     print("🧹 Aplicación detenida correctamente.")
 
-# Rutas principales
+
+#  Rutas principales
+
 app.include_router(auth_routes.router)
 app.include_router(users_me.router)
 app.include_router(wishlist_router.router)
@@ -66,7 +74,8 @@ app.include_router(users_router.router)
 app.include_router(book_router.router)
 app.include_router(catalogs.router)
 
-# Ruta raíz (necesaria para Railway)
+
+#  Ruta raíz (necesaria para Railway)
 @app.get("/")
 async def root():
     return {
