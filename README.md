@@ -60,9 +60,14 @@ npm install
 ```
 Con esto verás que en el menú lateral izquierdo se habrá creado una carpeta llamada **node_modules** significa que ya quedó.
 
-Ahora instalaremos lo necesario para la página, para eso tenemos ```requirements.txt ```.  Lo instalarlas de la siguiente forma.
+Ahora instalaremos lo necesario para la página, para eso tenemos ```requirements.txt```.  Lo instalarlas de la siguiente forma.
 ```bash
 cd backend 
-pip install -r requirements.txy
+pip install -r requirements.txt
 ```
 Con esto tendrás instalado todo lo necesario para el proyecto.
+
+## 🔗 Base de Datos
+Como te darás cuenta cuando abres nuestro archivo ```database.py``` los puertos y contraseñas están encriptados, lo mismo pasa con ```redis.py``` y ``` security.py```. Para que sirvan estas variables tienes que crear una base de datos o contactar con nosotros para tener acceso a esta. Nosotros usamos **Railway**, tú puedes usar el de tu preferencia.
+
+Para conectarlo de forma correcta puedes usar las mismas variables o las de tu preferencia pero recuerda cambiarlas en el código; tendras que crear un archivo ```.env```.
