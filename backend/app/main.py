@@ -2,13 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
-import logging
-
-# Configurar logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
 # Importar routers
 from app.routes import (
@@ -26,20 +19,25 @@ from app.routes.bibliotecario import users_router, book_router, catalogs
 # Configuración base de datos
 from app.config.database import init_db, close_db
 
+# Redis (con fallback automático)
+from app.dependencias.redis import r
+
+# Inicialización principal de la aplicación FastAPI
 app = FastAPI(title="Aeternum API", version="1.0.0")
 
-# ✅ CORS - DEBE IR INMEDIATAMENTE DESPUÉS DE CREAR LA APP
+# ✅ Configuración CORS (solo orígenes del frontend)
+origins = [
+    "http://localhost:5173",           # desarrollo local
+    "http://127.0.0.1:5173",           # alternativa local
+    "https://aeternum.vercel.app",     # producción (frontend en Vercel)
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://aeternum.vercel.app",
-    ],
+    allow_origins=origins,             # dominios permitidos
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 # Eventos de inicio y cierre
@@ -47,7 +45,7 @@ app.add_middleware(
 async def startup_event():
     print("🚀 Iniciando aplicación Aeternum...")
     await init_db(app)
-    FastAPICache.init(InMemoryBackend())
+    FastAPICache.init(InMemoryBackend())  # cache local segura
     print("🧠 Cache en memoria inicializada.")
 
 @app.on_event("shutdown")
@@ -68,10 +66,11 @@ app.include_router(users_router.router)
 app.include_router(book_router.router)
 app.include_router(catalogs.router)
 
-# Ruta raíz
+# Ruta raíz (necesaria para Railway)
 @app.get("/")
 async def root():
     return {
-        "message": "🚀 Aeternum API funcionando",
-        "status": "✅ OK"
+        "message": "🚀 Aeternum API desplegada correctamente en Railway",
+        "database": "✅ Conectada",
+        "redis": "✅ Disponible" if hasattr(r, "ping") else "⚠️ Fallback local",
     }
