@@ -60,7 +60,7 @@ npm install
 ```
 Con esto verás que en el menú lateral izquierdo se habrá creado una carpeta llamada **node_modules** significa que ya quedó.
 
-Ahora instalaremos lo necesario para la página, para eso tenemos ```bash requirements.txt ```.  Lo instalarlas de la siguiente forma.
+Ahora instalaremos lo necesario para la página, para eso tenemos ```requirements.txt ```.  Lo instalarlas de la siguiente forma.
 ```bash
 cd backend 
 pip install -r requirements.txy
