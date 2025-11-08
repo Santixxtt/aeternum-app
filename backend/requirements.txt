@@ -12,6 +12,7 @@ python-dotenv
 email-validator
 requests
 werkzeug
+pytz
 
 # Base de datos
 sqlalchemy

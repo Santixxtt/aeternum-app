@@ -16,7 +16,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
     const [comments, setComments] = useState([]);
     const textareaRef = useRef(null);
     const [loadingReviews, setLoadingReviews] = useState(true); 
-    const [reviewsRefreshKey] = useState(0);
+    const [reviewsRefreshKey, setReviewsRefreshKey] = useState(0);
     const [showPhysicalLoanModal, setShowPhysicalLoanModal] = useState(false);
     const token = localStorage.getItem("token");
 
@@ -31,7 +31,9 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
     const [currentUserId, setCurrentUserId] = useState(null);
     const [activeCommentMenu, setActiveCommentMenu] = useState(null); 
     const [isEditing, setIsEditing] = useState(null); 
-    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false); 
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
 
     const bookData = React.useMemo(() => ({
         titulo: book.title,
@@ -100,7 +102,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         const key = cleanOlKey(olKey);
         
         try {
-            const userRatingRes = await fetch(`http://127.0.0.1:8000/reviews/user-rating/${key}`, {
+            const userRatingRes = await fetch(`http://192.168.1.2:8000/reviews/user-rating/${key}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -120,12 +122,12 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         try {
             await fetchUserRating(olKey);
 
-            const ratingsRes = await fetch(`http://127.0.0.1:8000/reviews/ratings/${key}`);
+            const ratingsRes = await fetch(`http://192.168.1.2:8000/reviews/ratings/${key}`);
             const ratingsData = await ratingsRes.json();
             setAverageRating(ratingsData.promedio || 0.0);
             setTotalVotes(ratingsData.total_votos || 0);
 
-            const commentsRes = await fetch(`http://127.0.0.1:8000/reviews/comments/${key}`);
+            const commentsRes = await fetch(`http://192.168.1.2:8000/reviews/comments/${key}`);
             const commentsData = await commentsRes.json();
             setComments(commentsData.comments || []);
             
@@ -179,7 +181,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
             fetchUserRating(bookData.openlibrary_key);
             fetchReviewsAndComments(bookData.openlibrary_key);
         }
-    }, [bookData.openlibrary_key, token, reviewsRefreshKey, fetchUserRating, fetchReviewsAndComments, isEditing, currentUserId]);
+    }, [bookData.openlibrary_key, token, reviewsRefreshKey, fetchUserRating, fetchReviewsAndComments, isEditing, currentUserId, refreshTrigger ]);
 
     // ✅ Reemplaza el useEffect de fetchDownloadLinks con este MEJORADO
 useEffect(() => {
@@ -309,7 +311,7 @@ const handleDownload = () => {
     setRating(newRating);
 
     try {
-        const res = await fetch("http://127.0.0.1:8000/reviews/rate", {
+        const res = await fetch("http://192.168.1.2:8000/reviews/rate", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -335,7 +337,8 @@ const handleDownload = () => {
         // ✅ Recargar datos frescos del servidor
         await fetchReviewsAndComments(bookData.openlibrary_key);
         
-        console.log("✅ Calificación actualizada exitosamente");
+        console.log("Calificación actualizada exitosamente");
+        setRefreshTrigger((prev) => prev + 1);
         
     } catch (error) {
         console.error("Error en la solicitud de calificación:", error);
@@ -345,43 +348,58 @@ const handleDownload = () => {
     }
 };
 
-    const handleSubmitComment = async (e) => {
-        e.preventDefault();
-        if (!token) {
-            alert("Debes iniciar sesión para comentar.");
-            return;
-        }
-        if (commentText.trim().length < 5) {
-            alert("El comentario debe tener al menos 5 caracteres.");
-            return;
-        }
+const handleSubmitComment = async (e) => {
+  e.preventDefault();
+  if (!token) {
+    alert("Debes iniciar sesión para comentar.");
+    return;
+  }
+  if (commentText.trim().length < 5) {
+    alert("El comentario debe tener al menos 5 caracteres.");
+    return;
+  }
 
-        try {
-            const res = await fetch("http://127.0.0.1:8000/reviews/comment", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    texto: commentText.trim(),
-                    libro: bookData,
-                }),
-            });
+  try {
+    const res = await fetch("http://192.168.1.2:8000/reviews/comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        texto: commentText.trim(),
+        libro: bookData,
+      }),
+    });
 
-            if (!res.ok) {
-                const err = await res.json();
-                alert(`Error: ${err.detail || "Error al enviar el comentario."}`);
-            } else {
-                alert("Comentario enviado con éxito.");
-                setCommentText("");
-                fetchReviewsAndComments(bookData.openlibrary_key);
-            }
-        } catch (error) {
-            console.error("Error en la solicitud de comentario:", error);
-            alert("No se pudo conectar al servidor para comentar.");
-        }
-    };
+    if (!res.ok) {
+      const err = await res.json();
+      alert(`Error: ${err.detail || "Error al enviar el comentario."}`);
+      return;
+    }
+
+    alert("Comentario enviado con éxito.");
+    setCommentText("");
+    setRefreshTrigger((prev) => prev + 1);  
+
+    await fetchReviewsAndComments(bookData.openlibrary_key);
+    await fetchUserRating(bookData.openlibrary_key);
+
+  } catch (error) {
+    console.error("Error en la solicitud de comentario:", error);
+    alert("No se pudo conectar al servidor para comentar.");
+  }
+};
+
+
+// 🔹 useEffect que recarga automáticamente los comentarios al cambiar reviewsRefreshKey
+useEffect(() => {
+  if (bookData.openlibrary_key) {
+    fetchUserRating(bookData.openlibrary_key);
+    fetchReviewsAndComments(bookData.openlibrary_key);
+  }
+}, [bookData.openlibrary_key, token, reviewsRefreshKey]);
+
 
     const startEditComment = (comment) => {
         setActiveCommentMenu(null);
@@ -409,7 +427,7 @@ const handleDownload = () => {
         try {
             setLoadingReviews(true); 
             
-            const res = await fetch(`http://127.0.0.1:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://192.168.1.2:8000/reviews/comment/${commentId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -447,7 +465,7 @@ const handleDownload = () => {
             setLoadingReviews(true);
             setActiveCommentMenu(null); 
 
-            const res = await fetch(`http://127.0.0.1:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://192.168.1.2:8000/reviews/comment/${commentId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -574,7 +592,7 @@ const handleDownload = () => {
         // ✅ Verificar límite de préstamos antes de abrir el modal
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/mis-prestamos", {
+            const res = await fetch("http://192.168.1.2:8000/prestamos-fisicos/mis-prestamos", {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -607,7 +625,7 @@ const handleDigitalBorrow = async () => {
     const token = localStorage.getItem("token");
     
     try {
-        const res = await fetch("http://127.0.0.1:8000/prestamos/digital", {
+        const res = await fetch("http://192.168.1.2:8000/prestamos/digital", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

@@ -36,7 +36,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       const token = localStorage.getItem("token");
       
       try {
-        const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/puede-solicitar", {
+        const res = await fetch("http://192.168.1.2:8000/prestamos-fisicos/puede-solicitar", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -72,7 +72,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       try {
         // 1️⃣ Intentar buscar el libro por openlibrary_key
         const searchRes = await fetch(
-          `http://127.0.0.1:8000/wishlist/buscar-libro/${openlibrary_key}`,
+          `http://192.168.1.2:8000/wishlist/buscar-libro/${openlibrary_key}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -99,7 +99,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
         // 2️⃣ Si no existe, crearlo usando ensure_book_for_loan
         console.log("📚 Libro no encontrado, creando en BD...");
         
-        const createRes = await fetch("http://127.0.0.1:8000/wishlist/ensure-book-for-loan", {
+        const createRes = await fetch("http://192.168.1.2:8000/wishlist/ensure-book-for-loan", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -169,7 +169,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     console.log("📤 Body a enviar:", requestBody);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/solicitar", {
+      const res = await fetch("http://192.168.1.2:8000/prestamos-fisicos/solicitar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

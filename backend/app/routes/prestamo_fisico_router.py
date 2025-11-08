@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from datetime import datetime, timedelta
+import pytz
+
 from app.models.prestamo_fisico_model import (
     crear_prestamo_fisico, 
     obtener_prestamos_usuario, 
@@ -73,7 +75,8 @@ async def solicitar_prestamo_fisico(
     # ✅ Validación fecha
     try:
         fecha_recogida_obj = datetime.strptime(data.fecha_recogida, "%Y-%m-%d")
-        hoy = datetime.now().date()
+        tz = pytz.timezone("America/Bogota")
+        hoy = datetime.now(tz).date()
 
         if fecha_recogida_obj.date() < hoy:
             raise HTTPException(status_code=400, detail="La fecha debe ser hoy o futura")

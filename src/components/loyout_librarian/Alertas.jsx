@@ -3,7 +3,7 @@ import '../../assets/css/dashboard_librarian.css';
 
 const Alertas = () => {
   const [alertas, setAlertas] = useState({
-    atrasados: [],
+    recogen_hoy: [],
     por_vencer: []
   });
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ const Alertas = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:8000/estadisticas/bibliotecario/alertas', {
+      const response = await fetch('http://192.168.1.2:8000/estadisticas/bibliotecario/alertas', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -38,9 +38,16 @@ const Alertas = () => {
     }
   };
 
+  // ✅ Formateo corregido sin desfase
   const formatearFecha = (fecha) => {
     if (!fecha) return '-';
-    return new Date(fecha).toLocaleDateString('es-CO');
+    const fechaObj = new Date(fecha);
+    return fechaObj.toLocaleDateString('es-CO', {
+      timeZone: 'UTC',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   if (loading) {
@@ -56,7 +63,7 @@ const Alertas = () => {
     );
   }
 
-  const totalAlertas = alertas.atrasados.length + alertas.por_vencer.length;
+  const totalAlertas = alertas.recogen_hoy.length + alertas.por_vencer.length;
 
   return (
     <div className="alertas-section">
@@ -68,28 +75,27 @@ const Alertas = () => {
       </div>
 
       <div className="alertas-grid">
-        {/* Préstamos Atrasados */}
-        <div className="alerta-card alerta-atrasados">
+        {/* Préstamos para Recoger Hoy */}
+        <div className="alerta-card alerta-recogen-hoy">
           <div className="alerta-header">
-            <h3>Préstamos Atrasados</h3>
-            <span className="badge-count">{alertas.atrasados.length}</span>
+            <h3>Libros para Recoger Hoy</h3>
+            <span className="badge-count">{alertas.recogen_hoy.length}</span>
           </div>
           
-          {alertas.atrasados.length === 0 ? (
-            <p className="no-alertas"> No hay préstamos atrasados</p>
+          {alertas.recogen_hoy.length === 0 ? (
+            <p className="no-alertas">No hay libros programados para recoger hoy</p>
           ) : (
             <div className="alertas-lista">
-              {alertas.atrasados.map((prestamo) => (
+              {alertas.recogen_hoy.map((prestamo) => (
                 <div key={prestamo.id} className="alerta-item">
                   <div className="alerta-info">
                     <strong>{prestamo.titulo}</strong>
                     <small>{prestamo.nombre} {prestamo.apellido}</small>
                   </div>
-                  <div className="alerta-dias">
-                    <span className="dias-atraso">
-                      {prestamo.dias_atraso} {prestamo.dias_atraso === 1 ? 'día' : 'días'} de atraso
+                  <div className="alerta-fecha">
+                    <span className="fecha-recogida">
+                      Recoge: {formatearFecha(prestamo.fecha_recogida)}
                     </span>
-                    <small>Vencía: {formatearFecha(prestamo.fecha_devolucion)}</small>
                   </div>
                 </div>
               ))}
@@ -127,7 +133,7 @@ const Alertas = () => {
       </div>
 
       <button className="btn-refresh" onClick={cargarAlertas}>
-        <i class='bxr  bx-refresh-ccw'    ></i>  Actualizar Alertas
+        <i className='bx bx-refresh-ccw'></i>  Actualizar Alertas
       </button>
     </div>
   );

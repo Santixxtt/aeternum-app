@@ -1,4 +1,5 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+import pytz
 from app.config.database import get_cursor
 
 
@@ -98,13 +99,14 @@ async def obtener_prestamos_recientes(limit: int = 10):
 
 
 async def obtener_alertas_bibliotecario():
-    """Obtiene alertas de préstamos atrasados y próximos a vencer"""
+    """Obtiene alertas de libros que se recogen hoy y préstamos por vencer"""
     async with get_cursor() as (conn, cursor):
         try:
-            hoy = date.today()
+            tz = pytz.timezone("America/Bogota")
+            hoy = datetime.now(tz).date()
             manana = hoy + timedelta(days=1)
-            
-            # 🔴 Préstamos atrasados
+
+            # 📘 Libros que se recogen hoy (comparando por rango de fecha local)
             await cursor.execute("""
                 SELECT 
                     p.id,
@@ -113,17 +115,17 @@ async def obtener_alertas_bibliotecario():
                     u.nombre,
                     u.apellido,
                     u.correo,
-                    p.fecha_devolucion,
-                    DATEDIFF(%s, p.fecha_devolucion) as dias_atraso
+                    p.fecha_recogida
                 FROM prestamos_fisicos p
                 JOIN usuarios u ON p.usuario_id = u.id
-                WHERE p.fecha_devolucion < %s 
-                AND p.estado IN ('activo', 'atrasado')
-                ORDER BY p.fecha_devolucion ASC
+                WHERE DATE(p.fecha_recogida) = DATE(%s)
+                AND p.estado IN ('pendiente', 'activo')
+                ORDER BY p.fecha_recogida ASC
                 LIMIT 5
-            """, (hoy, hoy))
-            atrasados = await cursor.fetchall()
-            
+            """, (hoy,))
+            recogen_hoy = await cursor.fetchall()
+
+
             # ⚠️ Préstamos que vencen hoy o mañana
             await cursor.execute("""
                 SELECT 
@@ -142,15 +144,15 @@ async def obtener_alertas_bibliotecario():
                 LIMIT 5
             """, (hoy, manana))
             por_vencer = await cursor.fetchall()
-            
+
             return {
                 "status": "success",
                 "alertas": {
-                    "atrasados": atrasados,
+                    "recogen_hoy": recogen_hoy,
                     "por_vencer": por_vencer
                 }
             }
-            
+
         except Exception as e:
             print(f"❌ Error obtener_alertas_bibliotecario: {e}")
             return {"status": "error", "message": str(e)}
