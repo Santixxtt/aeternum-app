@@ -28,7 +28,7 @@ const Usuarios = () => {
     num_identificacion: "",
   });
 
-  const API_BASE = "http://192.168.1.2:8000";
+  const API_BASE = "http://127.0.0.1:8000";
   const ADMIN_USERS_BASE = `${API_BASE}/admin/users`;
   const REGISTER_BASE = `${API_BASE}/auth/register`;
 
@@ -78,9 +78,6 @@ const Usuarios = () => {
   }, []);
 
   const handleToggleStatus = async (usuario) => {
-    // 🔒 Prevenir clicks múltiples
-    if (processingId === usuario.id) return;
-
     const isActive = usuario.estado === "Activo";
     const action = isActive ? "desactivar" : "reactivar";
     const message = isActive ? "desactivar" : "reactivar";
@@ -88,6 +85,16 @@ const Usuarios = () => {
     if (!window.confirm(`¿Seguro que deseas ${message} este usuario?`)) return;
 
     setProcessingId(usuario.id);
+
+    const nuevoEstado = isActive ? "Desactivado" : "Activo";
+    const estadoOriginal = usuario.estado;
+    
+    // ✅ Actualización optimista
+    setUsuarios((prev) =>
+      prev.map((u) =>
+        u.id === usuario.id ? { ...u, estado: nuevoEstado } : u
+      )
+    );
 
     try {
       const token = getToken();
@@ -100,39 +107,32 @@ const Usuarios = () => {
       });
 
       if (!res.ok) {
+        // ❌ Revertir estado si falla
+        setUsuarios((prev) =>
+          prev.map((u) =>
+            u.id === usuario.id ? { ...u, estado: estadoOriginal } : u
+          )
+        );
         const errorData = await res.json().catch(() => null);
         throw new Error(errorData?.detail || `Error ${res.status}`);
       }
 
       const data = await res.json();
       
-      // ✅ Actualizar DESPUÉS de confirmar con el backend
-      if (data.status === "success") {
-        const nuevoEstado = isActive ? "Desactivado" : "Activo";
-        setUsuarios((prev) =>
-          prev.map((u) =>
-            u.id === usuario.id ? { ...u, estado: nuevoEstado } : u
-          )
-        );
+      // ✅ Solo mostrar mensaje si no es warning
+      if (data.status !== "warning") {
         showNotification(
           `Usuario ${nuevoEstado.toLowerCase()} correctamente`,
           "success"
         );
-      } else if (data.status === "warning") {
-        // 🔄 Si el backend dice que ya está en ese estado, recargar
-        await fetchUsuarios();
-        showNotification(data.message || "Estado ya actualizado", "info");
       }
     } catch (err) {
       console.error("handleToggleStatus error:", err);
       showNotification(`Error al ${message} usuario: ${err.message}`, "error");
-      // 🔄 Recargar en caso de error
-      await fetchUsuarios();
     } finally {
       setProcessingId(null);
     }
   };
-
 
   const handleEdit = (usuario) => {
     setEditingUser(usuario);

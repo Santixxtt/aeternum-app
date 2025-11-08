@@ -4,7 +4,7 @@ import PhysicalLoanModal from "./PhysicalLoanModal";
 import defaultImage from "../../assets/img/book-placeholder.png";
 import { jwtDecode } from 'jwt-decode';
 
-export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved, onRemoveFromWishlist, usuario, handleGuestAction }) {
+export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved, onRemoveFromWishlist, usuario, handleGuestAction, libro_id }) {
     // console.log("🔵 Book recibido en modal:", book);
     // console.log("🔵 book.key:", book?.key);
     const [description, setDescription] = useState("Cargando resumen...");
@@ -47,32 +47,35 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
     };
 
     // ✅ FUNCIÓN MEJORADA CON DEBUGGING
-    const handleToggleWishlist = () => {
+    const handleToggleWishlist = async () => {
     console.log("🔵 ===== handleToggleWishlist EJECUTADO =====");
     console.log("🔵 Props recibidas:", { isBookSaved, onRemoveFromWishlist, onAddToWishlist });
     console.log("🔵 book completo:", book);
-    console.log("🔵 libro_id disponible:", book.libro_id);
-    
-    if (isBookSaved) {
-        console.log("🔴 Intentando QUITAR de wishlist");
-        if (onRemoveFromWishlist) {
-            console.log("✅ onRemoveFromWishlist existe, llamando con book.id =", book.id || book.libro_id);
-            // ✅ PASAR TODO EL OBJETO BOOK, LA FUNCIÓN EN ListaDeseos EXTRAERÁ EL ID
-            onRemoveFromWishlist(book); 
-        } else {
-            console.error("❌ onRemoveFromWishlist NO está definido!");
-        }
-    } else {
-        console.log("🟢 Intentando AGREGAR a wishlist");
-        if (onAddToWishlist) {
-            console.log("✅ onAddToWishlist existe, llamando...");
-            onAddToWishlist(book);
-        } else {
-            console.error("❌ onAddToWishlist NO está definido!");
-        }
+    console.log("🔵 libro_id disponible:", libro_id);
+
+    if (!book) {
+      alert("❌ No hay información del libro");
+      return;
     }
+
+    // ✅ Usar el prop directamente
+    if (isBookSaved && libro_id) {
+      console.log("🔴 Intentando ELIMINAR de wishlist, libro_id:", libro_id);
+      if (onRemoveFromWishlist) {
+        await onRemoveFromWishlist(libro_id);
+      }
+    } else {
+      console.log("🟢 Intentando AGREGAR a wishlist");
+      if (onAddToWishlist) {
+        console.log("✅ onAddToWishlist existe, llamando...");
+        await onAddToWishlist(book);
+      } else {
+        console.log("❌ onAddToWishlist NO existe");
+      }
+    }
+
     console.log("🔵 ===== FIN handleToggleWishlist =====");
-};
+  };
 
     useEffect(() => {
         if (token) {
@@ -97,7 +100,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         const key = cleanOlKey(olKey);
         
         try {
-            const userRatingRes = await fetch(`http://192.168.1.2:8000/reviews/user-rating/${key}`, {
+            const userRatingRes = await fetch(`http://127.0.0.1:8000/reviews/user-rating/${key}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -117,12 +120,12 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         try {
             await fetchUserRating(olKey);
 
-            const ratingsRes = await fetch(`http://192.168.1.2:8000/reviews/ratings/${key}`);
+            const ratingsRes = await fetch(`http://127.0.0.1:8000/reviews/ratings/${key}`);
             const ratingsData = await ratingsRes.json();
             setAverageRating(ratingsData.promedio || 0.0);
             setTotalVotes(ratingsData.total_votos || 0);
 
-            const commentsRes = await fetch(`http://192.168.1.2:8000/reviews/comments/${key}`);
+            const commentsRes = await fetch(`http://127.0.0.1:8000/reviews/comments/${key}`);
             const commentsData = await commentsRes.json();
             setComments(commentsData.comments || []);
             
@@ -306,7 +309,7 @@ const handleDownload = () => {
     setRating(newRating);
 
     try {
-        const res = await fetch("http://192.168.1.2:8000/reviews/rate", {
+        const res = await fetch("http://127.0.0.1:8000/reviews/rate", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -354,7 +357,7 @@ const handleDownload = () => {
         }
 
         try {
-            const res = await fetch("http://192.168.1.2:8000/reviews/comment", {
+            const res = await fetch("http://127.0.0.1:8000/reviews/comment", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -406,7 +409,7 @@ const handleDownload = () => {
         try {
             setLoadingReviews(true); 
             
-            const res = await fetch(`http://192.168.1.2:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://127.0.0.1:8000/reviews/comment/${commentId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -444,7 +447,7 @@ const handleDownload = () => {
             setLoadingReviews(true);
             setActiveCommentMenu(null); 
 
-            const res = await fetch(`http://192.168.1.2:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://127.0.0.1:8000/reviews/comment/${commentId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -562,11 +565,36 @@ const handleDownload = () => {
         title: book.title 
     });
 
-    const handlePhysicalBorrow = () => {
+    const handlePhysicalBorrow = async () => {
         if (!usuario) {
             handleGuestAction();
             return;
         }
+        
+        // ✅ Verificar límite de préstamos antes de abrir el modal
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/mis-prestamos", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                const prestamosActivos = data.prestamos?.filter(
+                    p => p.estado === 'pendiente' || p.estado === 'activo'
+                ).length || 0;
+                
+                if (prestamosActivos >= 2) {
+                    alert("⚠️ Has alcanzado el límite de 2 préstamos físicos activos.\n\nDevuelve o cancela un préstamo para solicitar uno nuevo.");
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error("Error al verificar préstamos:", error);
+        }
+        
         setShowPhysicalLoanModal(true);
     };
 
@@ -579,7 +607,7 @@ const handleDigitalBorrow = async () => {
     const token = localStorage.getItem("token");
     
     try {
-        const res = await fetch("http://192.168.1.2:8000/prestamos/digital", {
+        const res = await fetch("http://127.0.0.1:8000/prestamos/digital", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

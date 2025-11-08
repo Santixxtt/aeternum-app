@@ -8,6 +8,11 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
   const [libroId, setLibroId] = useState(null);
   const [checkingBook, setCheckingBook] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+  
+  // 🆕 Estados para límite de préstamos
+  const [canRequest, setCanRequest] = useState(true);
+  const [activeLoans, setActiveLoans] = useState(0);
+  const [checkingLimit, setCheckingLimit] = useState(true);
 
   // Calcular fecha de devolución (+12 días)
   const calcularFechaDevolucion = (fechaRec) => {
@@ -25,6 +30,37 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
   maxFecha.setDate(maxFecha.getDate() + 30);
   const maxFechaStr = maxFecha.toISOString().split("T")[0];
 
+  // 🆕 VERIFICAR LÍMITE DE PRÉSTAMOS
+  useEffect(() => {
+    const verificarLimite = async () => {
+      const token = localStorage.getItem("token");
+      
+      try {
+        const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/puede-solicitar", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setCanRequest(data.puede_solicitar);
+          setActiveLoans(data.prestamos_activos);
+          
+          if (!data.puede_solicitar) {
+            setErrorMessage(`Has alcanzado el límite de 2 préstamos físicos activos.\n\nActualmente tienes ${data.prestamos_activos} préstamos activos.\nDevuelve o cancela un préstamo para solicitar uno nuevo.`);
+          }
+        }
+      } catch (error) {
+        console.error("Error verificando límite:", error);
+      } finally {
+        setCheckingLimit(false);
+      }
+    };
+
+    verificarLimite();
+  }, []);
+
   // ✅ VERIFICAR/CREAR LIBRO AL MONTAR EL COMPONENTE
   useEffect(() => {
     const verificarOCrearLibro = async () => {
@@ -36,7 +72,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       try {
         // 1️⃣ Intentar buscar el libro por openlibrary_key
         const searchRes = await fetch(
-          `http://192.168.1.2:8000/wishlist/buscar-libro/${openlibrary_key}`,
+          `http://127.0.0.1:8000/wishlist/buscar-libro/${openlibrary_key}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -63,7 +99,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
         // 2️⃣ Si no existe, crearlo usando ensure_book_for_loan
         console.log("📚 Libro no encontrado, creando en BD...");
         
-        const createRes = await fetch("http://192.168.1.2:8000/wishlist/ensure-book-for-loan", {
+        const createRes = await fetch("http://127.0.0.1:8000/wishlist/ensure-book-for-loan", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -106,6 +142,12 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 🆕 Verificar límite antes de enviar
+    if (!canRequest) {
+      alert("⚠️ Has alcanzado el límite de 2 préstamos físicos activos.\nDevuelve o cancela un préstamo para solicitar uno nuevo.");
+      return;
+    }
+
     if (!fechaRecogida) {
       alert("Por favor selecciona una fecha de recogida");
       return;
@@ -120,17 +162,14 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     const token = localStorage.getItem("token");
 
     const requestBody = {
-      libro_id: libroId, // ✅ Ahora tenemos el ID correcto
-      openlibrary_key: book.key?.replace("/works/", "") || book.openlibrary_key || "",
-      titulo: book.title || book.titulo,
-      autor: book.author_name?.[0] || book.autor || "Desconocido",
+      libro_id: libroId,
       fecha_recogida: fechaRecogida,
     };
 
     console.log("📤 Body a enviar:", requestBody);
 
     try {
-      const res = await fetch("http://192.168.1.2:8000/prestamos-fisicos/solicitar", {
+      const res = await fetch("http://127.0.0.1:8000/prestamos-fisicos/solicitar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,8 +208,8 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
     : defaultImage;
 
-  // ✅ MOSTRAR LOADING MIENTRAS VERIFICA EL LIBRO
-  if (checkingBook) {
+  // ✅ MOSTRAR LOADING MIENTRAS VERIFICA
+  if (checkingBook || checkingLimit) {
     return (
       <div className="physical-loan-overlay" onClick={handleOverlayClick} style={{ alignItems: 'center' }}>
         <div className="physical-loan-content" style={{ margin: 'auto' }}>
@@ -187,18 +226,22 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     );
   }
 
-  // ✅ MOSTRAR ERROR SI NO SE PUDO VERIFICAR EL LIBRO
+  // ✅ MOSTRAR ERROR SI HAY ALGÚN PROBLEMA
   if (errorMessage) {
     return (
       <div className="physical-loan-overlay" onClick={handleOverlayClick} style={{ alignItems: 'center' }}>
-        <div className="physical-loan-content" style={{ margin: 'auto' }}>
+        <div className="physical-loan-content" style={{ margin: 'auto', maxWidth: '500px' }}>
           <button className="physical-loan-close" onClick={onClose}>
             <i className="bx bx-x"></i>
           </button>
           <div style={{ textAlign: "center", padding: "3rem" }}>
             <i className="bx bx-error-circle" style={{ fontSize: "3rem", color: "#e74c3c" }}></i>
-            <h3 style={{ marginTop: "1rem", color: "#e74c3c" }}>No disponible</h3>
-            <p style={{ marginTop: "0.5rem" }}>{errorMessage}</p>
+            <h3 style={{ marginTop: "1rem", color: "#e74c3c" }}>
+              {canRequest ? "No disponible" : "Límite alcanzado"}
+            </h3>
+            <p style={{ marginTop: "0.5rem", whiteSpace: "pre-line", lineHeight: "1.6" }}>
+              {errorMessage}
+            </p>
             <button 
               onClick={onClose}
               style={{ 
@@ -208,10 +251,11 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
-                cursor: "pointer"
+                cursor: "pointer",
+                fontSize: "1rem"
               }}
             >
-              Cerrar
+              Entendido
             </button>
           </div>
         </div>
@@ -227,6 +271,33 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
         </button>
 
         <h2 className="physical-loan-title">Solicitud de Préstamo Físico</h2>
+
+        {/* 🆕 ALERTA DE PRÉSTAMOS ACTIVOS */}
+        {activeLoans > 0 && (
+          <div style={{
+            background: activeLoans >= 2 ? '#fff3cd' : '#d1ecf1',
+            border: `1px solid ${activeLoans >= 2 ? '#ffc107' : '#17a2b8'}`,
+            padding: '12px 20px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <i className={`bx ${activeLoans >= 2 ? 'bx-error' : 'bx-info-circle'}`} 
+               style={{ fontSize: '1.5rem', color: activeLoans >= 2 ? '#856404' : '#0c5460' }}></i>
+            <div>
+              <strong style={{ color: activeLoans >= 2 ? '#856404' : '#0c5460' }}>
+                Préstamos activos: {activeLoans}/2
+              </strong>
+              {activeLoans >= 2 && (
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#856404' }}>
+                  Este será tu último préstamo disponible
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="physical-loan-body">
           <div className="physical-loan-image">
@@ -270,6 +341,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
                     min={hoy}
                     max={maxFechaStr}
                     required
+                    disabled={!canRequest}
                   />
                   <small>Selecciona cuándo recogerás el libro</small>
                 </div>
@@ -307,7 +379,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
                   type="button"
                   onClick={handleSubmit}
                   className="btn-confirm"
-                  disabled={loading || !fechaRecogida}
+                  disabled={loading || !fechaRecogida || !canRequest}
                 >
                   {loading ? (
                     <>

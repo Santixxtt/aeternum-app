@@ -1,11 +1,9 @@
+# En prestamos_schema.py - SIMPLIFICADO
 from pydantic import BaseModel
 
 class PrestamoFisicoRequest(BaseModel):
     libro_id: int
-    openlibrary_key: str
-    titulo: str
-    autor: str
-    fecha_recogida: str 
+    fecha_recogida: str  # Formato: YYYY-MM-DD
 
 class EstadoRequest(BaseModel):
     estado: str

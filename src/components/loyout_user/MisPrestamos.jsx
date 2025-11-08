@@ -27,7 +27,7 @@
             if (!token) return;
 
             try {
-                const res = await fetch("http://192.168.1.2:8000/users/me", {
+                const res = await fetch("http://127.0.0.1:8000/users/me", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -45,26 +45,28 @@
         };
 
         const cargarPrestamos = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) return;
+  const token = localStorage.getItem("token");
+  if (!token) return;
 
-            try {
-                const res = await fetch("http://192.168.1.2:8000/prestamos-fisicos/mis-prestamos", {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+  try {
+    // ✅ Agregar timestamp para evitar caché del navegador
+    const timestamp = new Date().getTime();
+    const res = await fetch(`http://127.0.0.1:8000/prestamos-fisicos/mis-prestamos?_t=${timestamp}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-                const data = await res.json();
-                
-                if (data.status === "success") {
-                    setPrestamos(data.prestamos || []);
-                    console.log("✅ Préstamos cargados:", data.prestamos);
-                }
-            } catch (error) {
-                console.error("Error al cargar préstamos:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const data = await res.json();
+    
+    if (data.status === "success") {
+      setPrestamos(data.prestamos || []);
+      console.log("✅ Préstamos cargados:", data.prestamos);
+    }
+  } catch (error) {
+    console.error("Error al cargar préstamos:", error);
+  } finally {
+    setLoading(false);
+  }
+};  
 
         useEffect(() => {
             cargarDatosUsuario();
@@ -72,33 +74,64 @@
         }, []);
 
         const cancelarPrestamo = async (prestamoId) => {
-            const token = localStorage.getItem("token");
-            
-            if (!window.confirm("¿Seguro que deseas cancelar este préstamo?")) return;
+  // 🔒 Prevenir clicks múltiples
+  if (loadingCancelar === prestamoId) return;
 
-            setLoadingCancelar(prestamoId);
+  if (!window.confirm("¿Seguro que deseas cancelar este préstamo?")) return;
 
-            try {
-                const res = await fetch(`http://192.168.1.2:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
-                    method: "PUT",
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+  setLoadingCancelar(prestamoId);
 
-                const data = await res.json();
-                
-                if (data.status === "success") {
-                    alert("✅ Préstamo cancelado exitosamente. Se envió un correo de confirmación.");
-                    cargarPrestamos();
-                } else {
-                    alert(data.detail || "Error al cancelar el préstamo");
-                }
-            } catch (err) {
-                console.error("Error al cancelar préstamo:", err);
-                alert("Error de conexión al cancelar el préstamo");
-            } finally {
-                setLoadingCancelar(null);
-            }
-        };
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://127.0.0.1:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+    
+    if (data.status === "success") {
+      showNotification("✅ Préstamo cancelado exitosamente", "success");
+      
+      // ✅ Recargar préstamos después de cancelar
+      await cargarPrestamos();
+    } else {
+      showNotification(data.detail || "Error al cancelar el préstamo", "error");
+    }
+  } catch (err) {
+    console.error("Error al cancelar préstamo:", err);
+    showNotification("Error de conexión al cancelar el préstamo", "error");
+  } finally {
+    setLoadingCancelar(null);
+  }
+};
+
+// Agregar esta función para mostrar notificaciones
+const showNotification = (message, type = "success") => {
+  const toast = document.createElement("div");
+  toast.className = `notification ${type}`;
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === "success" ? "#4caf50" : "#f44336"};
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s;
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => (toast.style.opacity = "1"), 100);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+};
 
         const handleLogout = () => {
             localStorage.removeItem("token");

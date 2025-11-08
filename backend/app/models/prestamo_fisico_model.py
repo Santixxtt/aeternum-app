@@ -10,6 +10,21 @@ from app.utils.email_prestamos import (
 async def crear_prestamo_fisico(usuario_id: int, libro_id: int, fecha_recogida: str):
     async with get_cursor() as (conn, cursor):
         try:
+            # 🔹 VALIDAR LÍMITE DE 2 PRÉSTAMOS ACTIVOS
+            await cursor.execute("""
+                SELECT COUNT(*) as total
+                FROM prestamos_fisicos
+                WHERE usuario_id = %s 
+                AND estado IN ('pendiente', 'activo')
+            """, (usuario_id,))
+            result = await cursor.fetchone()
+            
+            if result["total"] >= 2:
+                return {
+                    "status": "error", 
+                    "message": "Has alcanzado el límite de 2 préstamos físicos activos. Devuelve o cancela un préstamo para solicitar uno nuevo."
+                }
+            
             # 🔹 Validar que el libro existe
             await cursor.execute("""
                 SELECT id, titulo, autor_id, cantidad_disponible, openlibrary_key
@@ -19,10 +34,6 @@ async def crear_prestamo_fisico(usuario_id: int, libro_id: int, fecha_recogida: 
             libro = await cursor.fetchone()
             if not libro:
                 return {"status": "error", "message": "Libro no encontrado"}
-
-            # 🔹 Validar stock
-            if libro["cantidad_disponible"] <= 0:
-                return {"status": "error", "message": "No hay ejemplares disponibles para préstamo"}
 
             # 🔹 Obtener nombre del autor (si existe)
             autor_nombre = "Desconocido"

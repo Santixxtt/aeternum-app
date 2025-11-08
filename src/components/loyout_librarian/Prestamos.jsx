@@ -34,7 +34,7 @@ const Prestamos = () => {
   const [activeTab, setActiveTab] = useState("fisicos");
   const [processingId, setProcessingId] = useState(null);
 
-  const API_BASE = "http://192.168.1.2:8000";
+  const API_BASE = "http://127.0.0.1:8000";
   const PRESTAMOS_BASE = `${API_BASE}/prestamos-fisicos`;
   const STATS_BASE = `${API_BASE}/estadisticas/bibliotecario`;
 
@@ -157,45 +157,52 @@ const Prestamos = () => {
     }
   };
 
-  // ✅ Cambiar estado de préstamo
-  const handleChangeStatus = async (prestamo, nuevoEstado) => {
-    if (!window.confirm(`¿Cambiar estado a "${nuevoEstado}"?`)) return;
+// ✅ Cambiar estado de préstamo (OPTIMIZADO - sin actualización optimista)
+const handleChangeStatus = async (prestamo, nuevoEstado) => {
+  // 🔒 Prevenir clicks múltiples
+  if (processingId === prestamo.id) return;
 
-    setProcessingId(prestamo.id);
+  if (!window.confirm(`¿Cambiar estado a "${nuevoEstado}"?`)) return;
 
-    // Cambio optimista
-    setPrestamosFisicos((prev) =>
-      prev.map((p) => (p.id === prestamo.id ? { ...p, estado: nuevoEstado } : p))
-    );
+  setProcessingId(prestamo.id);
 
-    try {
-      const token = getToken();
-      const res = await fetch(`${PRESTAMOS_BASE}/estado/${prestamo.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ estado: nuevoEstado }),
-      });
+  try {
+    const token = getToken();
+    const res = await fetch(`${PRESTAMOS_BASE}/estado/${prestamo.id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ estado: nuevoEstado }),
+    });
 
-      if (!res.ok) {
-        // Revertir si falla
-        setPrestamosFisicos((prev) =>
-          prev.map((p) => (p.id === prestamo.id ? { ...p, estado: prestamo.estado } : p))
-        );
-        throw new Error(`Error ${res.status}`);
-      }
-
-      showNotification(`Estado actualizado a "${nuevoEstado}"`, "success");
-      fetchEstadisticas();
-    } catch (err) {
-      console.error("Error handleChangeStatus:", err);
-      alert("Error al cambiar estado: " + err.message);
-    } finally {
-      setProcessingId(null);
+    if (!res.ok) {
+      throw new Error(`Error ${res.status}`);
     }
-  };
+
+    const data = await res.json();
+
+    // ✅ Actualizar DESPUÉS de confirmar con el backend
+    if (data.status === "success") {
+      setPrestamosFisicos((prev) =>
+        prev.map((p) => (p.id === prestamo.id ? { ...p, estado: nuevoEstado } : p))
+      );
+      showNotification(`Estado actualizado a "${nuevoEstado}"`, "success");
+      
+      // 🔄 Recargar estadísticas
+      fetchEstadisticas();
+    }
+  } catch (err) {
+    console.error("Error handleChangeStatus:", err);
+    showNotification("Error al cambiar estado: " + err.message, "error");
+    
+    // 🔄 Recargar en caso de error para sincronizar
+    await fetchPrestamosFisicos();
+  } finally {
+    setProcessingId(null);
+  }
+};
 
   // ✅ Notificación toast
   const showNotification = (message, type = "success") => {

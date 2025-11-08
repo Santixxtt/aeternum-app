@@ -38,12 +38,8 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
     fetchRecomendaciones();
   }, []); 
 
-  // ✅ Función local que muestra mensaje de éxito/error
-  // Función para agregar a wishlist
-// ✅ REEMPLAZA la función handleAddToWishlist en catalogo.jsx con esta:
-
-const handleAddToWishlist = useCallback(async (book) => {
-    console.log("📤 ENVIANDO libro a wishlist:", book);
+  const handleAddToWishlist = useCallback(async (book) => {
+    console.log("📤 INICIANDO agregar a wishlist:", book.title);
     
     const token = localStorage.getItem("token");
     if (!token) {
@@ -52,21 +48,73 @@ const handleAddToWishlist = useCallback(async (book) => {
     }
 
     try {
-        // ✅ Construir el objeto con TODOS los campos necesarios
+        // ✅ PASO 1: Obtener detalles adicionales del libro desde OpenLibrary
+        let genero = "No Clasificado";
+        let editorial = "Desconocida";
+        
+        console.log("🔍 Buscando género y editorial en OpenLibrary...");
+        
+        try {
+            // Obtener información completa del work
+            const workUrl = `https://openlibrary.org${book.key}.json`;
+            console.log("📡 Llamando a:", workUrl);
+            const workRes = await fetch(workUrl);
+            const workData = await workRes.json();
+            
+            console.log("📚 Datos del work recibidos");
+            
+            // Extraer género de subjects
+            if (workData.subjects && workData.subjects.length > 0) {
+                genero = workData.subjects[0];
+                console.log("✅ Género encontrado:", genero);
+            } else {
+                console.log("⚠️ No hay subjects en el work");
+            }
+            
+            // Obtener editorial de las ediciones
+            const editionsUrl = `https://openlibrary.org${book.key}/editions.json`;
+            console.log("📡 Llamando a:", editionsUrl);
+            const editionsRes = await fetch(editionsUrl);
+            const editionsData = await editionsRes.json();
+            
+            console.log("📚 Ediciones encontradas:", editionsData.entries?.length || 0);
+            
+            // Buscar la primera editorial disponible
+            if (editionsData.entries) {
+                for (const edition of editionsData.entries) {
+                    if (edition.publishers && edition.publishers.length > 0) {
+                        editorial = edition.publishers[0];
+                        console.log("✅ Editorial encontrada:", editorial);
+                        break;
+                    }
+                }
+            }
+            
+            if (editorial === "Desconocida") {
+                console.log("⚠️ No se encontró editorial en ninguna edición");
+            }
+            
+        } catch (apiError) {
+            console.error("❌ Error al obtener detalles de OpenLibrary:", apiError);
+        }
+
+        // ✅ PASO 2: Construir el objeto con TODOS los campos
         const libroData = {
             openlibrary_key: book.key || book.openlibrary_key,
             titulo: book.title || book.titulo,
             autor: book.author_name?.[0] || book.autor || "Desconocido",
-            genero: book.subject?.[0] || book.genero || "No Clasificado",
-            editorial: book.publisher?.[0] || book.editorial || "Desconocida",
-            descripcion: "", // Opcional, puedes dejarlo vacío o eliminarlo si no lo usas
+            genero: genero,
+            editorial: editorial,
+            descripcion: "", 
             cover_id: book.cover_i || book.cover_id || null,
             fecha_publicacion: book.first_publish_year?.toString() || book.fecha_publicacion || null
         };
 
-        console.log("📦 Datos formateados para enviar:", libroData);
+        console.log("📦 DATOS FINALES para enviar:", libroData);
 
-        const res = await fetch("http://192.168.1.2:8000/wishlist/add", {
+        // ✅ PASO 3: Enviar al backend
+        console.log("📡 Enviando al backend...");
+        const res = await fetch("http://127.0.0.1:8000/wishlist/add", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -81,7 +129,19 @@ const handleAddToWishlist = useCallback(async (book) => {
         }
 
         const data = await res.json();
-        console.log("✅ Libro agregado exitosamente:", data);
+        console.log("✅ Respuesta del backend:", data);
+
+        // ✅ CRÍTICO: Actualizar el libro en la lista con el libro_id recibido
+        if (data.libro_id) {
+            setLibros(prevLibros => 
+                prevLibros.map(lib => 
+                    lib.key === book.key 
+                        ? { ...lib, libro_id: data.libro_id, isBookSaved: true }
+                        : lib
+                )
+            );
+            console.log("✅ Libro actualizado con ID:", data.libro_id);
+        }
 
         setTipoMensaje("exito");
         setMensaje("✅ Libro agregado a la lista de deseos");

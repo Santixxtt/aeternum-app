@@ -21,7 +21,7 @@ export default function Catalogo({ isMobile }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://192.168.1.2:8000/users/me", {
+      fetch("http://127.0.0.1:8000/users/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => (res.ok ? res.json() : Promise.reject("Token inválido")))
@@ -177,7 +177,7 @@ export default function Catalogo({ isMobile }) {
 
         // ✅ PASO 3: Enviar al backend
         console.log("📡 Enviando al backend...");
-        const res = await fetch("http://192.168.1.2:8000/wishlist/add", {
+        const res = await fetch("http://127.0.0.1:8000/wishlist/add", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

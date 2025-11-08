@@ -7,18 +7,18 @@ export default function Recomendados({ libros, onAddToWishlist, onBorrow, usuari
 
   return (
     <section className="dashboard-user dashboard-book-list">
-      {/* <h2>Recomendaciones para ti</h2> */}
-  {libros.map((book, index) => (
-     <BookCard
-          key={index}
+      {libros.map((book, index) => (
+        <BookCard
+          key={book.key || index}  // ✅ Mejor usar book.key como key único
           book={book}
           usuario={usuario}              
           onAddToWishlist={onAddToWishlist}
           onBorrow={onBorrow}
-          handleGuestAction={handleGuestAction}  
+          handleGuestAction={handleGuestAction}
+          isBookSaved={book.isBookSaved || false}  
+          libro_id={book.libro_id}                  
         />
-  ))}
-</section>
-
+      ))}
+    </section>
   );
 }

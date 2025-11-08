@@ -9,11 +9,11 @@ from app.models.prestamo_fisico_model import (
 )
 from app.schemas.prestamos_schema import PrestamoFisicoRequest, EstadoRequest
 from app.utils.security import get_current_user
+from app.config.database import get_cursor
 from app.dependencias.redis import r  
 
 router = APIRouter(prefix="/prestamos-fisicos", tags=["Préstamos Físicos"])
 
-# 🧹 Función helper para limpiar cachés relacionados
 def limpiar_cache_prestamos(usuario_id: int = None, prestamo_id: int = None):
     """Limpia cachés de préstamos de forma eficiente"""
     try:
@@ -34,6 +34,32 @@ def limpiar_cache_prestamos(usuario_id: int = None, prestamo_id: int = None):
     except Exception as e:
         print(f"⚠️ Error limpiando caché: {e}")
 
+@router.get("/puede-solicitar")
+async def puede_solicitar_prestamo(current_user: dict = Depends(get_current_user)):
+    """Verifica si el usuario puede solicitar un nuevo préstamo físico (límite: 2)"""
+    usuario_id = current_user.get("sub")
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="Usuario no autenticado")
+    
+    async with get_cursor() as (conn, cursor):
+        await cursor.execute("""
+            SELECT COUNT(*) as total
+            FROM prestamos_fisicos
+            WHERE usuario_id = %s 
+            AND estado IN ('pendiente', 'activo')
+        """, (int(usuario_id),))
+        
+        result = await cursor.fetchone()
+        prestamos_activos = result['total'] if result else 0
+        
+        puede_solicitar = prestamos_activos < 2
+        
+        return {
+            "puede_solicitar": puede_solicitar,
+            "prestamos_activos": prestamos_activos,
+            "limite": 2,
+            "message": "OK" if puede_solicitar else "Has alcanzado el límite de 2 préstamos activos"
+        }
 
 @router.post("/solicitar")
 async def solicitar_prestamo_fisico(
@@ -83,8 +109,6 @@ async def mis_prestamos_fisicos(current_user: dict = Depends(get_current_user)):
     if not usuario_id:
         raise HTTPException(status_code=401, detail="Usuario no autenticado")
 
-    # ❌ NO usar caché - siempre traer datos frescos de BD
-    # Esto asegura que SIEMPRE se vean los cambios más recientes
     resultado = await obtener_prestamos_usuario(int(usuario_id))
 
     if resultado.get("status") == "success":
@@ -128,10 +152,10 @@ async def cambiar_estado_prestamo(
     resultado = await actualizar_estado_prestamo(prestamo_id, data.estado)
 
     if resultado.get("status") == "success":
-        # 🧹 Limpiar TODOS los cachés relacionados
-        limpiar_cache_prestamos(prestamo_id=prestamo_id)
+        # ✅ Limpiar todos los cachés relacionados
+        r.delete(f"prestamo:{prestamo_id}")
         
-        # Limpiar todos los cachés de usuarios (para que todos vean el cambio)
+        # Limpiar cachés de estadísticas
         pattern = "prestamos_fisicos_usuario:*"
         for key in r.scan_iter(pattern):
             r.delete(key)
