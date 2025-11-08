@@ -160,8 +160,7 @@ export default function Perfil({ isMobile }) {
                     ) : (
                     <Header  
                         onLogout={handleLogout} 
-                        usuario={usuario} 
-                        onRedirectToLogin={handleRedirectToLogin} 
+                        usuario={usuario}
                     />
                 )} 
                 <main>
@@ -177,11 +176,18 @@ export default function Perfil({ isMobile }) {
 
     return (
         <div className="dashboard-user">
-            <Header
-                onSearch={(q) => console.log("Buscar:", q)}
-                onLogout={handleLogout}
-                usuario={usuario}
-            />
+            {isMobile ? (
+                <HeaderMovil
+                    onLogout={handleLogout}
+                    usuario={usuario}
+                />
+                ) : (
+                <Header
+                    onSearch={(q) => console.log("Buscar:", q)}
+                    onLogout={handleLogout}
+                    usuario={usuario}
+                />
+            )}
 
             <main>
                 <section className="perfil-hero-aurora">

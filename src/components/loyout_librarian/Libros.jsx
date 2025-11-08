@@ -33,22 +33,12 @@ const Libros = () => {
     cover_id: "",
   });
 
-  const API_BASE = "http://127.0.0.1:8000";
-  // const API_BASE = "http://127.0.0.1:8000";
+  const API_BASE = "http://192.168.1.2:8000";
   const BOOKS_BASE = `${API_BASE}/admin/books`;
 
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
 
-  // ✅ Cargar datos iniciales
-  useEffect(() => {
-    fetchLibros();
-    fetchAutores();
-    fetchEditoriales();
-    fetchGeneros();
-  }, []);
-
-  // ✅ Obtener todos los libros
   const fetchLibros = async () => {
     try {
       setLoading(true);
@@ -57,12 +47,29 @@ const Libros = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || `Error HTTP ${res.status}`);
+      }
+
       const json = await res.json();
-      
-      setLibros(Array.isArray(json) ? json : json.libros || json.data || []);
+
+      if (Array.isArray(json)) {
+        setLibros(json);
+      } else if (Array.isArray(json.libros)) {
+        setLibros(json.libros);
+      } else if (Array.isArray(json.data)) {
+        setLibros(json.data);
+      } else {
+        const arr = Object.values(json).find((v) => Array.isArray(v));
+        if (arr) {
+          setLibros(arr);
+        } else {
+          setLibros([]);
+        }
+      }
     } catch (err) {
-      console.error("Error fetchLibros:", err);
+      console.error("fetchLibros error:", err);
       alert("Error al cargar libros: " + err.message);
       setLibros([]);
     } finally {
@@ -70,98 +77,102 @@ const Libros = () => {
     }
   };
 
-  // ✅ Obtener autores
-  const fetchAutores = async () => {
+  const fetchCatalogos = async () => {
     try {
       const token = getToken();
-      const res = await fetch(`${API_BASE}/autores/`, {
+
+      // Autores
+      const resAutores = await fetch(`${API_BASE}/autores/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Error al cargar autores");
-      const data = await res.json();
-      setAutores(Array.isArray(data) ? data : data.autores || []);
+      if (resAutores.ok) {
+        const dataAutores = await resAutores.json();
+        setAutores(Array.isArray(dataAutores) ? dataAutores : []);
+      }
+
+      // Editoriales
+      const resEditoriales = await fetch(`${API_BASE}/editoriales/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (resEditoriales.ok) {
+        const dataEditoriales = await resEditoriales.json();
+        setEditoriales(Array.isArray(dataEditoriales) ? dataEditoriales : []);
+      }
+
+      // Géneros
+      const resGeneros = await fetch(`${API_BASE}/generos/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (resGeneros.ok) {
+        const dataGeneros = await resGeneros.json();
+        setGeneros(Array.isArray(dataGeneros) ? dataGeneros : []);
+      }
     } catch (err) {
-      console.error("Error fetchAutores:", err);
-      setAutores([]);
+      console.error("fetchCatalogos error:", err);
     }
   };
 
-  // ✅ Obtener editoriales
-  const fetchEditoriales = async () => {
-    try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/editoriales/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Error al cargar editoriales");
-      const data = await res.json();
-      setEditoriales(Array.isArray(data) ? data : data.editoriales || []);
-    } catch (err) {
-      console.error("Error fetchEditoriales:", err);
-      setEditoriales([]);
-    }
-  };
+  useEffect(() => {
+    fetchLibros();
+    fetchCatalogos();
+  }, []);
 
-  // ✅ Obtener géneros
-  const fetchGeneros = async () => {
-    try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/generos/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Error al cargar géneros");
-      const data = await res.json();
-      setGeneros(Array.isArray(data) ? data : data.generos || []);
-    } catch (err) {
-      console.error("Error fetchGeneros:", err);
-      setGeneros([]);
-    }
-  };
-
-  // ✅ Alternar estado del libro (Activar/Desactivar) - OPTIMISTA
   const handleToggleStatus = async (libro) => {
     const isActive = libro.estado === "Activo";
     const action = isActive ? "desactivar" : "activar";
-    
-    if (!window.confirm(`¿Seguro que deseas ${action} este libro?`)) return;
-    
+    const message = isActive ? "desactivar" : "activar";
+
+    if (!window.confirm(`¿Seguro que deseas ${message} este libro?`)) return;
+
     setProcessingId(libro.id);
-    
-    // 🚀 Actualización optimista
+
     const nuevoEstado = isActive ? "Desactivado" : "Activo";
-    setLibros(prev => prev.map(l => 
-      l.id === libro.id ? { ...l, estado: nuevoEstado } : l
-    ));
-    
+    const estadoOriginal = libro.estado;
+
+    // ✅ Actualización optimista
+    setLibros((prev) =>
+      prev.map((l) =>
+        l.id === libro.id ? { ...l, estado: nuevoEstado } : l
+      )
+    );
+
     try {
       const token = getToken();
-      const endpoint = isActive 
-        ? `${BOOKS_BASE}/desactivar/${libro.id}` 
-        : `${BOOKS_BASE}/activar/${libro.id}`;
-      
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${BOOKS_BASE}/${action}/${libro.id}`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!res.ok) {
-        // Revierte si falla
-        setLibros(prev => prev.map(l => 
-          l.id === libro.id ? { ...l, estado: libro.estado } : l
-        ));
-        throw new Error(`Error ${res.status}`);
+        // ❌ Revertir estado si falla
+        setLibros((prev) =>
+          prev.map((l) =>
+            l.id === libro.id ? { ...l, estado: estadoOriginal } : l
+          )
+        );
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || `Error ${res.status}`);
       }
-      
-      showNotification(`Libro ${action} correctamente`, "success");
+
+      const data = await res.json();
+
+      if (data.status !== "warning") {
+        showNotification(
+          `Libro ${nuevoEstado.toLowerCase()} correctamente`,
+          "success"
+        );
+      }
     } catch (err) {
-      console.error("Error handleToggleStatus:", err);
-      alert(`Error al ${action} libro: ` + err.message);
+      console.error("handleToggleStatus error:", err);
+      showNotification(`Error al ${message} libro: ${err.message}`, "error");
     } finally {
       setProcessingId(null);
     }
   };
 
-  // ✅ Editar libro (abrir modal)
   const handleEdit = (libro) => {
     setEditingBook(libro);
     setCreatingBook(false);
@@ -178,7 +189,6 @@ const Libros = () => {
     });
   };
 
-  // ✅ Abrir modal para crear libro
   const handleCreate = () => {
     setCreatingBook(true);
     setEditingBook(null);
@@ -200,26 +210,28 @@ const Libros = () => {
     setCreatingBook(false);
   };
 
-  // ✅ Guardar cambios (editar libro) - OPTIMISTA
   const handleSave = async () => {
     if (!editingBook) return;
-    
-    if (!formData.titulo || !formData.autor_id || !formData.editorial_id || !formData.genero_id) {
-      alert("Por favor completa los campos obligatorios");
-      return;
-    }
-    
+
     const updatedData = {
       ...editingBook,
-      ...formData,
+      titulo: formData.titulo,
+      descripcion: formData.descripcion,
+      autor_id: formData.autor_id,
+      editorial_id: formData.editorial_id,
+      genero_id: formData.genero_id,
+      fecha_publicacion: formData.fecha_publicacion,
+      cantidad_disponible: formData.cantidad_disponible,
+      openlibrary_key: formData.openlibrary_key,
+      cover_id: formData.cover_id,
     };
-    
-    // 🚀 Actualización optimista
-    setLibros(prev => prev.map(l => 
-      l.id === editingBook.id ? updatedData : l
-    ));
+
+    // ✅ Actualización optimista
+    setLibros((prev) =>
+      prev.map((l) => (l.id === editingBook.id ? updatedData : l))
+    );
     closeModal();
-    
+
     try {
       const token = getToken();
       const res = await fetch(`${BOOKS_BASE}/${editingBook.id}`, {
@@ -228,74 +240,111 @@ const Libros = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          titulo: formData.titulo,
+          descripcion: formData.descripcion,
+          autor_id: parseInt(formData.autor_id),
+          editorial_id: parseInt(formData.editorial_id),
+          genero_id: parseInt(formData.genero_id),
+          fecha_publicacion: formData.fecha_publicacion,
+          cantidad_disponible: parseInt(formData.cantidad_disponible),
+          openlibrary_key: formData.openlibrary_key,
+          cover_id: formData.cover_id ? parseInt(formData.cover_id) : 0,
+        }),
       });
 
       if (!res.ok) {
+        // ❌ Revertir si falla
         await fetchLibros();
-        throw new Error(`Error ${res.status}`);
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || `Error ${res.status}`);
       }
-      
+
       showNotification("Libro actualizado correctamente", "success");
     } catch (err) {
-      console.error("Error handleSave:", err);
-      alert("Error al actualizar libro: " + err.message);
+      console.error("handleSave error:", err);
+      showNotification("Error al actualizar libro: " + err.message, "error");
     }
   };
 
-  // ✅ Crear nuevo libro
   const handleCreateBook = async () => {
-    if (!formData.titulo || !formData.autor_id || !formData.editorial_id || !formData.genero_id) {
-      alert("Por favor completa los campos obligatorios");
+    if (
+      !formData.titulo ||
+      !formData.autor_id ||
+      !formData.editorial_id ||
+      !formData.genero_id
+    ) {
+      alert("Por favor completa todos los campos obligatorios");
       return;
     }
 
     closeModal();
-    
+
     try {
       const token = getToken();
+      const payload = {
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        autor_id: parseInt(formData.autor_id),
+        editorial_id: parseInt(formData.editorial_id),
+        genero_id: parseInt(formData.genero_id),
+        fecha_publicacion: formData.fecha_publicacion,
+        cantidad_disponible: parseInt(formData.cantidad_disponible) || 1,
+        openlibrary_key: formData.openlibrary_key || "",
+        cover_id: formData.cover_id ? parseInt(formData.cover_id) : 0,
+      };
+
       const res = await fetch(BOOKS_BASE, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.detail || `Error ${res.status}`);
+        console.error("Error del servidor:", error);
+        throw new Error(error.detail || JSON.stringify(error));
       }
 
       const newBook = await res.json();
-      
-      // 🚀 Agrega el nuevo libro optimistamente
-      setLibros(prev => [
+
+      // ✅ Agregar optimistamente
+      const autorNombre = autores.find((a) => a.id === parseInt(formData.autor_id))?.nombre || "";
+      const editorialNombre = editoriales.find((e) => e.id === parseInt(formData.editorial_id))?.nombre || "";
+      const generoNombre = generos.find((g) => g.id === parseInt(formData.genero_id))?.nombre || "";
+
+      setLibros((prev) => [
         {
           id: newBook.libro_id || Date.now(),
           ...formData,
           estado: "Activo",
+          autor_nombre: autorNombre,
+          editorial_nombre: editorialNombre,
+          genero_nombre: generoNombre,
         },
-        ...prev
+        ...prev,
       ]);
-      
+
       showNotification("Libro creado correctamente", "success");
+
+      // ✅ Recargar después de 1 segundo para sincronizar
       setTimeout(() => fetchLibros(), 1000);
     } catch (err) {
-      console.error("Error handleCreateBook:", err);
-      alert("Error al crear libro: " + err.message);
+      console.error("handleCreateBook error:", err);
+      showNotification("Error al crear libro: " + err.message, "error");
       await fetchLibros();
     }
   };
 
-  // ✅ Notificación toast
   const showNotification = (message, type = "success") => {
     const toast = document.createElement("div");
     toast.className = `notification ${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
-    
+
     setTimeout(() => toast.classList.add("show"), 100);
     setTimeout(() => {
       toast.classList.remove("show");
@@ -303,52 +352,94 @@ const Libros = () => {
     }, 2000);
   };
 
-  // ✅ Exportar
-  const handleExport = (tipo) => {
-    alert(`Exportando ${tipo.toUpperCase()}...`);
+  const handleExport = async (tipo) => {
+    const token = getToken();
+
+    if (!token) {
+      showNotification("❌ No estás autenticado", "error");
+      return;
+    }
+
+    try {
+      showNotification(`⏳ Generando archivo ${tipo.toUpperCase()}...`, "info");
+
+      const endpoint =
+        tipo === "excel"
+          ? `${BOOKS_BASE}/export/excel`
+          : `${BOOKS_BASE}/export/pdf`;
+
+      console.log("📤 Exportando desde:", endpoint);
+
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("📥 Respuesta status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("❌ Error response:", errorText);
+        throw new Error(`Error al exportar: ${res.status} - ${errorText}`);
+      }
+
+      const blob = await res.blob();
+      console.log("📦 Blob recibido, tamaño:", blob.size);
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+
+      const timestamp = new Date().toISOString().split("T")[0];
+      a.download = `libros_${timestamp}.${tipo === "excel" ? "xlsx" : "pdf"}`;
+
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+
+      showNotification(
+        `✅ Archivo ${tipo.toUpperCase()} descargado correctamente`,
+        "success"
+      );
+    } catch (error) {
+      console.error("❌ Error completo:", error);
+      showNotification(`❌ Error al exportar: ${error.message}`, "error");
+    }
   };
 
-  // ✅ Filtro de búsqueda
-  const filteredBooks = Array.isArray(libros) ? libros.filter((l) =>
-    `${l.titulo || ""} ${l.autor_nombre || ""} ${l.editorial_nombre || ""} ${l.genero_nombre || ""}`
-      .toLowerCase()
-      .includes(busqueda.toLowerCase())
-  ) : [];
-
-  // ✅ Obtener nombre del autor
-  const getAutorNombre = (autor_id) => {
-    const autor = autores.find(a => a.id === autor_id);
-    return autor ? autor.nombre : "-";
-  };
-
-  // ✅ Obtener nombre de editorial
-  const getEditorialNombre = (editorial_id) => {
-    const editorial = editoriales.find(e => e.id === editorial_id);
-    return editorial ? editorial.nombre : "-";
-  };
-
-  // ✅ Obtener nombre de género
-  const getGeneroNombre = (genero_id) => {
-    const genero = generos.find(g => g.id === genero_id);
-    return genero ? genero.nombre : "-";
-  };
+  const filteredBooks = Array.isArray(libros)
+    ? libros.filter((l) =>
+        `${l.titulo || ""} ${l.autor_nombre || ""} ${l.editorial_nombre || ""} ${
+          l.genero_nombre || ""
+        }`
+          .toLowerCase()
+          .includes(busqueda.toLowerCase())
+      )
+    : [];
 
   const [isMobile, setIsMobile] = useState(false);
-        useEffect(() => {
-          const checkDevice = () => {
-            const mobile =
-              /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-              window.innerWidth < 768;
-            setIsMobile(mobile);
-          };
-          checkDevice();
-          window.addEventListener("resize", checkDevice);
-          return () => window.removeEventListener("resize", checkDevice);
-        }, []);
+  useEffect(() => {
+    const checkDevice = () => {
+      const mobile =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
 
   return (
     <>
       {isMobile ? <HeaderMovil /> : <Header />}
+
       <div className="libros-container">
         <div className="libros-header">
           <h2>Gestión de Libros</h2>
@@ -367,7 +458,7 @@ const Libros = () => {
               onClick={handleCreate}
               title="Crear Libro"
             >
-              <i className='bx bx-book-add'></i>
+              <i className="bx bx-book-add"></i>
             </button>
             <button
               className="libros-btn excel"
@@ -394,69 +485,75 @@ const Libros = () => {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Título</th>
-                  <th>Autor</th>
-                  <th>Editorial</th>
-                  <th>Género</th>
-                  <th>Año</th>
-                  <th>Disponibles</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
+                  <th>TÍTULO</th>
+                  <th>AUTOR</th>
+                  <th>EDITORIAL</th>
+                  <th>GÉNERO</th>
+                  <th>F. PUBLICACIÓN</th>
+                  <th>DISPONIBLES</th>
+                  <th>ESTADO</th>
+                  <th>ACCIONES</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredBooks.length > 0 ? (
                   filteredBooks.map((l) => (
-                    <tr key={l.id} className={processingId === l.id ? "processing" : ""}>
+                    <tr
+                      key={l.id}
+                      className={processingId === l.id ? "processing" : ""}
+                    >
                       <td>{l.id}</td>
                       <td>{l.titulo}</td>
-                      <td>{l.autor_nombre || getAutorNombre(l.autor_id)}</td>
-                      <td>{l.editorial_nombre || getEditorialNombre(l.editorial_id)}</td>
-                      <td>{l.genero_nombre || getGeneroNombre(l.genero_id)}</td>
+                      <td>{l.autor_nombre || "-"}</td>
+                      <td>{l.editorial_nombre || "-"}</td>
+                      <td>{l.genero_nombre || "-"}</td>
                       <td>{l.fecha_publicacion || "-"}</td>
-                      <td className="text-center">{l.cantidad_disponible}</td>
+                      <td>{l.cantidad_disponible}</td>
                       <td>
-                        <span
-                          className={`libros-estado ${
-                            l.estado === "Activo" ? "activo" : "inactivo"
-                          }`}
-                        >
-                          {l.estado}
-                        </span>
+                        <div className="estado-toggle-wrapper">
+                          <button
+                            className={`estado-toggle-btn ${
+                              l.estado === "Activo" ? "active" : "inactive"
+                            }`}
+                            onClick={() => handleToggleStatus(l)}
+                            disabled={processingId === l.id}
+                          >
+                            {processingId === l.id ? (
+                              <i className="bx bx-loader-alt bx-spin"></i>
+                            ) : (
+                              <i
+                                className={`bx ${
+                                  l.estado === "Activo"
+                                    ? "bx-toggle-right"
+                                    : "bx-toggle-left"
+                                }`}
+                              ></i>
+                            )}
+                            <span>
+                              {l.estado === "Activo" ? "Activo" : "Inactivo"}
+                            </span>
+                          </button>
+                        </div>
                       </td>
-                      <td className="libros-actions-cell">
-                        <button
-                          className="libros-icon-btn edit"
-                          onClick={() => handleEdit(l)}
-                          title="Editar"
-                          disabled={processingId === l.id}
-                        >
-                          <i className='bx bx-pencil'></i>
-                        </button>
-                        <button
-                          className={`libros-icon-btn toggle ${
-                            l.estado === "Activo" ? "active" : "inactive"
-                          }`}
-                          onClick={() => handleToggleStatus(l)}
-                          title={l.estado === "Activo" ? "Desactivar" : "Activar"}
-                          disabled={processingId === l.id}
-                        >
-                          {processingId === l.id ? (
-                            <i className='bx bx-loader-alt bx-spin'></i>
-                          ) : (
-                            <i className={`bx ${
-                              l.estado === "Activo" ? "bx-toggle-right" : "bx-toggle-left"
-                            }`}></i>
-                          )}
-                        </button>
+                      <td>
+                        <div className="acciones-wrapper">
+                          <button
+                            className="accion-btn edit"
+                            onClick={() => handleEdit(l)}
+                            disabled={processingId === l.id}
+                          >
+                            <i className="bx bx-pencil"></i>
+                            <span>Editar</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td colSpan="9" className="libros-empty">
-                      {libros.length === 0 
-                        ? "No hay libros registrados." 
+                      {libros.length === 0
+                        ? "No hay libros registrados."
                         : "No hay libros que coincidan con la búsqueda."}
                     </td>
                   </tr>
@@ -466,12 +563,15 @@ const Libros = () => {
           </div>
         )}
 
-        {/* ✅ Modal */}
         {(editingBook || creatingBook) && (
           <div className="libros-modal-overlay">
             <div className="libros-modal">
               <div className="libros-modal-header">
-                <h3>{creatingBook ? "Crear Libro" : `Editar Libro #${editingBook.id}`}</h3>
+                <h3>
+                  {creatingBook
+                    ? "Crear Libro"
+                    : `Editar Libro #${editingBook.id}`}
+                </h3>
                 <button className="libros-modal-close" onClick={closeModal}>
                   <FaTimes />
                 </button>
@@ -489,12 +589,11 @@ const Libros = () => {
 
                 <label>Descripción</label>
                 <textarea
-                  rows="3"
                   value={formData.descripcion}
                   onChange={(e) =>
                     setFormData({ ...formData, descripcion: e.target.value })
                   }
-                  placeholder="Descripción del libro..."
+                  rows="3"
                 />
 
                 <label>Autor *</label>
@@ -504,9 +603,11 @@ const Libros = () => {
                     setFormData({ ...formData, autor_id: e.target.value })
                   }
                 >
-                  <option value="">-- Seleccionar autor --</option>
-                  {autores.map(a => (
-                    <option key={a.id} value={a.id}>{a.nombre}</option>
+                  <option value="">Seleccione un autor...</option>
+                  {autores.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nombre}
+                    </option>
                   ))}
                 </select>
 
@@ -517,9 +618,11 @@ const Libros = () => {
                     setFormData({ ...formData, editorial_id: e.target.value })
                   }
                 >
-                  <option value="">-- Seleccionar editorial --</option>
-                  {editoriales.map(e => (
-                    <option key={e.id} value={e.id}>{e.nombre}</option>
+                  <option value="">Seleccione una editorial...</option>
+                  {editoriales.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.nombre}
+                    </option>
                   ))}
                 </select>
 
@@ -530,63 +633,74 @@ const Libros = () => {
                     setFormData({ ...formData, genero_id: e.target.value })
                   }
                 >
-                  <option value="">-- Seleccionar género --</option>
-                  {generos.map(g => (
-                    <option key={g.id} value={g.id}>{g.nombre}</option>
+                  <option value="">Seleccione un género...</option>
+                  {generos.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.nombre}
+                    </option>
                   ))}
                 </select>
 
-                <label>Año de publicación</label>
+                <label>Fecha de Publicación</label>
                 <input
-                  type="number"
-                  min="1000"
-                  max="2100"
+                  type="date"
                   value={formData.fecha_publicacion}
                   onChange={(e) =>
-                    setFormData({ ...formData, fecha_publicacion: e.target.value })
+                    setFormData({
+                      ...formData,
+                      fecha_publicacion: e.target.value,
+                    })
                   }
-                  placeholder="2024"
                 />
 
-                <label>Cantidad disponible</label>
+                <label>Cantidad Disponible *</label>
                 <input
                   type="number"
                   min="0"
                   value={formData.cantidad_disponible}
                   onChange={(e) =>
-                    setFormData({ ...formData, cantidad_disponible: parseInt(e.target.value) || 0 })
+                    setFormData({
+                      ...formData,
+                      cantidad_disponible: e.target.value,
+                    })
                   }
                 />
 
-                <label>OpenLibrary Key</label>
+                <label>OpenLibrary Key (opcional)</label>
                 <input
                   type="text"
                   value={formData.openlibrary_key}
                   onChange={(e) =>
-                    setFormData({ ...formData, openlibrary_key: e.target.value })
+                    setFormData({
+                      ...formData,
+                      openlibrary_key: e.target.value,
+                    })
                   }
-                  placeholder="OL12345W"
+                  placeholder="Ej: /works/OL45804W"
                 />
 
-                <label>Cover ID</label>
+                <label>Cover ID (opcional)</label>
                 <input
-                  type="number"
+                  type="text"
                   value={formData.cover_id}
                   onChange={(e) =>
                     setFormData({ ...formData, cover_id: e.target.value })
                   }
-                  placeholder="ID de portada"
+                  placeholder="Ej: 8739161"
                 />
               </div>
 
               <div className="libros-modal-footer">
-                <button 
-                  className="libros-modal-btn save" 
+                <button
+                  className="libros-modal-btn save"
                   onClick={creatingBook ? handleCreateBook : handleSave}
                 >
                   <FaSave /> {creatingBook ? "Crear" : "Guardar"}
                 </button>
-                <button className="libros-modal-btn cancel" onClick={closeModal}>
+                <button
+                  className="libros-modal-btn cancel"
+                  onClick={closeModal}
+                >
                   Cancelar
                 </button>
               </div>
@@ -594,6 +708,7 @@ const Libros = () => {
           </div>
         )}
       </div>
+
       <Footer />
     </>
   );

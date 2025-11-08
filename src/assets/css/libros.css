@@ -1,50 +1,61 @@
-/* 🎨 Contenedor principal */
 .libros-container {
-  background-color: #f2f2f2;
-  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 2rem;
+  min-height: calc(100vh - 200px);
 }
 
-/* 📋 Header de la página */
+/* ========== HEADER ========== */
 .libros-header {
-  background: #fff;
-  padding: 1.5rem 2rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.libros-header h2 {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #b150a8;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-/* 🔍 Acciones (búsqueda y exportación) */
-.libros-actions {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
+.libros-header h2 {
+  color: #b150a8;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.libros-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ========== BÚSQUEDA ========== */
 .libros-search {
   position: relative;
-  flex: 1;
-  min-width: 300px;
-  max-width: 500px;
+  width: 300px;
+}
+
+.libros-search input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.libros-search input:focus {
+  outline: none;
+  border-color: #b150a8;
+  box-shadow: 0 0 0 3px rgba(177, 80, 168, 0.1);
 }
 
 .libros-search-icon {
   position: absolute;
-  left: 15px;
+  right: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1.2rem;
-  color: #b150a8;
+  color: #999;
+  pointer-events: none;
 }
 
 .libros-search input {

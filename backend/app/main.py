@@ -15,14 +15,8 @@ from app.routes import (
     estadisticas_router,
 )
 from app.routes.bibliotecario import users_router, book_router, catalogs
-
-# Configuración base de datos
 from app.config.database import init_db, close_db
-
-# Redis (con fallback automático)
 from app.dependencias.redis import r
-
-# Inicialización principal de la aplicación FastAPI
 
 app = FastAPI(title="Aeternum API", version="1.0.0")
 
@@ -32,9 +26,9 @@ app = FastAPI(title="Aeternum API", version="1.0.0")
 origins = [
     "http://localhost",
     "http://localhost:5173",
+    "http://192.168.1.2:5173",  
     "http://127.0.0.1:8000",
     "http://127.0.0.1:5173",
-    "http://127.0.0.1:8000",
     "http://192.168.1.8:8000"
 ]
 
@@ -44,8 +38,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"]  
 )
-
 
 # Eventos de inicio y cierre
 @app.on_event("startup")

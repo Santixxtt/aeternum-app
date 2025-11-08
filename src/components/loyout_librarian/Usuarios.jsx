@@ -28,7 +28,7 @@ const Usuarios = () => {
     num_identificacion: "",
   });
 
-  const API_BASE = "http://127.0.0.1:8000";
+  const API_BASE = "http://192.168.1.2:8000";
   const ADMIN_USERS_BASE = `${API_BASE}/admin/users`;
   const REGISTER_BASE = `${API_BASE}/auth/register`;
 
@@ -291,8 +291,69 @@ const Usuarios = () => {
     }, 2000);
   };
 
-  const handleExport = (tipo) => {
-    alert(`Exportando ${tipo.toUpperCase()}...`);
+  const handleExport = async (tipo) => {
+    const token = getToken();
+    
+    if (!token) {
+      showNotification("❌ No estás autenticado", "error");
+      return;
+    }
+    
+    try {
+      // Mostrar que está procesando
+      showNotification(`⏳ Generando archivo ${tipo.toUpperCase()}...`, "info");
+      
+      const endpoint = tipo === 'excel' 
+        ? `${ADMIN_USERS_BASE}/export/excel`
+        : `${ADMIN_USERS_BASE}/export/pdf`;
+      
+      console.log("📤 Exportando desde:", endpoint);
+      console.log("🔑 Token:", token ? "Presente" : "Ausente");
+      
+      const res = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log("📥 Respuesta status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("❌ Error response:", errorText);
+        throw new Error(`Error al exportar: ${res.status} - ${errorText}`);
+      }
+
+      // Obtener el blob del archivo
+      const blob = await res.blob();
+      console.log("📦 Blob recibido, tamaño:", blob.size);
+      
+      // Crear URL temporal para descarga
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Nombre del archivo basado en el tipo
+      const timestamp = new Date().toISOString().split('T')[0];
+      a.download = `usuarios_${timestamp}.${tipo === 'excel' ? 'xlsx' : 'pdf'}`;
+      
+      // Simular click para descargar
+      document.body.appendChild(a);
+      a.click();
+      
+      // Limpiar
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+      
+      showNotification(`✅ Archivo ${tipo.toUpperCase()} descargado correctamente`, "success");
+      
+    } catch (error) {
+      console.error('❌ Error completo:', error);
+      showNotification(`❌ Error al exportar: ${error.message}`, "error");
+    }
   };
 
   const filteredUsers = Array.isArray(usuarios)

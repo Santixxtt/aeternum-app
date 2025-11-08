@@ -97,41 +97,55 @@ export default function ListaDeseos({ isMobile }) {
         setFilteredLista(filtrados);
     };
 
-    // ✅ FUNCIÓN CORREGIDA - Ahora usa book.id correctamente
     const handleRemoveFromWishlist = async (bookToRemove) => {
-    const bookId = bookToRemove?.id || bookToRemove?.lista_deseos_id;
-    const token = localStorage.getItem("token");
+  // Acepta: number (id), o objeto { id, lista_deseos_id, ... }
+  let bookId = null;
+  if (typeof bookToRemove === "number") {
+    bookId = bookToRemove;
+  } else if (bookToRemove && typeof bookToRemove === "object") {
+    bookId = bookToRemove?.id ?? bookToRemove?.lista_deseos_id ?? null;
+  }
 
-    if (!bookId || !token) return;
+  const token = localStorage.getItem("token");
+  if (!bookId || !token) {
+    console.warn("No hay id o token para eliminar.", { bookToRemove, bookId });
+    return;
+  }
 
-    // ✅ OPTIMISTIC UPDATE - Actualizar UI antes de que responda el servidor
-    setListaDeseos(prev => prev.filter(book => book.id !== bookId));
-    setFilteredLista(prev => prev.filter(book => book.id !== bookId));
-    setSelectedBook(null);
+  // Optimistic update (elimina por id o lista_deseos_id)
+  setListaDeseos(prev => prev.filter(b => b.id !== bookId && b.lista_deseos_id !== bookId));
+  setFilteredLista(prev => prev.filter(b => b.id !== bookId && b.lista_deseos_id !== bookId));
+  setSelectedBook(null);
 
-    try {
-        const res = await fetch(`http://127.0.0.1:8000/wishlist/delete/${bookId}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-        });
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/wishlist/delete/${bookId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-        if (!res.ok) {
-            // Si falla, revertir
-            await cargarListaDeseos();
-            const errorData = await res.json();
-            throw new Error(errorData.detail || "Error al eliminar libro");
-        }
-
-        setTipoMensaje("exito");
-        setMensaje("✅ Libro eliminado de la lista de deseos");
-        setTimeout(() => setMensaje(""), 2500);
-    } catch (error) {
-        console.error("❌ Error al eliminar de lista:", error);
-        setTipoMensaje("error");
-        setMensaje(`❌ Error: ${error.message}`);
-        setTimeout(() => setMensaje(""), 3000);
+    if (!res.ok) {
+      await cargarListaDeseos(); // revertir
+      let errorText = "Error al eliminar libro";
+      try {
+        const err = await res.json();
+        errorText = err.detail || JSON.stringify(err);
+      } catch (e) {
+        errorText = await res.text();
+      }
+      throw new Error(errorText);
     }
+
+    setTipoMensaje("exito");
+    setMensaje("✅ Libro eliminado de la lista de deseos");
+    setTimeout(() => setMensaje(""), 2500);
+  } catch (error) {
+    console.error("❌ Error al eliminar de lista:", error);
+    setTipoMensaje("error");
+    setMensaje(`❌ Error: ${error.message}`);
+    setTimeout(() => setMensaje(""), 3000);
+  }
 };
+
 
     // ⚠️ Acción para invitados (aunque aquí siempre hay sesión)
     const handleGuestAction = () => {
@@ -164,8 +178,7 @@ export default function ListaDeseos({ isMobile }) {
       <Header 
         onSearch={handleSearch} 
         onLogout={handleLogout} 
-        usuario={usuario} 
-        onRedirectToLogin={handleRedirectToLogin} 
+        usuario={usuario}
       />
     )}
 
@@ -220,22 +233,23 @@ export default function ListaDeseos({ isMobile }) {
                                 return (
                                     <BookCard
                                         key={`wishlist-${book.id}-${index}`}
-                                        book={{ 
+                                        book={{
                                             ...book,
                                             title: book.titulo,
-                                            author_name: [book.autor], 
+                                            author_name: [book.autor],
                                             cover_i: book.cover_id,
                                             key: normalizedKey,
-                                            id: book.id // ✅ Asegurar que book.id existe
+                                            id: book.id
                                         }}
                                         usuario={usuario}
                                         isBookSaved={true}
                                         onRemoveFromWishlist={handleRemoveFromWishlist}
                                         onAddToWishlist={() => {}}
                                         handleGuestAction={handleGuestAction}
-                                    />
-                                );
-                            })}
+                                        libro_id={book.id}
+                                        />
+                                    );
+                                    })}
                         </div>
                     )}
                 </section>

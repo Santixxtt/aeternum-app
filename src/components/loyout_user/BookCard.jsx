@@ -9,7 +9,8 @@ const BookCard = ({
   usuario,
   handleGuestAction,
   isBookSaved = false,
-  onRemoveFromWishlist
+  onRemoveFromWishlist,
+  libro_id
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -73,6 +74,7 @@ const BookCard = ({
           onRate={handleRateClick}
           isBookSaved={isBookSaved}
           onRemoveFromWishlist={onRemoveFromWishlist}
+          libro_id={libro_id}
         />
       )}
     </>

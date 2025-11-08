@@ -194,8 +194,7 @@ const showNotification = (message, type = "success") => {
                     ) : (
                     <Header
                         onLogout={handleLogout} 
-                        usuario={usuario} 
-                        onRedirectToLogin={handleRedirectToLogin} 
+                        usuario={usuario}
                     />
                 )}
 
