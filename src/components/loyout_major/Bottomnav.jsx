@@ -12,11 +12,10 @@ const BottomNav = () => {
                 <i className="bx bx-book"></i>
                 <span>Catálogo</span>
             </Link>
-            {/* Estos enlaces deberían ser ajustados a tus rutas públicas */}
-            <a href="#" className="nav-item">
+            <Link to="/contacto" className="nav-item">
                 <i className="bx bx-phone"></i>
                 <span>Contacto</span>
-            </a>
+            </Link>
             <Link to="/login" className="nav-item">
                 <i className="bx bx-user"></i>
                 <span>Ingreso</span>

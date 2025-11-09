@@ -1,0 +1,424 @@
+/* ============================================
+   CONTACTO.CSS - Estilos específicos para página de contacto
+   ============================================ */
+
+/* Variables de color de Aeternum */
+:root {
+  --primary-pink: #B6407D;
+  --primary-purple: #764ba2;
+  --dark-purple: #4a2c6b;
+  --light-purple: #a47ec9;
+  --accent-purple: #667eea;
+  --dark-bg: #1a1a2e;
+  --darker-bg: #0f0f1e;
+  --gray-dark: #2d3748;
+  --gray-medium: #4a5568;
+  --gray-light: #e2e8f0;
+  --white: #ffffff;
+}
+
+/* Contenedor principal de la página de contacto */
+.contact-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, var(--dark-bg) 0%, var(--dark-purple) 50%, var(--primary-pink) 100%);
+  position: relative;
+}
+
+.contact-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(182, 64, 125, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.contact-container {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Navegación de retroceso */
+.contact-container .back-nav {
+  margin-bottom: 2rem;
+}
+
+.contact-container .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(182, 64, 125, 0.2);
+  color: var(--white);
+  border: 2px solid rgba(182, 64, 125, 0.3);
+  border-radius: 50px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  font-weight: 500;
+}
+
+.contact-container .back-link:hover {
+  background: rgba(182, 64, 125, 0.4);
+  border-color: var(--primary-pink);
+  transform: translateX(-5px);
+  box-shadow: 0 4px 15px rgba(182, 64, 125, 0.3);
+}
+
+.contact-container .back-link i {
+  font-size: 1.5rem;
+}
+
+/* Header de contacto */
+.contact-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  color: var(--white);
+}
+
+.contact-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--white) 0%, var(--primary-pink) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.contact-header p {
+  font-size: 1.1rem;
+  opacity: 0.95;
+  max-width: 600px;
+  margin: 0 auto;
+  color: var(--gray-light);
+}
+
+/* Contenido principal en grid */
+.contact-content {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* Información de contacto */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info-card {
+  background: rgba(26, 26, 46, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 1.5rem;
+  border-radius: 15px;
+  border: 1px solid rgba(182, 64, 125, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(182, 64, 125, 0.3);
+  border-color: var(--primary-pink);
+  background: rgba(26, 26, 46, 0.95);
+}
+
+.info-card i {
+  font-size: 2rem;
+  color: var(--primary-pink);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.info-card h3 {
+  font-size: 1.2rem;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.info-card p,
+.info-card a {
+  color: var(--gray-light);
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.info-card a:hover {
+  color: var(--primary-pink);
+}
+
+/* Redes sociales */
+.social-card .social-links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.social-card .social-links a {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-pink) 0%, var(--primary-purple) 100%);
+  color: var(--white);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+  border: 2px solid transparent;
+}
+
+.social-card .social-links a:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 15px rgba(182, 64, 125, 0.5);
+  border-color: var(--white);
+}
+
+/* Formulario de contacto */
+.contact-form-wrapper {
+  background: rgba(26, 26, 46, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 15px;
+  border: 1px solid rgba(182, 64, 125, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.contact-form-wrapper h2 {
+  font-size: 1.8rem;
+  color: var(--white);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.contact-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.contact-form label {
+  display: block;
+  color: var(--gray-light);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid rgba(182, 64, 125, 0.3);
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  background: rgba(15, 15, 30, 0.6);
+  color: var(--white);
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: var(--gray-medium);
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: var(--primary-pink);
+  box-shadow: 0 0 0 3px rgba(182, 64, 125, 0.2);
+  background: rgba(15, 15, 30, 0.8);
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* Alertas */
+.contact-form .alert {
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  backdrop-filter: blur(10px);
+}
+
+.contact-form .alert i {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.contact-form .alert-success {
+  background: rgba(72, 187, 120, 0.2);
+  color: #9ae6b4;
+  border: 1px solid rgba(72, 187, 120, 0.4);
+}
+
+.contact-form .alert-error {
+  background: rgba(252, 129, 129, 0.2);
+  color: #fc8181;
+  border: 1px solid rgba(252, 129, 129, 0.4);
+}
+
+/* Botón de envío */
+.contact-form .submit-button {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--primary-pink) 0%, var(--primary-purple) 100%);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(182, 64, 125, 0.3);
+}
+
+.contact-form .submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(182, 64, 125, 0.5);
+  background: linear-gradient(135deg, #c94e8c 0%, #8557af 100%);
+}
+
+.contact-form .submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.contact-form .submit-button i {
+  font-size: 1.2rem;
+}
+
+/* Sección FAQ */
+.faq-section {
+  background: rgba(26, 26, 46, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 15px;
+  border: 1px solid rgba(182, 64, 125, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.faq-section h2 {
+  text-align: center;
+  color: var(--white);
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  font-weight: 600;
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.faq-item {
+  padding: 1.5rem;
+  background: rgba(15, 15, 30, 0.6);
+  border-radius: 10px;
+  border-left: 4px solid var(--primary-pink);
+  transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+  background: rgba(15, 15, 30, 0.8);
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(182, 64, 125, 0.2);
+}
+
+.faq-item h4 {
+  color: var(--white);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.faq-item p {
+  color: var(--gray-light);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .contact-content {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-header h1 {
+    font-size: 2rem;
+  }
+
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-container {
+    padding: 1rem;
+  }
+
+  .contact-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .contact-header p {
+    font-size: 1rem;
+  }
+
+  .contact-form-wrapper,
+  .faq-section {
+    padding: 1.5rem;
+  }
+
+  .info-card {
+    padding: 1.25rem;
+  }
+
+  .social-card .social-links a {
+    width: 35px;
+    height: 35px;
+    font-size: 1.3rem;
+  }
+}
+
+/* Animación de carga del spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bx-spin {
+  animation: spin 1s linear infinite;
+}

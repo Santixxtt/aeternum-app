@@ -10,6 +10,10 @@ import Home from "./components/home";
 import Login from "./components/login";
 import Register from "./components/register";
 import ResetPassword from "./components/ResetPassword";
+import PoliticaPrivacidad from "./components/loyout_major/PoliticaPrivacidad";
+import TerminosServicio from "./components/loyout_major/TerminosServicio";
+import Contacto from "./components/loyout_major/Contacto";
+
 
 // Dashboard (usuario)
 import DashboardUser from "./components/loyout_user/dashboard_user";
@@ -47,6 +51,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/restablecer-contrasena" element={<ResetPassword />} />
         <Route path="/catalogo" element={<Catalogo isMobile={isMobile} />} />
+        <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+        <Route path="/terminos-servicio" element={<TerminosServicio />} />
+        <Route path="/contacto" element={<Contacto />} />
+
+
 
         {/* 🔒 Rutas protegidas dentro del AuthProvider */}
         <Route
@@ -54,7 +63,6 @@ function App() {
           element={
             <AuthProvider>
               <Routes>
-                {/* ✅ AQUÍ PASAMOS isMobile */}
                 <Route path="dashboard_user" element={<DashboardUser isMobile={isMobile} />} />
                 <Route path="lista_deseos" element={<Listadeseos isMobile={isMobile} />} />
                 <Route path="mis_prestamos" element={<MisPrestamos isMobile={isMobile} />} />
