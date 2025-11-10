@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Importar useNavigate
 import {
   FaFileExcel,
   FaFilePdf,
@@ -12,12 +13,14 @@ import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
 
 const Usuarios = () => {
+  const navigate = useNavigate(); // ✅ Hook para navegación
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
   const [creatingUser, setCreatingUser] = useState(false);
   const [processingId, setProcessingId] = useState(null);
+  const [usuario, setUsuario] = useState(null); // ✅ Estado para el usuario actual
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -34,6 +37,33 @@ const Usuarios = () => {
 
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
+
+  // ✅ Cargar datos del usuario actual
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) throw new Error("Error obteniendo usuario");
+
+        const data = await response.json();
+        setUsuario(data);
+      } catch (error) {
+        console.error(error);
+        navigate("/");
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
 
   const fetchUsuarios = async () => {
     try {
@@ -77,6 +107,14 @@ const Usuarios = () => {
     fetchUsuarios();
   }, []);
 
+  // ✅ Función handleLogout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("userRole");
+    navigate("/");
+  };
+
   const handleToggleStatus = async (usuario) => {
     const isActive = usuario.estado === "Activo";
     const action = isActive ? "desactivar" : "reactivar";
@@ -89,7 +127,6 @@ const Usuarios = () => {
     const nuevoEstado = isActive ? "Desactivado" : "Activo";
     const estadoOriginal = usuario.estado;
     
-    // ✅ Actualización optimista
     setUsuarios((prev) =>
       prev.map((u) =>
         u.id === usuario.id ? { ...u, estado: nuevoEstado } : u
@@ -107,7 +144,6 @@ const Usuarios = () => {
       });
 
       if (!res.ok) {
-        // ❌ Revertir estado si falla
         setUsuarios((prev) =>
           prev.map((u) =>
             u.id === usuario.id ? { ...u, estado: estadoOriginal } : u
@@ -119,7 +155,6 @@ const Usuarios = () => {
 
       const data = await res.json();
       
-      // ✅ Solo mostrar mensaje si no es warning
       if (data.status !== "warning") {
         showNotification(
           `Usuario ${nuevoEstado.toLowerCase()} correctamente`,
@@ -179,7 +214,6 @@ const Usuarios = () => {
       num_identificacion: formData.num_identificacion,
     };
 
-    // ✅ Actualización optimista
     setUsuarios((prev) =>
       prev.map((u) => (u.id === editingUser.id ? updatedData : u))
     );
@@ -203,7 +237,6 @@ const Usuarios = () => {
       });
 
       if (!res.ok) {
-        // ❌ Revertir si falla
         await fetchUsuarios();
         const errorData = await res.json().catch(() => null);
         throw new Error(errorData?.detail || `Error ${res.status}`);
@@ -257,7 +290,6 @@ const Usuarios = () => {
 
       const newUser = await res.json();
       
-      // ✅ Agregar optimistamente
       setUsuarios((prev) => [
         {
           id: newUser.user_id || Date.now(),
@@ -268,8 +300,6 @@ const Usuarios = () => {
       ]);
 
       showNotification("Usuario creado correctamente", "success");
-
-      // ✅ Recargar después de 1 segundo para sincronizar
       setTimeout(() => fetchUsuarios(), 1000);
     } catch (err) {
       console.error("handleCreateUser error:", err);
@@ -300,15 +330,11 @@ const Usuarios = () => {
     }
     
     try {
-      // Mostrar que está procesando
       showNotification(`⏳ Generando archivo ${tipo.toUpperCase()}...`, "info");
       
       const endpoint = tipo === 'excel' 
         ? `${ADMIN_USERS_BASE}/export/excel`
         : `${ADMIN_USERS_BASE}/export/pdf`;
-      
-      console.log("📤 Exportando desde:", endpoint);
-      console.log("🔑 Token:", token ? "Presente" : "Ausente");
       
       const res = await fetch(endpoint, {
         method: 'GET',
@@ -317,32 +343,22 @@ const Usuarios = () => {
         },
       });
 
-      console.log("📥 Respuesta status:", res.status);
-
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("❌ Error response:", errorText);
         throw new Error(`Error al exportar: ${res.status} - ${errorText}`);
       }
 
-      // Obtener el blob del archivo
       const blob = await res.blob();
-      console.log("📦 Blob recibido, tamaño:", blob.size);
-      
-      // Crear URL temporal para descarga
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       
-      // Nombre del archivo basado en el tipo
       const timestamp = new Date().toISOString().split('T')[0];
       a.download = `usuarios_${timestamp}.${tipo === 'excel' ? 'xlsx' : 'pdf'}`;
       
-      // Simular click para descargar
       document.body.appendChild(a);
       a.click();
       
-      // Limpiar
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
@@ -380,8 +396,13 @@ const Usuarios = () => {
   }, []);
 
   return (
-    <>
-      {isMobile ? <HeaderMovil /> : <Header />}
+    <div className="dashboard-user">
+      {/* ✅ Pasar las props necesarias al Header */}
+      {isMobile ? (
+        <HeaderMovil onLogout={handleLogout} usuario={usuario} />
+      ) : (
+        <Header onLogout={handleLogout} usuario={usuario} />
+      )}
 
       <div className="usuarios-container">
         <div className="usuarios-header">
@@ -623,7 +644,7 @@ const Usuarios = () => {
       </div>
 
       <Footer />
-    </>
+    </div>
   );
 };
 

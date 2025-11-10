@@ -1,34 +1,31 @@
-/* ============================================
-   MODAL DE PRÉSTAMO FÍSICO
-   ============================================ */
-
 .physical-loan-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.85); /* ✅ Más oscuro para bloquear mejor */
     display: flex;
     justify-content: center;
-    align-items: center; /* ✅ Asegura centrado vertical */
-    z-index: 9999 !important;
+    align-items: center;
+    z-index: 10000 !important; /* ✅ Más alto que BookModal (9999) */
     padding: 20px;
     animation: fadeIn 0.3s ease;
+    overflow-y: auto; /* ✅ Permite scroll si es necesario */
 }
 
 .physical-loan-content {
     background: #ffffff;
     padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     max-width: 800px;
     width: 100%;
     position: relative;
-    max-height: 90vh;
+    max-height: 85vh; /* ✅ Limita altura para evitar salirse de pantalla */
     overflow-y: auto;
     animation: scaleIn 0.3s ease-out;
-    margin: auto; /* ✅ Centra horizontalmente si el flex falla */
+    margin: auto; /* ✅ Centra horizontalmente */
 }
 
 .physical-loan-close {
@@ -250,11 +247,11 @@
 @keyframes scaleIn {
     from {
         opacity: 0;
-        transform: scale(0.9) translateY(-20px); /* ✅ Mejora la animación */
+        transform: scale(0.95);
     }
     to {
         opacity: 1;
-        transform: scale(1) translateY(0);
+        transform: scale(1);
     }
 }
 
@@ -272,6 +269,18 @@
    ============================================ */
 
 @media (max-width: 768px) {
+    .physical-loan-overlay {
+        padding: 15px; /* ✅ Menos padding en móvil */
+        align-items: flex-start; /* ✅ Permite scroll desde arriba */
+        padding-top: 30px; /* ✅ Espacio superior en móvil */
+    }
+
+    .physical-loan-content {
+        padding: 20px;
+        max-height: 90vh;
+        margin-top: 0; /* ✅ Se posiciona desde arriba */
+    }
+
     .physical-loan-body {
         flex-direction: column;
         align-items: center;
@@ -286,11 +295,6 @@
         grid-template-columns: 1fr;
     }
 
-    .physical-loan-content {
-        padding: 20px;
-        max-height: 95vh; /* ✅ Aprovecha más espacio en móvil */
-    }
-
     .physical-loan-title {
         font-size: 1.4em;
     }
@@ -298,5 +302,5 @@
 
 /* ✅ Para asegurar que se superpone a otros modales */
 .physical-loan-overlay {
-    z-index: 9999 !important;
+    z-index: 10000 !important; /* Mayor que BookModal */
 }

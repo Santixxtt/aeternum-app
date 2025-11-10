@@ -12,7 +12,8 @@ from app.models.prestamo_fisico_model import (
 from app.schemas.prestamos_schema import PrestamoFisicoRequest, EstadoRequest
 from app.utils.security import get_current_user
 from app.config.database import get_cursor
-from app.dependencias.redis import r  
+from app.dependencias.redis import r
+from app.utils.email_prestamos import send_prestamo_cancelado_bibliotecario 
 
 router = APIRouter(prefix="/prestamos-fisicos", tags=["Préstamos Físicos"])
 
@@ -152,6 +153,29 @@ async def cambiar_estado_prestamo(
     if rol != "bibliotecario":
         raise HTTPException(status_code=403, detail="Acceso restringido")
 
+    # ✅ Obtener datos del préstamo ANTES de actualizar (para enviar correo)
+    async with get_cursor() as (conn, cursor):
+        await cursor.execute("""
+            SELECT 
+                pf.id,
+                pf.usuario_id,
+                pf.libro_id,
+                u.nombre,
+                u.apellido,
+                u.correo,
+                l.titulo
+            FROM prestamos_fisicos pf
+            INNER JOIN usuarios u ON pf.usuario_id = u.id
+            INNER JOIN libros l ON pf.libro_id = l.id
+            WHERE pf.id = %s
+        """, (prestamo_id,))
+        
+        prestamo_info = await cursor.fetchone()
+    
+    if not prestamo_info:
+        raise HTTPException(status_code=404, detail="Préstamo no encontrado")
+
+    # ✅ Actualizar estado del préstamo
     resultado = await actualizar_estado_prestamo(prestamo_id, data.estado)
 
     if resultado.get("status") == "success":
@@ -162,6 +186,24 @@ async def cambiar_estado_prestamo(
         pattern = "prestamos_fisicos_usuario:*"
         for key in r.scan_iter(pattern):
             r.delete(key)
+
+        # ✅ Enviar correo si el bibliotecario CANCELA el préstamo
+        if data.estado.lower() == "cancelado":
+            try:
+                nombre_completo = f"{prestamo_info['nombre']} {prestamo_info['apellido']}"
+                
+                # Enviar correo de cancelación (no esperar, ejecutar en background)
+                await send_prestamo_cancelado_bibliotecario(
+                    recipient_email=prestamo_info['correo'],
+                    nombre_usuario=nombre_completo,
+                    titulo_libro=prestamo_info['titulo']
+                )
+                
+                print(f"✅ Correo de cancelación enviado a {prestamo_info['correo']}")
+                
+            except Exception as e:
+                # No fallar la operación si el correo falla
+                print(f"⚠️ Error al enviar correo de cancelación: {e}")
 
         return resultado
 

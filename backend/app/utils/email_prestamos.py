@@ -220,3 +220,57 @@ async def send_prestamo_atrasado(
     """
 
     return await _send_email_async(recipient_email, subject, html_content)
+
+async def send_prestamo_cancelado_bibliotecario(
+    recipient_email: str,
+    nombre_usuario: str,
+    titulo_libro: str,
+    motivo: str = None
+):
+    """
+    Envía correo cuando un BIBLIOTECARIO cancela un préstamo.
+    """
+    subject = "⚠️ Préstamo Cancelado por Biblioteca - Aeternum"
+    
+    motivo_html = ""
+    if motivo:
+        motivo_html = f"""
+        <div style="background-color: #fff3cd; padding: 10px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
+            <p style="margin: 0;"><strong>Motivo:</strong> {motivo}</p>
+        </div>
+        """
+    
+    html_content = f"""
+    <html>
+        <body>
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 600px; margin: auto;">
+                <h2 style="color: #d9534f;"> Préstamo Cancelado</h2>
+                
+                <p>Hola <strong>{nombre_usuario}</strong>,</p>
+                
+                <p>Te informamos que tu préstamo físico ha sido <strong>cancelado por la libreria</strong>.</p>
+                
+                <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #d9534f;">
+                    <h3 style="margin-top: 0; color: #721c24;">Libro Cancelado:</h3>
+                    <p><strong>{titulo_libro}</strong></p>
+                </div>
+                
+                {motivo_html}
+
+                <p>El libro fue cancelado por no venir en la fecha que se selecciono, por este motivo se cancelo su préstamo.</p>
+                
+                <p>El libro ha sido liberado y ya está disponible para otros usuarios.</p>
+                
+                <p>Si tienes alguna pregunta o necesitas más información, por favor contacta con la biblioteca.</p>
+                
+                <p style="margin-top: 30px;">Gracias por usar Aeternum </p>
+                
+                <p style="font-size: 0.8em; color: #999; margin-top: 30px;">
+                    Este es un correo automático. Por favor, no respondas a este mensaje.
+                </p>
+            </div>
+        </body>
+    </html>
+    """
+
+    return await _send_email_async(recipient_email, subject, html_content)

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import {
   LineChart,
@@ -21,6 +22,7 @@ import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
 
 const Prestamos = () => {
+  const navigate = useNavigate();
   const [prestamosFisicos, setPrestamosFisicos] = useState([]);
   const [prestamosDigitales, setPrestamosDigitales] = useState([]);
   const [estadisticas, setEstadisticas] = useState(null);
@@ -33,6 +35,7 @@ const Prestamos = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("fisicos");
   const [processingId, setProcessingId] = useState(null);
+  const [usuario, setUsuario] = useState(null);
 
   const API_BASE = "http://192.168.1.2:8000";
   const PRESTAMOS_BASE = `${API_BASE}/prestamos-fisicos`;
@@ -40,6 +43,41 @@ const Prestamos = () => {
 
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
+
+  // ✅ Cargar datos del usuario actual
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) throw new Error("Error obteniendo usuario");
+
+        const data = await response.json();
+        setUsuario(data);
+      } catch (error) {
+        console.error(error);
+        navigate("/");
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
+
+  // ✅ Función handleLogout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("userRole");
+    navigate("/");
+  };
 
   useEffect(() => {
     fetchPrestamosFisicos();
@@ -50,7 +88,6 @@ const Prestamos = () => {
     fetchLibrosDigitalesPopulares();
   }, []);
 
-  // ✅ Obtener préstamos físicos
   const fetchPrestamosFisicos = async () => {
     try {
       setLoading(true);
@@ -71,7 +108,6 @@ const Prestamos = () => {
     }
   };
 
-  // ✅ Obtener préstamos digitales
   const fetchPrestamosDigitales = async () => {
     try {
       const token = getToken();
@@ -89,7 +125,6 @@ const Prestamos = () => {
     }
   };
 
-  // ✅ Obtener libros digitales populares
   const fetchLibrosDigitalesPopulares = async () => {
     try {
       const token = getToken();
@@ -106,7 +141,6 @@ const Prestamos = () => {
     }
   };
 
-  // ✅ Obtener estadísticas generales
   const fetchEstadisticas = async () => {
     try {
       const token = getToken();
@@ -123,7 +157,6 @@ const Prestamos = () => {
     }
   };
 
-  // ✅ Obtener datos para gráfica
   const fetchGraficaData = async () => {
     try {
       const token = getToken();
@@ -140,7 +173,6 @@ const Prestamos = () => {
     }
   };
 
-  // ✅ Obtener libros populares
   const fetchLibrosPopulares = async () => {
     try {
       const token = getToken();
@@ -157,54 +189,46 @@ const Prestamos = () => {
     }
   };
 
-// ✅ Cambiar estado de préstamo (OPTIMIZADO - sin actualización optimista)
-const handleChangeStatus = async (prestamo, nuevoEstado) => {
-  // 🔒 Prevenir clicks múltiples
-  if (processingId === prestamo.id) return;
+  const handleChangeStatus = async (prestamo, nuevoEstado) => {
+    if (processingId === prestamo.id) return;
 
-  if (!window.confirm(`¿Cambiar estado a "${nuevoEstado}"?`)) return;
+    if (!window.confirm(`¿Cambiar estado a "${nuevoEstado}"?`)) return;
 
-  setProcessingId(prestamo.id);
+    setProcessingId(prestamo.id);
 
-  try {
-    const token = getToken();
-    const res = await fetch(`${PRESTAMOS_BASE}/estado/${prestamo.id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ estado: nuevoEstado }),
-    });
+    try {
+      const token = getToken();
+      const res = await fetch(`${PRESTAMOS_BASE}/estado/${prestamo.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      });
 
-    if (!res.ok) {
-      throw new Error(`Error ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      if (data.status === "success") {
+        setPrestamosFisicos((prev) =>
+          prev.map((p) => (p.id === prestamo.id ? { ...p, estado: nuevoEstado } : p))
+        );
+        showNotification(`Estado actualizado a "${nuevoEstado}"`, "success");
+        fetchEstadisticas();
+      }
+    } catch (err) {
+      console.error("Error handleChangeStatus:", err);
+      showNotification("Error al cambiar estado: " + err.message, "error");
+      await fetchPrestamosFisicos();
+    } finally {
+      setProcessingId(null);
     }
+  };
 
-    const data = await res.json();
-
-    // ✅ Actualizar DESPUÉS de confirmar con el backend
-    if (data.status === "success") {
-      setPrestamosFisicos((prev) =>
-        prev.map((p) => (p.id === prestamo.id ? { ...p, estado: nuevoEstado } : p))
-      );
-      showNotification(`Estado actualizado a "${nuevoEstado}"`, "success");
-      
-      // 🔄 Recargar estadísticas
-      fetchEstadisticas();
-    }
-  } catch (err) {
-    console.error("Error handleChangeStatus:", err);
-    showNotification("Error al cambiar estado: " + err.message, "error");
-    
-    // 🔄 Recargar en caso de error para sincronizar
-    await fetchPrestamosFisicos();
-  } finally {
-    setProcessingId(null);
-  }
-};
-
-  // ✅ Notificación toast
   const showNotification = (message, type = "success") => {
     const toast = document.createElement("div");
     toast.className = `notification ${type}`;
@@ -218,10 +242,8 @@ const handleChangeStatus = async (prestamo, nuevoEstado) => {
     }, 2000);
   };
 
-  // ✅ Fecha actual YYYY-MM-DD
   const getToday = () => new Date().toISOString().split("T")[0];
 
-  // ✅ Filtro combinando búsqueda / estado / fecha
   const filteredPrestamos = prestamosFisicos.filter((p) => {
     const coincideBusqueda = `${p.titulo || ""} ${p.nombre || ""} ${p.apellido || ""} ${p.correo || ""}`
       .toLowerCase()
@@ -287,21 +309,26 @@ const handleChangeStatus = async (prestamo, nuevoEstado) => {
   };
 
   const [isMobile, setIsMobile] = useState(false);
-        useEffect(() => {
-          const checkDevice = () => {
-            const mobile =
-              /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-              window.innerWidth < 768;
-            setIsMobile(mobile);
-          };
-          checkDevice();
-          window.addEventListener("resize", checkDevice);
-          return () => window.removeEventListener("resize", checkDevice);
-        }, []);
+  useEffect(() => {
+    const checkDevice = () => {
+      const mobile =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
 
   return (
-    <>
-      {isMobile ? <HeaderMovil /> : <Header />}
+    <div className="dashboard-user">
+      {isMobile ? (
+        <HeaderMovil onLogout={handleLogout} usuario={usuario} />
+      ) : (
+        <Header onLogout={handleLogout} usuario={usuario} />
+      )}
+
       <div className="prestamos-container">
         <div className="prestamos-header">
           <h2>Gestión de Préstamos</h2>
@@ -328,7 +355,6 @@ const handleChangeStatus = async (prestamo, nuevoEstado) => {
           </div>
         </div>
 
-        {/* TAB: FÍSICOS */}
         {activeTab === "fisicos" && (
           <>
             {estadisticas && (
@@ -478,7 +504,6 @@ const handleChangeStatus = async (prestamo, nuevoEstado) => {
           </>
         )}
 
-        {/* TAB: DIGITALES */}
         {activeTab === "digitales" && (
           <>
             <div className="prestamos-actions">
@@ -545,7 +570,6 @@ const handleChangeStatus = async (prestamo, nuevoEstado) => {
           </>
         )}
 
-        {/* TAB: ESTADÍSTICAS */}
         {activeTab === "estadisticas" && (
           <div className="estadisticas-container">
             <div className="chart-card">
@@ -605,8 +629,9 @@ const handleChangeStatus = async (prestamo, nuevoEstado) => {
           </div>
         )}
       </div>
+
       <Footer />
-    </>
+    </div>
   );
 };
 

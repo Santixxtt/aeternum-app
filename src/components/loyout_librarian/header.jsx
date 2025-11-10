@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/img/aeternum_logo.png";
 import "../../assets/css/dashboard_user.css";
@@ -8,6 +8,9 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin}) => {
   const [query] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // ✅ Ref para el menú de usuario
+  const menuRef = useRef(null);
 
   const isActive = (path) => location.pathname === path;
 
@@ -26,19 +29,38 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin}) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // ✅ Efecto para detectar clics fuera del menú
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Si el menú está abierto y el clic fue fuera del menú
+      if (showMenu && menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    // Agregar el listener solo cuando el menú esté abierto
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    // Limpiar el listener
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
+
   const handleNavigate = (path) => {
     navigate(path);
     setShowMenu(false);
   };
 
-      const handleUserIconClick = () => {
-        if (!usuario && onRedirectToLogin) {
-            onRedirectToLogin();
-            return; // Detiene la ejecución aquí
-        } 
-        // Si hay usuario, alterna el menú
-        setShowMenu(!showMenu);
-    };
+  const handleUserIconClick = () => {
+    if (!usuario && onRedirectToLogin) {
+      onRedirectToLogin();
+      return; 
+    } 
+    setShowMenu(!showMenu);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -73,7 +95,7 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin}) => {
               onClick={() => handleNavigate("/loyout_librarian/Usuarios")}
               className={isActive("/loyout_librarian/Usuarios") ? "active" : ""}
             >
-              <i class='bxr  bx-user'></i>  Usuarios
+              <i className='bxr bx-user'></i> Usuarios
             </li>
 
             <li
@@ -95,8 +117,8 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin}) => {
         {/* Search bar */}
         <form className="search-bar" onSubmit={handleSearch}></form>
 
-        {/* Menú usuario */}
-        <div className="user-menu">
+        {/* ✅ Menú usuario con ref */}
+        <div className="user-menu" ref={menuRef}>
 
           <i
             className="bx bx-user-circle user-icon"

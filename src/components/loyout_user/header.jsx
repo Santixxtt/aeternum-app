@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/img/aeternum_logo.png";
 import "../../assets/css/dashboard_user.css";
@@ -10,6 +10,9 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin }) => {
     const [showMenu, setShowMenu] = useState(false);
     const [query, setQuery] = useState("");
     const navigate = useNavigate();
+    
+    // ✅ Ref para el menú de usuario
+    const menuRef = useRef(null);
 
     const isActive = (path) => location.pathname === path;
 
@@ -29,6 +32,26 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin }) => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // Efecto para detectar clics fuera del menú
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Si el menú está abierto y el clic fue fuera del menú
+            if (showMenu && menuRef.current && !menuRef.current.contains(event.target)) {
+                setShowMenu(false);
+            }
+        };
+
+        // Agregar el listener solo cuando el menú esté abierto
+        if (showMenu) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        // Limpiar el listener
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showMenu]);
+
     const handleSearch = (e) => {
         e.preventDefault();
         if (onSearch) onSearch(query);
@@ -43,7 +66,7 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin }) => {
         }
     };
     
-    // ✅ Lógica de redirección CLAVE: Si no hay usuario, redirige INMEDIATAMENTE
+    //  Lógica de redirección CLAVE: Si no hay usuario, redirige inmediatamente
     const handleUserIconClick = () => {
         if (!usuario && onRedirectToLogin) {
             onRedirectToLogin();
@@ -111,7 +134,8 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin }) => {
                     </button>
                 </form>
 
-                <div className="user-menu">
+                {/* ✅ Agregamos ref al contenedor del menú */}
+                <div className="user-menu" ref={menuRef}>
                     <i
                         className="bx bx-user-circle user-icon"
                         onClick={handleUserIconClick}
@@ -128,7 +152,7 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin }) => {
                             </li>
 
                             <li onClick={() => handleNavigate("/loyout_user/mis_prestamos")}>
-                                <i class='bxr  bx-book-library'    ></i>  Mis Prestamos
+                                <i className='bxr bx-book-library'></i> Mis Prestamos
                             </li>
                             
                             <li onClick={handleLogout}>

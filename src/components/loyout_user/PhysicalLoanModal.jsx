@@ -96,8 +96,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
           }
         }
 
-        // 2️⃣ Si no existe, crearlo usando ensure_book_for_loan
-        console.log("📚 Libro no encontrado, creando en BD...");
+        console.log(" Libro no encontrado, creando en BD...");
         
         const createRes = await fetch("http://192.168.1.2:8000/wishlist/ensure-book-for-loan", {
           method: "POST",
@@ -199,7 +198,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
   };
 
   const handleOverlayClick = (e) => {
-    if (e.target.classList.contains("physical-loan-overlay")) {
+    if (e.target === e.currentTarget) {
       onClose();
     }
   };

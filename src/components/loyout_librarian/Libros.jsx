@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaFileExcel,
   FaFilePdf,
@@ -12,6 +13,7 @@ import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
 
 const Libros = () => {
+  const navigate = useNavigate();
   const [libros, setLibros] = useState([]);
   const [autores, setAutores] = useState([]);
   const [editoriales, setEditoriales] = useState([]);
@@ -21,6 +23,7 @@ const Libros = () => {
   const [editingBook, setEditingBook] = useState(null);
   const [creatingBook, setCreatingBook] = useState(false);
   const [processingId, setProcessingId] = useState(null);
+  const [usuario, setUsuario] = useState(null);
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
@@ -38,6 +41,41 @@ const Libros = () => {
 
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
+
+  // ✅ Cargar datos del usuario actual
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) throw new Error("Error obteniendo usuario");
+
+        const data = await response.json();
+        setUsuario(data);
+      } catch (error) {
+        console.error(error);
+        navigate("/");
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
+
+  // ✅ Función handleLogout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("userRole");
+    navigate("/");
+  };
 
   const fetchLibros = async () => {
     try {
@@ -81,7 +119,6 @@ const Libros = () => {
     try {
       const token = getToken();
 
-      // Autores
       const resAutores = await fetch(`${API_BASE}/autores/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -90,7 +127,6 @@ const Libros = () => {
         setAutores(Array.isArray(dataAutores) ? dataAutores : []);
       }
 
-      // Editoriales
       const resEditoriales = await fetch(`${API_BASE}/editoriales/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -99,7 +135,6 @@ const Libros = () => {
         setEditoriales(Array.isArray(dataEditoriales) ? dataEditoriales : []);
       }
 
-      // Géneros
       const resGeneros = await fetch(`${API_BASE}/generos/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -129,7 +164,6 @@ const Libros = () => {
     const nuevoEstado = isActive ? "Desactivado" : "Activo";
     const estadoOriginal = libro.estado;
 
-    // ✅ Actualización optimista
     setLibros((prev) =>
       prev.map((l) =>
         l.id === libro.id ? { ...l, estado: nuevoEstado } : l
@@ -147,7 +181,6 @@ const Libros = () => {
       });
 
       if (!res.ok) {
-        // ❌ Revertir estado si falla
         setLibros((prev) =>
           prev.map((l) =>
             l.id === libro.id ? { ...l, estado: estadoOriginal } : l
@@ -226,7 +259,6 @@ const Libros = () => {
       cover_id: formData.cover_id,
     };
 
-    // ✅ Actualización optimista
     setLibros((prev) =>
       prev.map((l) => (l.id === editingBook.id ? updatedData : l))
     );
@@ -254,7 +286,6 @@ const Libros = () => {
       });
 
       if (!res.ok) {
-        // ❌ Revertir si falla
         await fetchLibros();
         const errorData = await res.json().catch(() => null);
         throw new Error(errorData?.detail || `Error ${res.status}`);
@@ -311,7 +342,6 @@ const Libros = () => {
 
       const newBook = await res.json();
 
-      // ✅ Agregar optimistamente
       const autorNombre = autores.find((a) => a.id === parseInt(formData.autor_id))?.nombre || "";
       const editorialNombre = editoriales.find((e) => e.id === parseInt(formData.editorial_id))?.nombre || "";
       const generoNombre = generos.find((g) => g.id === parseInt(formData.genero_id))?.nombre || "";
@@ -329,8 +359,6 @@ const Libros = () => {
       ]);
 
       showNotification("Libro creado correctamente", "success");
-
-      // ✅ Recargar después de 1 segundo para sincronizar
       setTimeout(() => fetchLibros(), 1000);
     } catch (err) {
       console.error("handleCreateBook error:", err);
@@ -368,8 +396,6 @@ const Libros = () => {
           ? `${BOOKS_BASE}/export/excel`
           : `${BOOKS_BASE}/export/pdf`;
 
-      console.log("📤 Exportando desde:", endpoint);
-
       const res = await fetch(endpoint, {
         method: "GET",
         headers: {
@@ -377,17 +403,12 @@ const Libros = () => {
         },
       });
 
-      console.log("📥 Respuesta status:", res.status);
-
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("❌ Error response:", errorText);
         throw new Error(`Error al exportar: ${res.status} - ${errorText}`);
       }
 
       const blob = await res.blob();
-      console.log("📦 Blob recibido, tamaño:", blob.size);
-
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -437,8 +458,12 @@ const Libros = () => {
   }, []);
 
   return (
-    <>
-      {isMobile ? <HeaderMovil /> : <Header />}
+    <div className="dashboard-user">
+      {isMobile ? (
+        <HeaderMovil onLogout={handleLogout} usuario={usuario} />
+      ) : (
+        <Header onLogout={handleLogout} usuario={usuario} />
+      )}
 
       <div className="libros-container">
         <div className="libros-header">
@@ -710,7 +735,7 @@ const Libros = () => {
       </div>
 
       <Footer />
-    </>
+    </div>
   );
 };
 
