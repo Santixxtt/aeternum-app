@@ -110,7 +110,7 @@ async def create_book(
     genero_id = payload.get("genero_id")
     fecha_publicacion = payload.get("fecha_publicacion")
     cantidad_disponible = payload.get("cantidad_disponible", 1)
-    openlibrary_key = payload.get("openlibrary_key", "")
+    openlibrary_key = payload.get("openlibrary_key", "") or None
     cover_id = payload.get("cover_id", 0)
 
     if not titulo or not autor_id or not editorial_id or not genero_id:
@@ -156,7 +156,7 @@ async def update_book(
     genero_id = payload.get("genero_id")
     fecha_publicacion = payload.get("fecha_publicacion")
     cantidad_disponible = payload.get("cantidad_disponible", 1)
-    openlibrary_key = payload.get("openlibrary_key", "")
+    openlibrary_key = payload.get("openlibrary_key", "") or None
     cover_id = payload.get("cover_id", 0)
 
     if not titulo or not autor_id or not editorial_id or not genero_id:

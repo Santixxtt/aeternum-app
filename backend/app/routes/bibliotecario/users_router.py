@@ -5,6 +5,8 @@ from app.utils.security import get_current_user
 from app.config.database import get_cursor
 from io import BytesIO
 from datetime import datetime
+from app.dependencias.redis import r
+
 
 # Importaciones condicionales para evitar errores si no están instaladas
 try:
@@ -122,8 +124,6 @@ async def update_user_by_admin(
             await conn.rollback()
             raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")
 
-
-# 🚫 Desactivar un usuario (OPTIMIZADO)
 @router.put("/desactivar/{user_id}")
 async def deactivate_user_by_admin(
     user_id: int,
@@ -151,6 +151,9 @@ async def deactivate_user_by_admin(
             """, (user_id,))
             
             await conn.commit()
+
+            r.delete(f"login_attempts:{user_id}")
+            r.delete(f"account_locked:{user_id}")
 
             return {"status": "success", "message": f"Usuario {user_id} desactivado correctamente"}
 
@@ -189,6 +192,9 @@ async def reactivate_user_by_admin(
             """, (user_id,))
             
             await conn.commit()
+
+            r.delete(f"login_attempts:{user_id}")
+            r.delete(f"account_locked:{user_id}")
 
             return {"status": "success", "message": f"Usuario {user_id} reactivado correctamente"}
 

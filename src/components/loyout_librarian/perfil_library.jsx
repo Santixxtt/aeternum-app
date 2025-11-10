@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "./header";
-import HeaderMovil from "./HeaderMovil"; 
+import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
 import "../../assets/css/perfil.css";
 
@@ -99,10 +99,8 @@ export default function Perfil({ isMobile }) {
             const data = await res.json();
             console.log("✅ Datos recibidos del servidor:", data);
             
-            // ACTUALIZAR ESTADO CON DATOS DEL SERVIDOR
             setUsuario(data);
             
-            // ACTUALIZAR FORM DATA TAMBIÉN
             setFormData({
                 nombre: data.nombre || "",
                 apellido: data.apellido || "",
@@ -128,7 +126,7 @@ export default function Perfil({ isMobile }) {
         const token = localStorage.getItem("token");
         
         try {
-            console.log(" Iniciando desactivación de cuenta...");
+            console.log("🔄 Iniciando desactivación de cuenta...");
             
             const res = await fetch("http://192.168.1.2:8000/users/me", {
                 method: "DELETE",
@@ -144,13 +142,11 @@ export default function Perfil({ isMobile }) {
             }
             
             const data = await res.json();
-            console.log(" Cuenta desactivada:", data);
+            console.log("✅ Cuenta desactivada:", data);
             
-            // Limpiar token y redirigir
             localStorage.removeItem("token");
             alert("Cuenta desactivada correctamente. Serás redirigido al inicio.");
             
-            // Asegurar redirección
             setTimeout(() => {
                 navigate("/", { replace: true });
             }, 100);
@@ -174,7 +170,7 @@ export default function Perfil({ isMobile }) {
                         onLogout={handleLogout}
                         usuario={usuario}
                     />
-                    ) : (
+                ) : (
                     <Header  
                         onLogout={handleLogout} 
                         usuario={usuario}
@@ -198,9 +194,8 @@ export default function Perfil({ isMobile }) {
                     onLogout={handleLogout}
                     usuario={usuario}
                 />
-                ) : (
+            ) : (
                 <Header
-                    onSearch={(q) => console.log("Buscar:", q)}
                     onLogout={handleLogout}
                     usuario={usuario}
                 />
@@ -231,7 +226,6 @@ export default function Perfil({ isMobile }) {
 
                         {!editMode ? (
                             <>
-                                {/* Bloque de Información del Usuario (ANTES) */}
                                 <div className="info-list">
                                     <div className="info-item">
                                         <i className="bx bx-user"></i>
@@ -267,16 +261,13 @@ export default function Perfil({ isMobile }) {
                                 </div>
                                 
                                 <hr className="divider" />
-                                <div className="action-buttons-bottom"> {/* Clase renombrada para mayor claridad */}
+                                <div className="action-buttons-bottom">
                                     <button 
                                         className="btn-primary" 
                                         onClick={() => setEditMode(true)}
                                         disabled={editMode}
                                     >
                                         <i className="bx bx-edit"></i> Editar Perfil
-                                    </button>
-                                    <button className="btn-secondary" onClick={() => navigate("/loyout_user/mis_prestamos")}>
-                                        <i className="bx bx-book-reader"></i> Mis Préstamos
                                     </button>
                                     <button className="btn-danger" onClick={handleDesactivar}>
                                         <i className="bx bx-user-x"></i> Eliminar Cuenta
@@ -386,7 +377,6 @@ export default function Perfil({ isMobile }) {
                     </div>
                 </div>
             </main>
-
             <Footer />
         </div>
     );

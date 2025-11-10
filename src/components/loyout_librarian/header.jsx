@@ -131,7 +131,7 @@ const Header = ({ onSearch, onLogout, usuario, onRedirectToLogin}) => {
                   <li className="user-info"> 
                       <i className='bx bx-user'></i> {usuario.nombre} {usuario.apellido}
                   </li>
-                  <li onClick={() => handleNavigate("/loyout_librarian/perfil")}>
+                  <li onClick={() => handleNavigate("/loyout_librarian/perfil_library")}>
                       <i className="bx bx-user"></i> Perfil
                   </li>
                   <li onClick={handleLogoutClick}>

@@ -42,7 +42,6 @@ const Libros = () => {
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
 
-  // ✅ Cargar datos del usuario actual
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -69,7 +68,6 @@ const Libros = () => {
     fetchCurrentUser();
   }, [navigate]);
 
-  // ✅ Función handleLogout
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("access_token");
@@ -266,6 +264,12 @@ const Libros = () => {
 
     try {
       const token = getToken();
+      
+      // Extraer solo el año de la fecha (YYYY-MM-DD -> YYYY)
+      const year = formData.fecha_publicacion 
+        ? formData.fecha_publicacion.split('-')[0] 
+        : null;
+      
       const res = await fetch(`${BOOKS_BASE}/${editingBook.id}`, {
         method: "PUT",
         headers: {
@@ -278,7 +282,7 @@ const Libros = () => {
           autor_id: parseInt(formData.autor_id),
           editorial_id: parseInt(formData.editorial_id),
           genero_id: parseInt(formData.genero_id),
-          fecha_publicacion: formData.fecha_publicacion,
+          fecha_publicacion: year ? parseInt(year) : null,
           cantidad_disponible: parseInt(formData.cantidad_disponible),
           openlibrary_key: formData.openlibrary_key,
           cover_id: formData.cover_id ? parseInt(formData.cover_id) : 0,
@@ -313,15 +317,20 @@ const Libros = () => {
 
     try {
       const token = getToken();
+      
+      const year = formData.fecha_publicacion 
+        ? formData.fecha_publicacion.split('-')[0] 
+        : null;
+      
       const payload = {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         autor_id: parseInt(formData.autor_id),
         editorial_id: parseInt(formData.editorial_id),
         genero_id: parseInt(formData.genero_id),
-        fecha_publicacion: formData.fecha_publicacion,
+        fecha_publicacion: year ? parseInt(year) : null,
         cantidad_disponible: parseInt(formData.cantidad_disponible) || 1,
-        openlibrary_key: formData.openlibrary_key || "",
+        openlibrary_key: formData.openlibrary_key?.trim() || null,
         cover_id: formData.cover_id ? parseInt(formData.cover_id) : 0,
       };
 

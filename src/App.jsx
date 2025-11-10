@@ -27,6 +27,8 @@ import DashboardLibrarian from "./components/loyout_librarian/dashboard_libraria
 import Usuarios from "./components/loyout_librarian/Usuarios";
 import Libros from "./components/loyout_librarian/Libros";
 import Prestamos from "./components/loyout_librarian/Prestamos";
+import Perfil_admin from "./components/loyout_librarian/perfil_library";
+
 
 // Contexto de autenticación
 import AuthProvider from "./auth/AuthProvider";
@@ -82,6 +84,7 @@ function App() {
                 <Route path="usuarios" element={<Usuarios />} />
                 <Route path="libros" element={<Libros />} />
                 <Route path="prestamos" element={<Prestamos />} />
+                <Route path="perfil_library" element={<Perfil_admin isMobile={isMobile} />} />
               </Routes>
             </AuthProvider>
           }
