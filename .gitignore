@@ -26,4 +26,4 @@ dist-ssr
 # Ignorar archivo de entorno con credenciales
 .env
 
-uploads/book_covers/
+backend/uploads/book_covers/
