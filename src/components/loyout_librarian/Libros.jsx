@@ -6,6 +6,9 @@ import {
   FaSearch,
   FaTimes,
   FaSave,
+  FaUpload,
+  FaImage,
+  FaTrash,
 } from "react-icons/fa";
 import "../../assets/css/libros.css";
 import Header from "./header";
@@ -24,6 +27,12 @@ const Libros = () => {
   const [creatingBook, setCreatingBook] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [usuario, setUsuario] = useState(null);
+  
+  // Estados para manejo de imágenes
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
@@ -34,10 +43,12 @@ const Libros = () => {
     cantidad_disponible: 1,
     openlibrary_key: "",
     cover_id: "",
+    imagen_local: null,
   });
 
   const API_BASE = "http://192.168.1.2:8000";
   const BOOKS_BASE = `${API_BASE}/admin/books`;
+  const UPLOADS_BASE = `${API_BASE}/uploads`;
 
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
@@ -150,6 +161,99 @@ const Libros = () => {
     fetchCatalogos();
   }, []);
 
+  // Manejo de imagen
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      alert('Formato no válido. Use: JPG, PNG, WEBP o GIF');
+      return;
+    }
+
+    // Validar tamaño (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen es muy grande. Máximo: 5MB');
+      return;
+    }
+
+    setSelectedImage(file);
+
+    // Crear preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async () => {
+    if (!selectedImage) return null;
+
+    setUploadingImage(true);
+    try {
+      const token = getToken();
+      const formData = new FormData();
+      formData.append('file', selectedImage);
+
+      const res = await fetch(`${UPLOADS_BASE}/book-cover`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || 'Error al subir imagen');
+      }
+
+      const data = await res.json();
+      return data.path; // Retorna la ruta relativa para guardar en BD
+    } catch (error) {
+      console.error('Error subiendo imagen:', error);
+      showNotification('Error al subir imagen: ' + error.message, 'error');
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setFormData({ ...formData, imagen_local: null });
+  };
+
+  const formatYearDisplay = (fecha) => {
+    if (!fecha) return "-";
+    const year = String(fecha);
+    return year.length === 4 ? year : year.split('-')[0];
+  };
+
+  const getBookCoverUrl = (libro) => {
+    // Prioridad: imagen local > OpenLibrary cover
+    if (libro.imagen_local) {
+      // Si la ruta ya incluye 'book_covers/', construir URL completa
+      // Si no, asumir que es la ruta completa desde uploads/
+      const imagePath = libro.imagen_local.startsWith('book_covers/') 
+        ? libro.imagen_local 
+        : libro.imagen_local.replace('uploads/', '');
+      
+      const fullUrl = `${UPLOADS_BASE}/${imagePath}`;
+      console.log('🖼️ URL de imagen generada:', fullUrl);
+      console.log('🖼️ imagen_local desde BD:', libro.imagen_local);
+      
+      return fullUrl;
+    } else if (libro.cover_id) {
+      return `https://covers.openlibrary.org/b/id/${libro.cover_id}-M.jpg`;
+    }
+    return null;
+  };
+
   const handleToggleStatus = async (libro) => {
     const isActive = libro.estado === "Activo";
     const action = isActive ? "desactivar" : "activar";
@@ -207,17 +311,35 @@ const Libros = () => {
   const handleEdit = (libro) => {
     setEditingBook(libro);
     setCreatingBook(false);
+    
+    // Convertir año a formato fecha para el input
+    let fechaFormateada = "";
+    if (libro.fecha_publicacion) {
+      const year = String(libro.fecha_publicacion);
+      // Si solo es el año, convertir a formato YYYY-01-01 para el input date
+      fechaFormateada = year.length === 4 ? `${year}-01-01` : year;
+    }
+    
     setFormData({
       titulo: libro.titulo || "",
       descripcion: libro.descripcion || "",
       autor_id: libro.autor_id || "",
       editorial_id: libro.editorial_id || "",
       genero_id: libro.genero_id || "",
-      fecha_publicacion: libro.fecha_publicacion || "",
+      fecha_publicacion: fechaFormateada,
       cantidad_disponible: libro.cantidad_disponible || 1,
       openlibrary_key: libro.openlibrary_key || "",
       cover_id: libro.cover_id || "",
+      imagen_local: libro.imagen_local || null,
     });
+
+    // Cargar preview si tiene imagen local
+    if (libro.imagen_local) {
+      setImagePreview(getBookCoverUrl(libro));
+    } else {
+      setImagePreview(null);
+    }
+    setSelectedImage(null);
   };
 
   const handleCreate = () => {
@@ -233,28 +355,37 @@ const Libros = () => {
       cantidad_disponible: 1,
       openlibrary_key: "",
       cover_id: "",
+      imagen_local: null,
     });
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   const closeModal = () => {
     setEditingBook(null);
     setCreatingBook(false);
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   const handleSave = async () => {
     if (!editingBook) return;
 
+    let imagePath = formData.imagen_local;
+
+    // Si se seleccionó una nueva imagen, subirla
+    if (selectedImage) {
+      imagePath = await uploadImage();
+      if (!imagePath && selectedImage) {
+        // Si falló la subida, no continuar
+        return;
+      }
+    }
+
     const updatedData = {
       ...editingBook,
-      titulo: formData.titulo,
-      descripcion: formData.descripcion,
-      autor_id: formData.autor_id,
-      editorial_id: formData.editorial_id,
-      genero_id: formData.genero_id,
-      fecha_publicacion: formData.fecha_publicacion,
-      cantidad_disponible: formData.cantidad_disponible,
-      openlibrary_key: formData.openlibrary_key,
-      cover_id: formData.cover_id,
+      ...formData,
+      imagen_local: imagePath,
     };
 
     setLibros((prev) =>
@@ -265,10 +396,12 @@ const Libros = () => {
     try {
       const token = getToken();
       
-      // Extraer solo el año de la fecha (YYYY-MM-DD -> YYYY)
-      const year = formData.fecha_publicacion 
-        ? formData.fecha_publicacion.split('-')[0] 
-        : null;
+      // Manejo seguro de fecha_publicacion
+      let year = null;
+      if (formData.fecha_publicacion) {
+        const fechaStr = String(formData.fecha_publicacion);
+        year = fechaStr.includes('-') ? fechaStr.split('-')[0] : fechaStr;
+      }
       
       const res = await fetch(`${BOOKS_BASE}/${editingBook.id}`, {
         method: "PUT",
@@ -286,6 +419,7 @@ const Libros = () => {
           cantidad_disponible: parseInt(formData.cantidad_disponible),
           openlibrary_key: formData.openlibrary_key,
           cover_id: formData.cover_id ? parseInt(formData.cover_id) : 0,
+          imagen_local: imagePath,
         }),
       });
 
@@ -313,14 +447,28 @@ const Libros = () => {
       return;
     }
 
+    let imagePath = null;
+
+    // Si se seleccionó una imagen, subirla
+    if (selectedImage) {
+      imagePath = await uploadImage();
+      if (!imagePath) {
+        // Si falló la subida, no continuar
+        return;
+      }
+    }
+
     closeModal();
 
     try {
       const token = getToken();
       
-      const year = formData.fecha_publicacion 
-        ? formData.fecha_publicacion.split('-')[0] 
-        : null;
+      // Manejo seguro de fecha_publicacion
+      let year = null;
+      if (formData.fecha_publicacion) {
+        const fechaStr = String(formData.fecha_publicacion);
+        year = fechaStr.includes('-') ? fechaStr.split('-')[0] : fechaStr;
+      }
       
       const payload = {
         titulo: formData.titulo,
@@ -332,6 +480,7 @@ const Libros = () => {
         cantidad_disponible: parseInt(formData.cantidad_disponible) || 1,
         openlibrary_key: formData.openlibrary_key?.trim() || null,
         cover_id: formData.cover_id ? parseInt(formData.cover_id) : 0,
+        imagen_local: imagePath,
       };
 
       const res = await fetch(BOOKS_BASE, {
@@ -363,6 +512,7 @@ const Libros = () => {
           autor_nombre: autorNombre,
           editorial_nombre: editorialNombre,
           genero_nombre: generoNombre,
+          imagen_local: imagePath,
         },
         ...prev,
       ]);
@@ -519,6 +669,7 @@ const Libros = () => {
               <thead>
                 <tr>
                   <th>ID</th>
+                  <th>PORTADA</th>
                   <th>TÍTULO</th>
                   <th>AUTOR</th>
                   <th>EDITORIAL</th>
@@ -537,12 +688,31 @@ const Libros = () => {
                       className={processingId === l.id ? "processing" : ""}
                     >
                       <td>{l.id}</td>
+                      <td>
+                        <div className="book-cover-thumbnail">
+                          {getBookCoverUrl(l) ? (
+                            <img 
+                              src={getBookCoverUrl(l)} 
+                              alt={l.titulo}
+                              onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/50x75?text=Sin+portada';
+                              }}
+                            />
+                          ) : (
+                            <div className="no-cover">
+                              <FaImage />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
                       <td>{l.titulo}</td>
                       <td>{l.autor_nombre || "-"}</td>
                       <td>{l.editorial_nombre || "-"}</td>
                       <td>{l.genero_nombre || "-"}</td>
-                      <td>{l.fecha_publicacion || "-"}</td>
+                      <td>{formatYearDisplay(l.fecha_publicacion)}</td>
                       <td>{l.cantidad_disponible}</td>
+
                       <td>
                         <div className="estado-toggle-wrapper">
                           <button
@@ -569,6 +739,7 @@ const Libros = () => {
                           </button>
                         </div>
                       </td>
+
                       <td>
                         <div className="acciones-wrapper">
                           <button
@@ -585,7 +756,7 @@ const Libros = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="libros-empty">
+                    <td colSpan="10" className="libros-empty">
                       {libros.length === 0
                         ? "No hay libros registrados."
                         : "No hay libros que coincidan con la búsqueda."}
@@ -612,6 +783,52 @@ const Libros = () => {
               </div>
 
               <div className="libros-modal-body">
+                {/* SECCIÓN DE IMAGEN */}
+                <div className="image-upload-section">
+                  <label>Portada del Libro</label>
+                  
+                  <div className="image-upload-container">
+                    {imagePreview ? (
+                      <div className="image-preview-wrapper">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="image-preview"
+                        />
+                        <button
+                          type="button"
+                          className="remove-image-btn"
+                          onClick={clearImage}
+                          title="Eliminar imagen"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="image-upload-placeholder">
+                        <FaImage className="placeholder-icon" />
+                        <p>Sin portada</p>
+                      </div>
+                    )}
+                    
+                    <div className="image-upload-controls">
+                      <input
+                        type="file"
+                        id="imageInput"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleImageSelect}
+                        style={{ display: 'none' }}
+                      />
+                      <label htmlFor="imageInput" className="upload-image-btn">
+                        <FaUpload /> {imagePreview ? 'Cambiar Imagen' : 'Subir Imagen'}
+                      </label>
+                      <p className="image-upload-hint">
+                        JPG, PNG, WEBP o GIF (máx. 5MB)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <label>Título *</label>
                 <input
                   type="text"
@@ -728,12 +945,22 @@ const Libros = () => {
                 <button
                   className="libros-modal-btn save"
                   onClick={creatingBook ? handleCreateBook : handleSave}
+                  disabled={uploadingImage}
                 >
-                  <FaSave /> {creatingBook ? "Crear" : "Guardar"}
+                  {uploadingImage ? (
+                    <>
+                      <i className="bx bx-loader-alt bx-spin"></i> Subiendo...
+                    </>
+                  ) : (
+                    <>
+                      <FaSave /> {creatingBook ? "Crear" : "Guardar"}
+                    </>
+                  )}
                 </button>
                 <button
                   className="libros-modal-btn cancel"
                   onClick={closeModal}
+                  disabled={uploadingImage}
                 >
                   Cancelar
                 </button>

@@ -14,7 +14,8 @@ from app.routes import (
     prestamo_fisico_router,
     estadisticas_router,
 )
-from app.routes.bibliotecario import users_router, book_router, catalogs
+from app.routes.bibliotecario import users_router, book_router, catalogs, upload_routes
+
 from app.config.database import init_db, close_db
 from app.dependencias.redis import r
 
@@ -68,6 +69,7 @@ app.include_router(estadisticas_router.router)
 app.include_router(users_router.router)
 app.include_router(book_router.router)
 app.include_router(catalogs.router)
+app.include_router(upload_routes.router)
 
 
 #  Ruta raíz (necesaria para Railway)

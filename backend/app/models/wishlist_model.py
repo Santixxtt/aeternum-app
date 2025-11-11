@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from datetime import datetime
 from app.config.database import get_cursor
 
 
@@ -175,30 +176,20 @@ async def get_wishlist(usuario_id: int):
 
 async def ensure_book_is_persisted(libro_data: dict) -> int | None:
     """Garantiza que el libro y sus relaciones existan en la DB para la lista de deseos."""
-    
+
     normalized_key = normalize_ol_key(libro_data["openlibrary_key"])
-    
-    # ✅ PRIMERO: Crear las entidades relacionadas ANTES de verificar si existe
+
+    # ✅ Crear las entidades relacionadas (autor, género, editorial)
     nombre_autor, apellido_autor = split_autor_name(libro_data.get("autor", "Desconocido"))
     autor_id = await get_or_create_autor(nombre_autor, apellido_autor)
-    
-    genero_nombre = libro_data.get("genero", "No Clasificado")
-    editorial_nombre = libro_data.get("editorial", "Desconocida")
-    
-    print(f"🔍 Procesando libro: {libro_data.get('titulo')}")
-    print(f"📊 Género recibido: {genero_nombre}")
-    print(f"🏢 Editorial recibida: {editorial_nombre}")
-    
-    genero_id = await get_or_create_genero(genero_nombre)
-    editorial_id = await get_or_create_editorial(editorial_nombre)
-    
+    genero_id = await get_or_create_genero(libro_data.get("genero", "No Clasificado"))
+    editorial_id = await get_or_create_editorial(libro_data.get("editorial", "Desconocida"))
+
     if not autor_id or not genero_id or not editorial_id:
-        print(f"❌ Error al crear entidades: autor_id={autor_id}, genero_id={genero_id}, editorial_id={editorial_id}")
+        print(f"❌ Error al crear entidades relacionadas")
         return None
-    
-    print(f"✅ IDs obtenidos: autor={autor_id}, genero={genero_id}, editorial={editorial_id}")
-    
-    # ✅ SEGUNDO: Verificar si el libro ya existe
+
+    # ✅ Verificar si el libro ya existe
     async with get_cursor() as (conn, cursor):
         try:
             await cursor.execute(
@@ -206,45 +197,54 @@ async def ensure_book_is_persisted(libro_data: dict) -> int | None:
                 (normalized_key,)
             )
             libro_existente = await cursor.fetchone()
-            
+
             if libro_existente:
                 print(f"📚 Libro ya existe con id={libro_existente['id']}")
-                
-                # ✅ ACTUALIZAR género y editorial si están vacíos o son "No Clasificado"/"Desconocida"
-                needs_update = False
-                if not libro_existente['genero_id'] or libro_existente['genero_id'] == genero_id:
-                    needs_update = True
-                if not libro_existente['editorial_id'] or libro_existente['editorial_id'] == editorial_id:
-                    needs_update = True
-                
-                if needs_update:
-                    print(f"🔄 Actualizando género y editorial del libro existente...")
-                    await cursor.execute(
-                        """
-                        UPDATE libros 
-                        SET genero_id = %s, editorial_id = %s 
-                        WHERE id = %s
-                        """,
-                        (genero_id, editorial_id, libro_existente['id'])
-                    )
-                    await conn.commit()
-                    print(f"✅ Libro actualizado")
-                
                 return libro_existente["id"]
+
         except Exception as e:
             print(f"❌ Error al verificar libro existente: {e}")
-    
+
     # ✅ Si no existe, crear el libro
     titulo = libro_data.get("titulo")
     descripcion = libro_data.get("descripcion", "")
     cover_id = libro_data.get("cover_id")
     fecha_publicacion = libro_data.get("fecha_publicacion", None)
-    
+
+    # 🧩 Normalización segura de la fecha_publicacion
+    try:
+        if fecha_publicacion:
+            fecha_str = str(fecha_publicacion).strip()
+
+            # Caso: solo año, ejemplo "2018"
+            if fecha_str.isdigit() and len(fecha_str) == 4:
+                year = int(fecha_str)
+                if 1000 <= year <= 9999:
+                    fecha_publicacion = f"{year}-01-01"
+                else:
+                    fecha_publicacion = None
+
+            # Caso: formato "YYYY-MM-DD"
+            elif len(fecha_str.split("-")) == 3:
+                try:
+                    fecha_publicacion = datetime.strptime(fecha_str, "%Y-%m-%d").date().isoformat()
+                except ValueError:
+                    fecha_publicacion = None
+
+            else:
+                fecha_publicacion = None
+        else:
+            fecha_publicacion = None
+    except Exception as e:
+        print(f"⚠️ Error al normalizar fecha_publicacion: {e}")
+        fecha_publicacion = None
+
+    # ✅ Insertar el nuevo libro
     async with get_cursor() as (conn, cursor):
         try:
             print(f"📝 Creando nuevo libro: {titulo}")
-            print(f"📝 Con: genero_id={genero_id}, editorial_id={editorial_id}")
-            
+            print(f"📝 Con: genero_id={genero_id}, editorial_id={editorial_id}, fecha_publicacion={fecha_publicacion}")
+
             await cursor.execute(
                 """
                 INSERT INTO libros 

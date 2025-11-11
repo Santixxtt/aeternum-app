@@ -498,65 +498,35 @@
 
   .usuarios-header h2 {
     font-size: 1.5rem;
+    margin-bottom: 1rem;  /* ✅ Añadido */
   }
 
+  /* ✨ BOTONES EN HORIZONTAL */
   .usuarios-actions {
-    flex-direction: column;
+    flex-direction: row;  /* ✅ row en lugar de column */
+    justify-content: center;
+    gap: 0.5rem;  /* ✅ Reducido */
   }
 
   .usuarios-search {
     width: 100%;
     max-width: none;
+    margin-bottom: 0.8rem;  /* ✅ Añadido espacio */
   }
 
   .usuarios-btn {
-    width: 100%;
+    width: auto;  /* ✅ auto en lugar de 100% */
+    padding: 0.7rem 1rem;  /* ✅ Más compacto */
+    font-size: 1rem;
     justify-content: center;
+    flex: 1;  /* ✅ Distribuye espacio */
   }
 
-  .usuarios-table-wrapper {
-    overflow-x: auto;
+  /* ✅ Iconos más pequeños */
+  .usuarios-btn svg,
+  .usuarios-btn i {
+    font-size: 1.1rem;
   }
-
-  .usuarios-table {
-    font-size: 0.85rem;
-    min-width: 900px;
-  }
-
-  .usuarios-table th,
-  .usuarios-table td {
-    padding: 0.6rem;
-  }
-
-  .estado-toggle-btn,
-  .accion-btn {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.85rem;
-  }
-
-  .estado-toggle-btn i,
-  .accion-btn i {
-    font-size: 1.2rem;
-  }
-
-  .usuarios-modal {
-    width: 95%;
-  }
-
-  .usuarios-modal-body {
-    padding: 1.5rem;
-  }
-
-  .usuarios-modal-footer {
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-
-  .usuarios-modal-btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
 
 @media (max-width: 480px) {
   .usuarios-table th,
