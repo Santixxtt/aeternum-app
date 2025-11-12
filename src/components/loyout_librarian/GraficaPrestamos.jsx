@@ -16,7 +16,7 @@ const GraficaPrestamos = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://192.168.1.2:8000/estadisticas/bibliotecario/grafica-prestamos', {
+      const response = await fetch('http://10.17.0.26:8000/estadisticas/bibliotecario/grafica-prestamos', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

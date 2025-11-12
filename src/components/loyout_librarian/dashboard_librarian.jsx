@@ -36,7 +36,7 @@ const DashboardLibrarian = () => {
 
     const fetchUser = async () => {
       try {
-        const response = await fetch("http://192.168.1.2:8000/users/me", {
+        const response = await fetch("http://10.17.0.26:8000/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

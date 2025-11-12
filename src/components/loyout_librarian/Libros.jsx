@@ -46,7 +46,7 @@ const Libros = () => {
     imagen_local: null,
   });
 
-  const API_BASE = "http://192.168.1.2:8000";
+  const API_BASE = "http://10.17.0.26:8000";
   const BOOKS_BASE = `${API_BASE}/admin/books`;
   const UPLOADS_BASE = `${API_BASE}/uploads`;
 
@@ -369,31 +369,30 @@ const Libros = () => {
   };
 
   const handleSave = async () => {
-    if (!editingBook) return;
-
-    let imagePath = formData.imagen_local;
-
-    // Si se seleccionó una nueva imagen, subirla
-    if (selectedImage) {
-      imagePath = await uploadImage();
-      if (!imagePath && selectedImage) {
-        // Si falló la subida, no continuar
-        return;
-      }
+    if (!editingBook) {
+      console.error('No hay libro en edición');
+      showNotification("Error: No hay libro seleccionado para editar", "error");
+      return;
     }
 
-    const updatedData = {
-      ...editingBook,
-      ...formData,
-      imagen_local: imagePath,
-    };
-
-    setLibros((prev) =>
-      prev.map((l) => (l.id === editingBook.id ? updatedData : l))
-    );
-    closeModal();
+    // Validar campos obligatorios
+    if (!formData.titulo || !formData.autor_id || !formData.editorial_id || !formData.genero_id) {
+      showNotification("Por favor completa todos los campos obligatorios", "error");
+      return;
+    }
 
     try {
+      let imagePath = formData.imagen_local;
+
+      // Si se seleccionó una nueva imagen, subirla
+      if (selectedImage) {
+        imagePath = await uploadImage();
+        if (!imagePath && selectedImage) {
+          // Si falló la subida, no continuar
+          return;
+        }
+      }
+
       const token = getToken();
       
       // Manejo seguro de fecha_publicacion
@@ -402,6 +401,17 @@ const Libros = () => {
         const fechaStr = String(formData.fecha_publicacion);
         year = fechaStr.includes('-') ? fechaStr.split('-')[0] : fechaStr;
       }
+
+      console.log('📤 Enviando actualización para libro ID:', editingBook.id);
+      console.log('📤 Datos:', {
+        titulo: formData.titulo,
+        autor_id: parseInt(formData.autor_id),
+        editorial_id: parseInt(formData.editorial_id),
+        genero_id: parseInt(formData.genero_id),
+        fecha_publicacion: year ? parseInt(year) : null,
+        cantidad_disponible: parseInt(formData.cantidad_disponible),
+        imagen_local: imagePath,
+      });
       
       const res = await fetch(`${BOOKS_BASE}/${editingBook.id}`, {
         method: "PUT",
@@ -417,22 +427,38 @@ const Libros = () => {
           genero_id: parseInt(formData.genero_id),
           fecha_publicacion: year ? parseInt(year) : null,
           cantidad_disponible: parseInt(formData.cantidad_disponible),
-          openlibrary_key: formData.openlibrary_key,
+          openlibrary_key: formData.openlibrary_key || null,
           cover_id: formData.cover_id ? parseInt(formData.cover_id) : 0,
           imagen_local: imagePath,
         }),
       });
 
+      console.log('📥 Respuesta del servidor:', res.status, res.statusText);
+
       if (!res.ok) {
-        await fetchLibros();
         const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.detail || `Error ${res.status}`);
+        console.error('❌ Error del servidor:', errorData);
+        
+        if (res.status === 404) {
+          throw new Error(`El libro con ID ${editingBook.id} no existe en la base de datos`);
+        }
+        
+        throw new Error(errorData?.detail || `Error ${res.status}: ${res.statusText}`);
       }
 
+      const responseData = await res.json();
+      console.log('✅ Libro actualizado:', responseData);
+
+      // Actualizar el estado local solo después de confirmar éxito
+      await fetchLibros();
+      closeModal();
       showNotification("Libro actualizado correctamente", "success");
+
     } catch (err) {
       console.error("handleSave error:", err);
       showNotification("Error al actualizar libro: " + err.message, "error");
+      // Recargar datos para sincronizar con el servidor
+      await fetchLibros();
     }
   };
 

@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 import aiomysql
 from dotenv import load_dotenv
 
-# 🔹 Buscar el archivo .env subiendo hasta 3 niveles si es necesario
 def find_env_file():
     current_dir = os.path.abspath(os.path.dirname(__file__))
     for _ in range(3):
@@ -14,18 +13,18 @@ def find_env_file():
     return None
 
 env_file = find_env_file()
-print(f"🧩 Intentando cargar .env desde: {env_file}")
+print(f"Cargando variables de entorno desde .env desde: {env_file}")
 if env_file:
     load_dotenv(env_file)
 else:
-    print("⚠️ No se encontró el archivo .env")
+    print("No se encontró el archivo .env")
 
 pool = None
 
 
 async def init_db(app):
     global pool
-    print("🧩 Cargando variables de entorno...")
+    print("Cargando variables de entorno...")
 
     pool = await aiomysql.create_pool(
         host=os.getenv("DB_HOST"),
@@ -36,7 +35,7 @@ async def init_db(app):
         minsize=1,
         maxsize=10,
     )
-    print("✅ Pool de conexiones MySQL inicializado.")
+    print("Pool de conexiones MySQL inicializado.")
 
 
 @asynccontextmanager
@@ -53,4 +52,4 @@ async def close_db():
         pool.close()
         await pool.wait_closed()
         pool = None
-        print("🧹 Pool de conexiones cerrado.")
+        print("Pool de conexiones cerrado.")

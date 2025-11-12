@@ -19,7 +19,7 @@ const LibrosPopulares = ({ tipo = "prestamos" }) => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://192.168.1.2:8000/estadisticas/bibliotecario/libros-populares?tipo=${tipo}`,
+        `http://10.17.0.26:8000/estadisticas/bibliotecario/libros-populares?tipo=${tipo}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -179,9 +179,18 @@ async def update_book(
             detail="Faltan campos requeridos"
         )
 
+    # ✅ Conversión del año a formato completo antes de usarlo
+    if fecha_publicacion:
+        if isinstance(fecha_publicacion, int):
+            fecha_publicacion = str(fecha_publicacion)
+        if isinstance(fecha_publicacion, str) and len(fecha_publicacion) == 4 and fecha_publicacion.isdigit():
+            fecha_publicacion = f"{fecha_publicacion}-01-01"
+    else:
+        fecha_publicacion = None
+
     async with get_cursor() as (conn, cursor):
-        # Si se cambió la imagen, eliminar la anterior
-        if imagen_local is not None:  # Solo si se envió explícitamente
+        # ✅ Manejo de imagen si se actualiza
+        if imagen_local is not None:  
             await cursor.execute(
                 "SELECT imagen_local FROM libros WHERE id = %s",
                 (book_id,)
@@ -189,14 +198,14 @@ async def update_book(
             old_book = await cursor.fetchone()
             
             if old_book and old_book['imagen_local'] and old_book['imagen_local'] != imagen_local:
-                # Eliminar imagen anterior del sistema de archivos
                 old_image_path = UPLOAD_DIR.parent / old_book['imagen_local']
                 if old_image_path.exists():
                     try:
                         old_image_path.unlink()
                     except Exception as e:
                         print(f"⚠️ No se pudo eliminar imagen antigua: {e}")
-        
+
+        # ✅ Actualización del libro
         await cursor.execute("""
             UPDATE libros 
             SET titulo = %s, descripcion = %s, autor_id = %s, editorial_id = %s, 
