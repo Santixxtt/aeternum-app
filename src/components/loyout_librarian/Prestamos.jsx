@@ -37,7 +37,7 @@ const Prestamos = () => {
   const [processingId, setProcessingId] = useState(null);
   const [usuario, setUsuario] = useState(null);
 
-  const API_BASE = "http://10.17.0.26:8000";
+  const API_BASE = "http://10.17.0.32:8000";
   const PRESTAMOS_BASE = `${API_BASE}/prestamos-fisicos`;
   const STATS_BASE = `${API_BASE}/estadisticas/bibliotecario`;
 

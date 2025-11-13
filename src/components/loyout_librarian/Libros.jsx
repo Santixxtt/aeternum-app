@@ -46,7 +46,7 @@ const Libros = () => {
     imagen_local: null,
   });
 
-  const API_BASE = "http://10.17.0.26:8000";
+  const API_BASE = "http://10.17.0.32:8000";
   const BOOKS_BASE = `${API_BASE}/admin/books`;
   const UPLOADS_BASE = `${API_BASE}/uploads`;
 

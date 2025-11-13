@@ -1,42 +1,86 @@
-import { useState, useEffect, useCallback} from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Recomendados from './Recomendados'; 
 import LoadingDots from '../loyout_reusable/LoadingDots'; 
 
 export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, handleGuestAction }) {
   const [libros, setLibros] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   // ✅ Estados para el mensaje flotante
   const [mensaje, setMensaje] = useState("");
   const [tipoMensaje, setTipoMensaje] = useState("exito");
 
-  useEffect(() => {
-    const fetchRecomendaciones = async () => {
+  // ✅ Usar useRef para mantener el offset actualizado
+  const offsetRef = useRef(0);
+  const LIBROS_POR_PAGINA = 12;
+
+  // ✅ Función para cargar libros (reutilizable) - SIN dependencias problemáticas
+  const fetchRecomendaciones = useCallback(async (isLoadingMore = false) => {
+    if (isLoadingMore) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
-      setError(false);
-      try {
-        const queries = ["fantasy", "science", "love", "history", "mystery"];
-        const randomQuery = queries[Math.floor(Math.random() * queries.length)];
-        const res = await fetch(`https://openlibrary.org/search.json?q=${randomQuery}&limit=12`);
+    }
+    
+    setError(false);
+    
+    try {
+      const queries = ["fantasy", "science", "love", "history", "mystery", "adventure", "thriller"];
+      const randomQuery = queries[Math.floor(Math.random() * queries.length)];
+      
+      // ✅ Usar el ref para el offset actual
+      const currentOffset = isLoadingMore ? offsetRef.current : 0;
+      
+      console.log(`📚 Cargando libros: query="${randomQuery}", offset=${currentOffset}, limit=${LIBROS_POR_PAGINA}`);
+      
+      const res = await fetch(
+        `https://openlibrary.org/search.json?q=${randomQuery}&limit=${LIBROS_POR_PAGINA}&offset=${currentOffset}`
+      );
 
-        if (!res.ok) {
-          throw new Error('Error de red o servidor al cargar libros.');
-        }
-
-        const data = await res.json();
-        setLibros(data.docs || []);
-        
-      } catch (e) {
-        console.error("Error al cargar recomendaciones:", e);
-        setError(true);
-      } finally {
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error(`Error de red: ${res.status} ${res.statusText}`);
       }
-    };
 
-    fetchRecomendaciones();
-  }, []); 
+      const data = await res.json();
+      const nuevosLibros = data.docs || [];
+      
+      console.log(`✅ Libros recibidos: ${nuevosLibros.length}`);
+      
+      if (isLoadingMore) {
+        // ✅ Agregar libros nuevos a la lista existente
+        setLibros(prev => [...prev, ...nuevosLibros]);
+        offsetRef.current += LIBROS_POR_PAGINA;
+      } else {
+        // ✅ Primera carga: reemplazar libros
+        setLibros(nuevosLibros);
+        offsetRef.current = LIBROS_POR_PAGINA;
+      }
+      
+      // ✅ Verificar si hay más libros disponibles
+      setHasMore(nuevosLibros.length === LIBROS_POR_PAGINA);
+      
+    } catch (e) {
+      console.error("❌ Error al cargar recomendaciones:", e);
+      setError(true);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, []); // ✅ Sin dependencias - usa refs internos
+
+  // ✅ Carga inicial
+  useEffect(() => {
+    fetchRecomendaciones(false);
+  }, [fetchRecomendaciones]); 
+
+  // ✅ Handler para el botón "Cargar Más"
+  const handleLoadMore = () => {
+    console.log("🔄 Usuario solicitó cargar más libros");
+    fetchRecomendaciones(true);
+  };
 
   const handleAddToWishlist = useCallback(async (book) => {
     console.log("📤 INICIANDO agregar a wishlist:", book.title);
@@ -48,14 +92,12 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
     }
 
     try {
-        // ✅ PASO 1: Obtener detalles adicionales del libro desde OpenLibrary
         let genero = "No Clasificado";
         let editorial = "Desconocida";
         
         console.log("🔍 Buscando género y editorial en OpenLibrary...");
         
         try {
-            // Obtener información completa del work
             const workUrl = `https://openlibrary.org${book.key}.json`;
             console.log("📡 Llamando a:", workUrl);
             const workRes = await fetch(workUrl);
@@ -63,7 +105,6 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
             
             console.log("📚 Datos del work recibidos");
             
-            // Extraer género de subjects
             if (workData.subjects && workData.subjects.length > 0) {
                 genero = workData.subjects[0];
                 console.log("✅ Género encontrado:", genero);
@@ -71,7 +112,6 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
                 console.log("⚠️ No hay subjects en el work");
             }
             
-            // Obtener editorial de las ediciones
             const editionsUrl = `https://openlibrary.org${book.key}/editions.json`;
             console.log("📡 Llamando a:", editionsUrl);
             const editionsRes = await fetch(editionsUrl);
@@ -79,7 +119,6 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
             
             console.log("📚 Ediciones encontradas:", editionsData.entries?.length || 0);
             
-            // Buscar la primera editorial disponible
             if (editionsData.entries) {
                 for (const edition of editionsData.entries) {
                     if (edition.publishers && edition.publishers.length > 0) {
@@ -98,7 +137,6 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
             console.error("❌ Error al obtener detalles de OpenLibrary:", apiError);
         }
 
-        // ✅ PASO 2: Construir el objeto con TODOS los campos
         const libroData = {
             openlibrary_key: book.key || book.openlibrary_key,
             titulo: book.title || book.titulo,
@@ -112,9 +150,8 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
 
         console.log("📦 DATOS FINALES para enviar:", libroData);
 
-        // ✅ PASO 3: Enviar al backend
         console.log("📡 Enviando al backend...");
-        const res = await fetch("http://10.17.0.26:8000/wishlist/add", {
+        const res = await fetch("http://10.17.0.32:8000/wishlist/add", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -131,7 +168,6 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
         const data = await res.json();
         console.log("✅ Respuesta del backend:", data);
 
-        // ✅ CRÍTICO: Actualizar el libro en la lista con el libro_id recibido
         if (data.libro_id) {
             setLibros(prevLibros => 
                 prevLibros.map(lib => 
@@ -153,11 +189,10 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
         setMensaje(`❌ ${error.message}`);
         setTimeout(() => setMensaje(""), 3000);
     }
-}, [handleGuestAction]);
+  }, [handleGuestAction]);
 
   return (
     <section className="dashboard-user">
-      {/* ✅ Mensaje flotante animado */}
       {mensaje && (
         <div className={`mensaje-flotante ${tipoMensaje}`}>
           {mensaje}
@@ -186,15 +221,57 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
         <div className="text-center py-10">No hay recomendaciones disponibles en este momento.</div>
       )}
 
-      {/* Solo renderiza la lista si no está cargando, no hay error, y hay libros */}
       {!loading && !error && libros.length > 0 && (
-        <Recomendados 
-          libros={libros} 
-          usuario={usuario}              
-          onAddToWishlist={handleAddToWishlist} 
-          onBorrow={onBorrow}
-          handleGuestAction={handleGuestAction}  
-        />
+        <>
+          <Recomendados 
+            libros={libros} 
+            usuario={usuario}              
+            onAddToWishlist={handleAddToWishlist} 
+            onBorrow={onBorrow}
+            handleGuestAction={handleGuestAction}  
+          />
+          
+          {/* ✅ Botón "Cargar Más" */}
+          {hasMore && (
+            <div className="text-center" style={{ margin: '40px 0' }}>
+              <button 
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="cta-button load-more-btn"
+                style={{
+                  padding: '12px 30px',
+                  fontSize: '1.1em',
+                  borderRadius: '25px',
+                  border: 'none',
+                  background: loadingMore ? '#ccc' : '#B6407D',
+                  color: '#fff',
+                  cursor: loadingMore ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 12px rgba(182, 64, 125, 0.3)'
+                }}
+              >
+                {loadingMore ? (
+                  <>
+                    <i className="bx bx-loader-alt bx-spin" style={{ marginRight: '8px' }}></i>
+                    Cargando...
+                  </>
+                ) : (
+                  <>
+                    <i className="bx bx-plus-circle" style={{ marginRight: '8px' }}></i>
+                    Cargar Más Libros
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* ✅ Mensaje cuando no hay más libros */}
+          {!hasMore && libros.length > 0 && (
+            <div className="text-center" style={{ margin: '40px 0', color: '#666' }}>
+              <p>📚 Has visto todas las recomendaciones disponibles</p>
+            </div>
+          )}
+        </>
       )}
     </section>
   );

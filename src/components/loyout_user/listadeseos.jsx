@@ -28,7 +28,7 @@ export default function ListaDeseos({ isMobile }) {
 
         const fetchUserData = async () => {
             try {
-                const res = await fetch("http://10.17.0.26:8000/users/me", {
+                const res = await fetch("http://10.17.0.32:8000/users/me", {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -54,28 +54,28 @@ export default function ListaDeseos({ isMobile }) {
     }, [navigate]);
 
     const cargarListaDeseos = async () => {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        if (!token) return;
+    setLoading(true);
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-        try {
-            const res = await fetch("http://10.17.0.26:8000/wishlist/list", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+    try {
+        const res = await fetch("http://10.17.0.32:8000/wishlist/list", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
 
-            if (!res.ok) throw new Error("Error al obtener lista de deseos");
-            const data = await res.json();
-            
-            const librosOrdenados = (data.wishlist || []).reverse(); 
-            setListaDeseos(librosOrdenados);
-            setFilteredLista(librosOrdenados);
-        } catch (error) {
-            console.error("Error al cargar lista de deseos:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+        if (!res.ok) throw new Error("Error al obtener lista de deseos");
+        const data = await res.json();
+        
+        // ✅ YA NO USAR .reverse() - El backend ya envía ordenado correctamente
+        const libros = data.wishlist || [];
+        setListaDeseos(libros);
+        setFilteredLista(libros);
+    } catch (error) {
+        console.error("Error al cargar lista de deseos:", error);
+    } finally {
+        setLoading(false);
+    }
+};
     useEffect(() => {
         cargarListaDeseos();
     }, []);
@@ -118,7 +118,7 @@ export default function ListaDeseos({ isMobile }) {
   setSelectedBook(null);
 
   try {
-    const res = await fetch(`http://10.17.0.26:8000/wishlist/delete/${bookId}`, {
+    const res = await fetch(`http://10.17.0.32:8000/wishlist/delete/${bookId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

@@ -18,7 +18,7 @@ const Alertas = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://10.17.0.26:8000/estadisticas/bibliotecario/alertas', {
+      const response = await fetch('http://10.17.0.32:8000/estadisticas/bibliotecario/alertas', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

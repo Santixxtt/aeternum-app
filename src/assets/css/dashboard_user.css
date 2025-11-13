@@ -607,6 +607,530 @@
     min-width: 120px;
 }
 
+/* Botón Cargar Más */
+.load-more-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.load-more-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.load-more-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.load-more-btn:hover {
+    background: #a1366b !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(182, 64, 125, 0.5) !important;
+}
+
+.load-more-btn:active {
+    transform: translateY(0);
+}
+
+/* ================================================= */
+/* ESTILOS DEL CARRUSEL                              */
+/* ================================================= */
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  min-height: 500px;
+  background: radial-gradient(circle at 10% 20%, rgba(255,0,150,0.2), transparent 40%),
+              radial-gradient(circle at 80% 30%, rgba(0,200,255,0.2), transparent 40%),
+              radial-gradient(circle at 50% 80%, rgba(255,255,0,0.15), transparent 40%),
+              #000;
+  background-size: 200% 200%;
+  animation: aurora 15s ease infinite;
+  padding: 60px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.carousel-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.carousel-welcome {
+  text-align: center;
+  color: #fff;
+  padding: 40px 20px;
+}
+
+.carousel-welcome h1 {
+  font-size: 2.5em;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.carousel-welcome p {
+  font-size: 1.4em;
+  margin-bottom: 40px;
+  padding: 0 50px;
+  line-height: 1.6;
+}
+
+.carousel-loading {
+  text-align: center;
+  color: #fff;
+  padding: 60px 20px;
+}
+
+.carousel-loading p {
+  margin-top: 20px;
+  font-size: 1.2em;
+}
+
+.carousel-book {
+  display: flex;
+  gap: 50px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.5s ease-out;
+}
+
+.carousel-book-image {
+  flex-shrink: 0;
+}
+
+.carousel-book-image img {
+  width: 280px;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
+              0 0 20px rgba(182, 64, 125, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.carousel-book-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
+
+.carousel-book-info h2 {
+  font-size: 2.2em;
+  margin-bottom: 15px;
+  color: #fff;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8),
+               0 0 20px rgba(182, 64, 125, 0.6);
+  font-weight: 700;
+}
+
+.carousel-author,
+.carousel-year {
+  font-size: 1.1em;
+  margin-bottom: 10px;
+  color: #f0f0f0;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+  font-weight: 500;
+}
+
+.carousel-description {
+  flex-grow: 1;
+  margin: 20px 0;
+}
+
+.carousel-description h3 {
+  font-size: 1.4em;
+  margin-bottom: 15px;
+  color: #fff;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
+  font-weight: 600;
+}
+
+.carousel-description p {
+  font-size: 1em;
+  line-height: 1.8;
+  color: #e8e8e8;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9);
+  max-height: 200px;
+  overflow-y: auto;
+  font-weight: 400;
+}
+
+/* Personalizar scrollbar para la descripción */
+.carousel-description p::-webkit-scrollbar {
+  width: 8px;
+}
+
+.carousel-description p::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.carousel-description p::-webkit-scrollbar-thumb {
+  background: rgba(182, 64, 125, 0.6);
+  border-radius: 4px;
+}
+
+.carousel-description p::-webkit-scrollbar-thumb:hover {
+  background: rgba(182, 64, 125, 0.8);
+}
+
+.carousel-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.carousel-actions button {
+  flex: 1;
+  padding: 15px 25px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-actions .btn-wishlist {
+  background: #B6407D;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(182, 64, 125, 0.4);
+}
+
+.carousel-actions .btn-wishlist:hover {
+  background: #d14e94;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(182, 64, 125, 0.6),
+              0 0 20px rgba(182, 64, 125, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.carousel-actions .btn-physical-loan {
+  background: #4A90E2;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+}
+
+.carousel-actions .btn-physical-loan:hover {
+  background: #5ba3ff;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.6),
+              0 0 20px rgba(74, 144, 226, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Botones de navegación */
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+  color: #B6407D;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.carousel-nav:hover {
+  background: #fff;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-nav-left {
+  left: 20px;
+}
+
+.carousel-nav-right {
+  right: 20px;
+}
+
+/* Indicadores de posición */
+.carousel-indicators {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+  margin: 0 auto;
+}
+
+.carousel-indicators .indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.carousel-indicators .indicator:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.carousel-indicators .indicator.active {
+  background: #fff;
+  width: 30px;
+  border-radius: 6px;
+}
+
+/* Animaciones */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive del Carrusel */
+@media (max-width: 1024px) {
+  .carousel-book {
+    gap: 30px;
+    padding: 30px;
+  }
+
+  .carousel-book-image img {
+    width: 220px;
+    height: 330px;
+  }
+
+  .carousel-book-info h2 {
+    font-size: 1.8em;
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-container {
+    min-height: auto;
+    padding: 40px 10px;
+  }
+
+  .carousel-book {
+    flex-direction: column;
+    align-items: center;
+    padding: 25px;
+    gap: 25px;
+  }
+
+  .carousel-book-image img {
+    width: 200px;
+    height: 300px;
+  }
+
+  .carousel-book-info h2 {
+    font-size: 1.6em;
+    text-align: center;
+  }
+
+  .carousel-author,
+  .carousel-year {
+    text-align: center;
+  }
+
+  .carousel-description p {
+    max-height: 150px;
+  }
+
+  .carousel-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .carousel-actions button {
+    width: 100%;
+  }
+
+  .carousel-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5em;
+  }
+
+  .carousel-nav-left {
+    left: 10px;
+  }
+
+  .carousel-nav-right {
+    right: 10px;
+  }
+
+  .carousel-welcome h1 {
+    font-size: 1.8em;
+  }
+
+  .carousel-welcome p {
+    font-size: 1.1em;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-book {
+    padding: 20px;
+  }
+
+  .carousel-book-image img {
+    width: 160px;
+    height: 240px;
+  }
+
+  .carousel-book-info h2 {
+    font-size: 1.4em;
+  }
+
+  .carousel-description h3 {
+    font-size: 1.2em;
+  }
+
+  .carousel-description p {
+    font-size: 0.95em;
+  }
+
+  .carousel-welcome h1 {
+    font-size: 1.5em;
+  }
+
+  .carousel-welcome p {
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-container {
+    min-height: auto;
+    padding: 40px 10px;
+  }
+
+  .carousel-book {
+    flex-direction: column;
+    align-items: center;
+    padding: 25px;
+    gap: 25px;
+  }
+
+  .carousel-book-image img {
+    width: 200px;
+    height: 300px;
+  }
+
+  .carousel-book-info h2 {
+    font-size: 1.6em;
+    text-align: center;
+  }
+
+  .carousel-author,
+  .carousel-year {
+    text-align: center;
+  }
+
+  .carousel-description p {
+    max-height: 150px;
+  }
+
+  .carousel-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .carousel-actions button {
+    width: 100%;
+  }
+
+  .carousel-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5em;
+  }
+
+  .carousel-nav-left {
+    left: 10px;
+  }
+
+  .carousel-nav-right {
+    right: 10px;
+  }
+
+  .carousel-welcome h1 {
+    font-size: 1.8em;
+  }
+
+  .carousel-welcome p {
+    font-size: 1.1em;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-book {
+    padding: 20px;
+  }
+
+  .carousel-book-image img {
+    width: 160px;
+    height: 240px;
+  }
+
+  .carousel-book-info h2 {
+    font-size: 1.4em;
+  }
+
+  .carousel-description h3 {
+    font-size: 1.2em;
+  }
+
+  .carousel-description p {
+    font-size: 0.95em;
+  }
+
+  .carousel-welcome h1 {
+    font-size: 1.5em;
+  }
+
+  .carousel-welcome p {
+    font-size: 1em;
+  }
+}
+
 .comment-menu button {
     /* Estilos generales para los botones dentro del menú */
     padding: 8px;

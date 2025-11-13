@@ -39,6 +39,16 @@ async def get_wishlist_route(current_user: dict = Depends(get_current_user)):
     CACHE_KEY = f"wishlist:{usuario_id}"
     print(f"🔄 Obteniendo wishlist para usuario {usuario_id}")
 
+    # ✅ LEER CACHÉ PRIMERO
+    cached = r.get(CACHE_KEY)
+    if cached:
+        try:
+            print(f"⚡ Cache hit para usuario {usuario_id}")
+            return {"wishlist": json.loads(cached)}
+        except json.JSONDecodeError:
+            print(f"⚠️ Caché corrupto, regenerando...")
+            r.delete(CACHE_KEY)
+
     try:
         async with get_cursor() as (conn, cursor):
             await cursor.execute("""
@@ -61,7 +71,7 @@ async def get_wishlist_route(current_user: dict = Depends(get_current_user)):
                 LEFT JOIN editoriales e ON l.editorial_id = e.id
                 LEFT JOIN generos g ON l.genero_id = g.id
                 WHERE ld.usuario_id = %s
-                ORDER BY ld.fecha_agregado DESC
+                ORDER BY ld.fecha_agregado DESC  -- ✅ Más recientes primero
             """, (usuario_id,))
             deseos = await cursor.fetchall()
 
@@ -79,17 +89,18 @@ async def get_wishlist_route(current_user: dict = Depends(get_current_user)):
 
         print(f"📚 Se encontraron {len(clean_deseos)} libros en wishlist")
 
+        # ✅ GUARDAR EN CACHÉ
         if clean_deseos:
             r.setex(CACHE_KEY, CACHE_TTL_SECONDS, json.dumps(clean_deseos))
 
-        return {"wishlist": clean_deseos or []}
+        return {"wishlist": clean_deseos}
 
     except Exception as e:
         print(f"❌ Error al obtener wishlist: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error al obtener lista de deseos: {str(e)}")
-
+    
 @router.delete("/delete/{book_id}")
 async def delete_from_wishlist(book_id: int, current_user: dict = Depends(get_current_user)):
     usuario_id = int(current_user["sub"])

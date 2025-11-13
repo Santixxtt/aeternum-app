@@ -28,7 +28,7 @@ const EstadisticasGenerales = () => {
         throw new Error('No se encontró token de autenticación. Por favor inicia sesión.');
       }
       
-      const url = 'http://10.17.0.26:8000/estadisticas/bibliotecario/generales';
+      const url = 'http://10.17.0.32:8000/estadisticas/bibliotecario/generales';
       
       const response = await fetch(url, {
         method: 'GET',

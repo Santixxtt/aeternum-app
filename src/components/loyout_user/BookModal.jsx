@@ -102,7 +102,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         const key = cleanOlKey(olKey);
         
         try {
-            const userRatingRes = await fetch(`http://10.17.0.26:8000/reviews/user-rating/${key}`, {
+            const userRatingRes = await fetch(`http://10.17.0.32:8000/reviews/user-rating/${key}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -122,12 +122,12 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         try {
             await fetchUserRating(olKey);
 
-            const ratingsRes = await fetch(`http://10.17.0.26:8000/reviews/ratings/${key}`);
+            const ratingsRes = await fetch(`http://10.17.0.32:8000/reviews/ratings/${key}`);
             const ratingsData = await ratingsRes.json();
             setAverageRating(ratingsData.promedio || 0.0);
             setTotalVotes(ratingsData.total_votos || 0);
 
-            const commentsRes = await fetch(`http://10.17.0.26:8000/reviews/comments/${key}`);
+            const commentsRes = await fetch(`http://10.17.0.32:8000/reviews/comments/${key}`);
             const commentsData = await commentsRes.json();
             setComments(commentsData.comments || []);
             
@@ -311,7 +311,7 @@ const handleDownload = () => {
     setRating(newRating);
 
     try {
-        const res = await fetch("http://10.17.0.26:8000/reviews/rate", {
+        const res = await fetch("http://10.17.0.32:8000/reviews/rate", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -360,7 +360,7 @@ const handleSubmitComment = async (e) => {
   }
 
   try {
-    const res = await fetch("http://10.17.0.26:8000/reviews/comment", {
+    const res = await fetch("http://10.17.0.32:8000/reviews/comment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -427,7 +427,7 @@ useEffect(() => {
         try {
             setLoadingReviews(true); 
             
-            const res = await fetch(`http://10.17.0.26:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://10.17.0.32:8000/reviews/comment/${commentId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -465,7 +465,7 @@ useEffect(() => {
             setLoadingReviews(true);
             setActiveCommentMenu(null); 
 
-            const res = await fetch(`http://10.17.0.26:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://10.17.0.32:8000/reviews/comment/${commentId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -592,7 +592,7 @@ useEffect(() => {
         // ✅ Verificar límite de préstamos antes de abrir el modal
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch("http://10.17.0.26:8000/prestamos-fisicos/mis-prestamos", {
+            const res = await fetch("http://10.17.0.32:8000/prestamos-fisicos/mis-prestamos", {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -625,7 +625,7 @@ const handleDigitalBorrow = async () => {
     const token = localStorage.getItem("token");
     
     try {
-        const res = await fetch("http://10.17.0.26:8000/prestamos/digital", {
+        const res = await fetch("http://10.17.0.32:8000/prestamos/digital", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
