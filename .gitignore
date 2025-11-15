@@ -27,3 +27,4 @@ dist-ssr
 .env
 
 backend/uploads/book_covers/
+.VSCodeCounter
