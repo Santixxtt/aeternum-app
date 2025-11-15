@@ -26,7 +26,7 @@ Desarrollar competencias para planificar, ejecutar, medir y mejorar el proceso p
 ### 1.2 Diagrama de flujo  
 (Puedes insertar una imagen o usar Mermaid)
 
-```mermaid
+```bash
 flowchart TD
 A[Requerimiento] --> B[Análisis]
 B --> C[Diseño]
@@ -35,7 +35,7 @@ D --> E[Pruebas]
 E --> F[Correcciones]
 F --> G[Entrega]
 G --> H[Postmortem]
-
+```
 ### 1.3 Fortalezas y Debilidades
 
 #### Fortalezas:
@@ -45,4 +45,5 @@ G --> H[Postmortem]
 #### Debilidades:
 - Poca documentación de Documentos
 - Revisión tardías
+
 - Pruebas limitas al final
