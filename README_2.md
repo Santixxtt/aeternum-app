@@ -23,20 +23,7 @@ Desarrollar competencias para planificar, ejecutar, medir y mejorar el proceso p
 9. Entrega  
 10. Revisión postmortem  
 
-### 1.2 Diagrama de flujo  
-(Puedes insertar una imagen o usar Mermaid)
-
-```bash
-flowchart TD
-A[Requerimiento] --> B[Análisis]
-B --> C[Diseño]
-C --> D[Codificación]
-D --> E[Pruebas]
-E --> F[Correcciones]
-F --> G[Entrega]
-G --> H[Postmortem]
-```
-### 1.3 Fortalezas y Debilidades
+### 1.2 Fortalezas y Debilidades
 
 #### Fortalezas:
 - Dominio de Herramientas
@@ -47,3 +34,4 @@ G --> H[Postmortem]
 - Revisión tardías
 
 - Pruebas limitas al final
+
