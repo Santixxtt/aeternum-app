@@ -27,7 +27,7 @@
             if (!token) return;
 
             try {
-                const res = await fetch("http://10.17.0.32:8000/users/me", {
+                const res = await fetch("http://192.168.1.2:8000/users/me", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -51,7 +51,7 @@
   try {
     // ✅ Agregar timestamp para evitar caché del navegador
     const timestamp = new Date().getTime();
-    const res = await fetch(`http://10.17.0.32:8000/prestamos-fisicos/mis-prestamos?_t=${timestamp}`, {
+    const res = await fetch(`http://192.168.1.2:8000/prestamos-fisicos/mis-prestamos?_t=${timestamp}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -83,7 +83,7 @@
 
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch(`http://10.17.0.32:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
+    const res = await fetch(`http://192.168.1.2:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${token}` }
     });

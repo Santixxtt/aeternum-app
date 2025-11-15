@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from app.config.database import get_cursor
+from datetime import datetime
+import pytz
 from app.utils.email_prestamos import (
     send_prestamo_confirmacion,
     send_prestamo_cancelado,
@@ -273,3 +275,67 @@ async def actualizar_estado_prestamo(prestamo_id: int, nuevo_estado: str):
             await conn.rollback()
             print("❌ Error actualizar estado:", e)
             return {"status": "error", "message": str(e)}
+
+async def cancelar_prestamos_por_desactivacion_cuenta(usuario_id: int):
+    """
+    Cancela todos los préstamos activos/pendientes cuando un usuario desactiva su cuenta
+    NO envía correo, solo libera los libros
+    """
+    from datetime import datetime
+    import pytz
+    
+    tz = pytz.timezone("America/Bogota")
+    ahora = datetime.now(tz)
+    
+    async with get_cursor() as (conn, cursor):
+        # 1️⃣ Obtener libros que se liberarán
+        await cursor.execute("""
+            SELECT libro_id, id as prestamo_id
+            FROM prestamos_fisicos
+            WHERE usuario_id = %s
+            AND estado IN ('pendiente', 'activo')
+        """, (usuario_id,))
+        
+        libros_a_liberar = await cursor.fetchall()
+        
+        if not libros_a_liberar:
+            print(f"ℹ️ Usuario {usuario_id} no tiene préstamos activos")
+            return {
+                "status": "success", 
+                "message": "No había préstamos activos",
+                "prestamos_cancelados": 0,
+                "libros_liberados": 0
+            }
+        
+        print(f"📚 Usuario {usuario_id} tiene {len(libros_a_liberar)} préstamos a cancelar")
+        
+        # 2️⃣ Cancelar préstamos (USAR fecha_devolucion_real en lugar de fecha_actualizacion)
+        await cursor.execute("""
+            UPDATE prestamos_fisicos
+            SET estado = 'cancelado',
+                fecha_devolucion_real = %s
+            WHERE usuario_id = %s
+            AND estado IN ('pendiente', 'activo')
+        """, (ahora.date(), usuario_id))
+        
+        prestamos_cancelados = cursor.rowcount
+        print(f"✅ {prestamos_cancelados} préstamos marcados como cancelados")
+        
+        # 3️⃣ Liberar libros (incrementar cantidad disponible)
+        for libro in libros_a_liberar:
+            await cursor.execute("""
+                UPDATE libros
+                SET cantidad_disponible = cantidad_disponible + 1
+                WHERE id = %s
+            """, (libro['libro_id'],))
+            print(f"📖 Libro {libro['libro_id']} liberado (préstamo {libro['prestamo_id']})")
+        
+        await conn.commit()
+        
+        print(f"🎉 Proceso completado: {prestamos_cancelados} préstamos cancelados, {len(libros_a_liberar)} libros liberados")
+        
+        return {
+            "status": "success",
+            "prestamos_cancelados": prestamos_cancelados,
+            "libros_liberados": len(libros_a_liberar)
+        }

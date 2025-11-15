@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from datetime import datetime, timedelta
+from app.task.verificar_mora import verificar_y_bloquear_usuarios_con_mora
 import pytz
 
 from app.models.prestamo_fisico_model import (
@@ -138,6 +139,48 @@ async def cancelar_prestamo(prestamo_id: int, current_user: dict = Depends(get_c
     raise HTTPException(status_code=400, detail=resultado.get("message"))
 
 
+async def verificar_y_desbloquear_usuario(usuario_id: int):
+    """
+    Verifica si un usuario ya no tiene préstamos vencidos y lo desbloquea automáticamente
+    """
+    from datetime import datetime
+    import pytz
+    
+    tz = pytz.timezone("America/Bogota")
+    hoy = datetime.now(tz).date()
+    
+    async with get_cursor() as (conn, cursor):
+        # Verificar si tiene préstamos vencidos activos
+        await cursor.execute("""
+            SELECT COUNT(*) as total_vencidos
+            FROM prestamos_fisicos
+            WHERE usuario_id = %s
+            AND estado = 'activo'
+            AND fecha_devolucion < %s
+        """, (usuario_id, hoy))
+        
+        result = await cursor.fetchone()
+        
+        if result['total_vencidos'] == 0:
+            # ✅ No tiene préstamos vencidos, desbloquear
+            await cursor.execute("""
+                UPDATE usuarios
+                SET estado = 'Activo',
+                    motivo_bloqueo = NULL,
+                    fecha_bloqueo = NULL
+                WHERE id = %s
+                AND estado = 'Bloqueado'
+            """, (usuario_id,))
+            
+            await conn.commit()
+            
+            if cursor.rowcount > 0:
+                print(f"🔓 Usuario {usuario_id} desbloqueado automáticamente")
+                return True
+        
+        return False
+
+
 @router.put("/estado/{prestamo_id}")
 async def cambiar_estado_prestamo(
     prestamo_id: int, 
@@ -153,7 +196,7 @@ async def cambiar_estado_prestamo(
     if rol != "bibliotecario":
         raise HTTPException(status_code=403, detail="Acceso restringido")
 
-    # ✅ Obtener datos del préstamo ANTES de actualizar (para enviar correo)
+    # ✅ Obtener datos del préstamo ANTES de actualizar
     async with get_cursor() as (conn, cursor):
         await cursor.execute("""
             SELECT 
@@ -179,20 +222,18 @@ async def cambiar_estado_prestamo(
     resultado = await actualizar_estado_prestamo(prestamo_id, data.estado)
 
     if resultado.get("status") == "success":
-        # ✅ Limpiar todos los cachés relacionados
-        r.delete(f"prestamo:{prestamo_id}")
-        
-        # Limpiar cachés de estadísticas
-        pattern = "prestamos_fisicos_usuario:*"
-        for key in r.scan_iter(pattern):
-            r.delete(key)
+        # ✅ Limpiar cachés
+        limpiar_cache_prestamos(usuario_id=prestamo_info['usuario_id'], prestamo_id=prestamo_id)
 
-        # ✅ Enviar correo si el bibliotecario CANCELA el préstamo
+        # 🔓 NUEVO: Si se marca como "devuelto", verificar desbloqueo automático
+        if data.estado.lower() == "devuelto":
+            await verificar_y_desbloquear_usuario(prestamo_info['usuario_id'])
+
+        # ✅ Enviar correo si se cancela
         if data.estado.lower() == "cancelado":
             try:
                 nombre_completo = f"{prestamo_info['nombre']} {prestamo_info['apellido']}"
                 
-                # Enviar correo de cancelación (no esperar, ejecutar en background)
                 await send_prestamo_cancelado_bibliotecario(
                     recipient_email=prestamo_info['correo'],
                     nombre_usuario=nombre_completo,
@@ -202,9 +243,21 @@ async def cambiar_estado_prestamo(
                 print(f"✅ Correo de cancelación enviado a {prestamo_info['correo']}")
                 
             except Exception as e:
-                # No fallar la operación si el correo falla
-                print(f"⚠️ Error al enviar correo de cancelación: {e}")
+                print(f"⚠️ Error al enviar correo: {e}")
 
         return resultado
 
     raise HTTPException(status_code=400, detail=resultado.get("message"))
+
+@router.post("/verificar-mora-manual")
+async def verificar_mora_manual(current_user: dict = Depends(get_current_user)):
+    """Ejecuta verificación de mora manualmente (solo bibliotecario)"""
+    rol = current_user.get("rol")
+    
+    if rol != "bibliotecario":
+        raise HTTPException(status_code=403, detail="Solo bibliotecarios")
+    
+    from app.task.verificar_mora import verificar_y_bloquear_usuarios_con_mora
+    resultado = await verificar_y_bloquear_usuarios_con_mora()
+    
+    return resultado

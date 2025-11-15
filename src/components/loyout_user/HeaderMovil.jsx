@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"; 
 import logo from "../../assets/img/aeternum_logo.png";
 
@@ -6,15 +6,37 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [showScrollTop, setShowScrollTop] = useState(false); // ✅ NUEVO
   const navigate = useNavigate();
   const location = useLocation(); 
+
+  // ✅ NUEVO: Detectar scroll para mostrar/ocultar botón
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // ✅ NUEVO: Función para scroll suave hacia arriba
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
 
   const handleLogout = () => {
     if (onLogout) onLogout();
     navigate("/");
   };
   
-  // ✅ Función para chequear si la ruta está activa
   const isActive = (path) => {
     if (path === "/loyout_user/dashboard_user") {
       return location.pathname === path;
@@ -22,7 +44,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
     return location.pathname.includes(path);
   };
 
-  // 🔍 Manejar búsqueda
   const handleSearch = (e) => {
     e.preventDefault();
     if (onSearch && query.trim()) {
@@ -42,7 +63,7 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
 
   return (
     <>
-      {/* 🔹 Header superior (logo + hamburguesa) */}
+      {/* Header superior */}
       <header className="header header-movil" id="navbar">
         <div
           className="header-content"
@@ -53,7 +74,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
             padding: "0.75rem 1.25rem",
           }}
         >
-          {/* Logo */}
           <img
             src={logo}
             alt="Aeternum Logo"
@@ -66,7 +86,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
             onClick={() => navigate("/loyout_user/dashboard_user")}
           />
 
-          {/* Icono hamburguesa */}
           <button
             className="menu-toggle"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -82,7 +101,7 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
           </button>
         </div>
 
-        {/* 🔍 Barra de búsqueda desplegable */}
+        {/* Barra de búsqueda desplegable */}
         {searchOpen && (
           <form
             onSubmit={handleSearch}
@@ -130,7 +149,7 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
           </form>
         )}
 
-        {/* 🔹 Menú desplegable (SIN Mis Préstamos) */}
+        {/* Menú desplegable */}
         {menuOpen && (
           <ul
             className="dropdown active"
@@ -146,7 +165,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
               zIndex: 999,
             }}
           >
-            {/* Info del usuario */}
             {usuario && (
               <li
                 style={{
@@ -161,7 +179,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
               </li>
             )}
             
-            {/* Perfil */}
             <li
               style={{
                 listStyle: "none",
@@ -179,7 +196,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
               <i className="bx bx-face"></i> Perfil
             </li>
             
-            {/* Cerrar sesión */}
             <li
               style={{
                 listStyle: "none",
@@ -200,7 +216,7 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
         )}
       </header>
 
-      {/* 🔍 BOTÓN FLOTANTE DE BÚSQUEDA (Centro, destacado) */}
+      {/* 🔍 Botón flotante de búsqueda */}
       <button
         className="floating-search-btn"
         onClick={() => setSearchOpen(!searchOpen)}
@@ -236,10 +252,46 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
         <i className={`bx ${searchOpen ? "bx-x" : "bx-search"}`}></i>
       </button>
 
-      {/* 🔹 Barra inferior de navegación */}
+      {/* 🆕 BOTÓN SCROLL TO TOP */}
+{showScrollTop && (
+  <button
+    className="scroll-to-top-btn"
+    onClick={scrollToTop}
+    style={{
+      position: "fixed",
+      bottom: "100px",
+      right: "20px",
+      width: "50px",
+      height: "50px",
+      borderRadius: "50%",
+      background: "linear-gradient(135deg, #b150a8 0%, #8e3d85 100%)", // ✅ NUEVO COLOR
+      border: "none",
+      boxShadow: "0 4px 12px rgba(177, 80, 168, 0.4)", // ✅ NUEVO COLOR
+      cursor: "pointer",
+      zIndex: 1000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#fff",
+      fontSize: "24px",
+      animation: "fadeInUp 0.3s ease",
+      transition: "all 0.3s ease",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "scale(1.1) translateY(-3px)";
+      e.currentTarget.style.boxShadow = "0 6px 18px rgba(177, 80, 168, 0.6)"; // ✅ NUEVO COLOR
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "scale(1) translateY(0)";
+      e.currentTarget.style.boxShadow = "0 4px 12px rgba(177, 80, 168, 0.4)"; // ✅ NUEVO COLOR
+    }}
+  >
+    <i className="bx bx-up-arrow-alt"></i>
+  </button>
+)}
+
+      {/* Barra inferior de navegación */}
       <nav className="bottom-nav dashboard-nav">
-        
-        {/* INICIO */}
         <Link
           to="/loyout_user/dashboard_user"
           className={`nav-item ${isActive("/loyout_user/dashboard_user") ? "active" : ""}`}
@@ -248,7 +300,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
           <span>Inicio</span>
         </Link>
 
-        {/* CATÁLOGO */}
         <Link 
           to="/catalogo" 
           className={`nav-item ${isActive("/catalogo") ? "active" : ""}`}
@@ -257,10 +308,8 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
           <span>Catálogo</span>
         </Link>
 
-        {/* Espacio vacío para el botón flotante */}
         <div style={{ flex: 1 }}></div>
 
-        {/* LISTA DE DESEOS */}
         <Link 
           to="/loyout_user/lista_deseos" 
           className={`nav-item ${isActive("/loyout_user/lista_deseos") ? "active" : ""}`} 
@@ -269,7 +318,6 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
           <span>Deseos</span>
         </Link>
 
-        {/* MIS PRÉSTAMOS */}
         <Link 
           to="/loyout_user/mis_prestamos" 
           className={`nav-item ${isActive("/loyout_user/mis_prestamos") ? "active" : ""}`} 
@@ -278,6 +326,20 @@ const HeaderMovil = ({ onLogout, onSearch, usuario }) => {
           <span>Préstamos</span>
         </Link>
       </nav>
+
+      {/* Estilos para la animación */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </>
   );
 };

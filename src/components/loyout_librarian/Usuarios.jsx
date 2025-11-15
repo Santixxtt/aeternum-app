@@ -31,7 +31,7 @@ const Usuarios = () => {
     num_identificacion: "",
   });
 
-  const API_BASE = "http://10.17.0.32:8000";
+  const API_BASE = "http://192.168.1.2:8000";
   const ADMIN_USERS_BASE = `${API_BASE}/admin/users`;
   const REGISTER_BASE = `${API_BASE}/auth/register`;
 

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import "../../assets/css/PoliticaPrivacidad.css"
+import "../../assets/css/PoliticaPrivacidad.css";
+import Bottomnav from "./Bottomnav"; 
 import Footer from "../loyout_reusable/footer";
 
 function PoliticaPrivacidad() {
@@ -12,6 +13,8 @@ function PoliticaPrivacidad() {
 
   return (
     <div className="privacy-page">
+      <Bottomnav />
+      
       <main className="privacy-container">
         <nav className="back-nav">
           <button onClick={() => navigate(-1)} className="back-link">

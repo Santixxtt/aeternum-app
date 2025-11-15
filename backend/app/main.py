@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+from app.scheduler import start_scheduler, stop_scheduler
 
 # Importar routers
 from app.routes import (
@@ -28,9 +29,9 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://192.168.1.2:5173",  
-    "http://10.17.0.32:8000",
+    "http://192.168.1.2:8000",
     "http://127.0.0.1:5173",
-    "http://10.17.0.32:8000"
+    "http://192.168.1.2:8000"
 ]
 
 app.add_middleware(
@@ -49,6 +50,16 @@ async def startup_event():
     await init_db(app)
     FastAPICache.init(InMemoryBackend())  # cache local segura
     print(" Cache en memoria inicializada.")
+
+@app.on_event("startup")
+async def startup_event():
+    start_scheduler()
+    print("✅ Aplicación iniciada con scheduler activo")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    stop_scheduler()
+    print("🛑 Aplicación detenida")
 
 @app.on_event("shutdown")
 async def shutdown_event():

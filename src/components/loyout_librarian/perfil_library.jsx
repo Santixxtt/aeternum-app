@@ -33,7 +33,7 @@ export default function Perfil({ isMobile }) {
         setLoading(true);
 
         try {
-            const res = await fetch("http://10.17.0.32:8000/users/me", {
+            const res = await fetch("http://192.168.1.2:8000/users/me", {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -79,7 +79,7 @@ export default function Perfil({ isMobile }) {
         try {
             console.log("📤 Enviando datos:", formData);
             
-            const res = await fetch("http://10.17.0.32:8000/users/me", {
+            const res = await fetch("http://192.168.1.2:8000/users/me", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -128,7 +128,7 @@ export default function Perfil({ isMobile }) {
         try {
             console.log("🔄 Iniciando desactivación de cuenta...");
             
-            const res = await fetch("http://10.17.0.32:8000/users/me", {
+            const res = await fetch("http://192.168.1.2:8000/users/me", {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             });

@@ -84,23 +84,43 @@ async def update_current_user(
         "num_identificacion": user.get("num_identificacion"),
     }
 
-
 @router.delete("/me")
 async def delete_current_user(current_user: dict = Depends(get_current_user)):
     """
     'Elimina' el usuario marcando estado = 'Desactivado'
+    Y cancela automáticamente todos sus préstamos activos
     """
     user_id = current_user.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="Token inválido o expirado.")
 
+    # 🔥 NUEVO: Cancelar préstamos antes de desactivar
+    from app.models.prestamo_fisico_model import cancelar_prestamos_por_desactivacion_cuenta
+    
+    try:
+        resultado_prestamos = await cancelar_prestamos_por_desactivacion_cuenta(int(user_id))
+        print(f"📚 Préstamos cancelados: {resultado_prestamos}")
+    except Exception as e:
+        print(f"⚠️ Error al cancelar préstamos: {e}")
+        # No fallar si hay error, continuar con la desactivación
+
+    # Desactivar cuenta
     result = await deactivate_user_by_id(user_id)
 
     if not result:
         raise HTTPException(status_code=500, detail="No se pudo desactivar el usuario")
 
-    return {"status": "success", "message": "Usuario desactivado correctamente"}
+    # 🧹 Limpiar caché de Redis
+    from app.dependencias.redis import r
+    r.delete(f"login_attempts:{user_id}")
+    r.delete(f"account_locked:{user_id}")
+    r.delete(f"prestamos_fisicos_usuario:{user_id}")
 
+    return {
+        "status": "success", 
+        "message": "Usuario desactivado correctamente",
+        "prestamos_cancelados": resultado_prestamos.get("prestamos_cancelados", 0)
+    }
 
 @router.put("/reactivar/{user_id}")
 async def reactivate_user_account(

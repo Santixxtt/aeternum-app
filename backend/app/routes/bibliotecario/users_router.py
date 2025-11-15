@@ -133,7 +133,6 @@ async def deactivate_user_by_admin(
 
     async with get_cursor() as (conn, cursor):
         try:
-            # Verificar que existe
             await cursor.execute("SELECT id, estado FROM usuarios WHERE id = %s", (user_id,))
             user = await cursor.fetchone()
             
@@ -143,7 +142,21 @@ async def deactivate_user_by_admin(
             if user["estado"] == "Desactivado":
                 return {"status": "warning", "message": "El usuario ya está desactivado"}
 
-            # Desactivar directamente
+            resultado_prestamos = {
+                "status": "success",
+                "prestamos_cancelados": 0,
+                "libros_liberados": 0
+            }
+
+            from app.models.prestamo_fisico_model import cancelar_prestamos_por_desactivacion_cuenta
+            
+            try:
+                resultado_prestamos = await cancelar_prestamos_por_desactivacion_cuenta(user_id)
+                print(f"📚 Préstamos cancelados del usuario {user_id}: {resultado_prestamos}")
+            except Exception as e:
+                print(f"⚠️ Error al cancelar préstamos: {e}")
+
+            # Desactivar cuenta
             await cursor.execute("""
                 UPDATE usuarios 
                 SET estado = 'Desactivado'
@@ -152,10 +165,21 @@ async def deactivate_user_by_admin(
             
             await conn.commit()
 
+            # 🔥 NUEVO: Marcar sesión como inválida en Redis
+            r.setex(f"user_session_invalid:{user_id}", 3600, "1")  # 1 hora de bloqueo
+            
+            # Limpiar caché
             r.delete(f"login_attempts:{user_id}")
             r.delete(f"account_locked:{user_id}")
+            r.delete(f"prestamos_fisicos_usuario:{user_id}")
+            r.delete(f"user_data:{user_id}")  # ✅ Limpiar caché de usuario
 
-            return {"status": "success", "message": f"Usuario {user_id} desactivado correctamente"}
+            return {
+                "status": "success", 
+                "message": f"Usuario {user_id} desactivado correctamente",
+                "prestamos_cancelados": resultado_prestamos.get("prestamos_cancelados", 0),
+                "libros_liberados": resultado_prestamos.get("libros_liberados", 0)
+            }
 
         except HTTPException:
             raise
@@ -164,7 +188,6 @@ async def deactivate_user_by_admin(
             raise HTTPException(status_code=500, detail=f"Error al desactivar: {str(e)}")
 
 
-# ✅ Reactivar un usuario (OPTIMIZADO)
 @router.put("/reactivar/{user_id}")
 async def reactivate_user_by_admin(
     user_id: int,
@@ -174,7 +197,6 @@ async def reactivate_user_by_admin(
 
     async with get_cursor() as (conn, cursor):
         try:
-            # Verificar que existe
             await cursor.execute("SELECT id, estado FROM usuarios WHERE id = %s", (user_id,))
             user = await cursor.fetchone()
             
@@ -184,7 +206,7 @@ async def reactivate_user_by_admin(
             if user["estado"] == "Activo":
                 return {"status": "warning", "message": "El usuario ya está activo"}
 
-            # Reactivar directamente
+            # Reactivar cuenta
             await cursor.execute("""
                 UPDATE usuarios 
                 SET estado = 'Activo'
@@ -193,8 +215,11 @@ async def reactivate_user_by_admin(
             
             await conn.commit()
 
+            # 🔥 NUEVO: Limpiar marca de sesión inválida
+            r.delete(f"user_session_invalid:{user_id}")
             r.delete(f"login_attempts:{user_id}")
             r.delete(f"account_locked:{user_id}")
+            r.delete(f"user_data:{user_id}")  # ✅ Limpiar caché de usuario
 
             return {"status": "success", "message": f"Usuario {user_id} reactivado correctamente"}
 

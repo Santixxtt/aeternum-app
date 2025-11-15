@@ -36,7 +36,7 @@ function Footer() {
           <ul>
             <li><a href="#">Facebook</a></li>
             <li><a href="#">Twitter</a></li>
-            <li><a href="#">Instagram</a></li>
+            <li><a href="https://www.instagram.com/aeternum538?igsh=MXhoaXRrNmFvdDlleQ==">Instagram</a></li>
           </ul>
         </div>
       </div>

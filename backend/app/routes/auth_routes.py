@@ -16,32 +16,39 @@ async def login(user_data: UserLogin):
     if not user:
         raise HTTPException(status_code=401, detail="Correo o contraseña son incorrectos.")
 
-    if user.get("estado") == "Desactivado":
-        raise HTTPException(status_code=403, detail="Correo o contraseña son incorrectos.")
-
     user_id = user["id"]
     attempts_key = f"login_attempts:{user_id}"
     lock_key = f"account_locked:{user_id}"
 
-    # Verificar si la cuenta está bloqueada en Redis
+    # Verificar si la cuenta está bloqueada en Redis (intentos fallidos)
     if r.get(lock_key):
         raise HTTPException(status_code=403, detail="Cuenta bloqueada temporalmente. Intenta más tarde.")
 
-    # Intentos fallidos actuales
+    # Verificar contraseña ANTES de chequear estado
     attempts = int(r.get(attempts_key) or 0)
 
-    # Contraseña incorrecta
     if not verify_password(user_data.clave, user["clave"]):
         attempts += 1
-        r.setex(attempts_key, LOCK_TIME_SECONDS, attempts)  # guarda intentos y expira en 15 min
+        r.setex(attempts_key, LOCK_TIME_SECONDS, attempts)
 
         remaining = MAX_ATTEMPTS - attempts
 
         if attempts >= MAX_ATTEMPTS:
-            r.setex(lock_key, LOCK_TIME_SECONDS, "1")  # bloquea la cuenta
+            r.setex(lock_key, LOCK_TIME_SECONDS, "1")
             raise HTTPException(status_code=403, detail="Cuenta bloqueada por intentos fallidos.")
 
         raise HTTPException(status_code=401, detail=f"Clave incorrecta. Intentos restantes: {remaining}")
+
+    # AHORA SÍ verificar estado de la cuenta (DESPUÉS de validar contraseña)
+    if user.get("estado") == "Bloqueado":
+        motivo = user.get("motivo_bloqueo", "Cuenta bloqueada por el administrador")
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Tu cuenta está bloqueada. Motivo: {motivo}. Contacta a la biblioteca."
+        )
+
+    if user.get("estado") == "Desactivado":
+        raise HTTPException(status_code=403, detail="Tu cuenta ha sido desactivada. Contacta al administrador.")
 
     # Login correcto, limpiar intentos
     r.delete(attempts_key)

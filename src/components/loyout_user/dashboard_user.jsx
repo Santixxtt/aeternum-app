@@ -34,7 +34,7 @@ export default function DashboardUser({ isMobile }) {
 
     const fetchUserData = async () => {
       try {
-        const res = await fetch("http://10.17.0.32:8000/users/me", {
+        const res = await fetch("http://192.168.1.2:8000/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -202,7 +202,7 @@ export default function DashboardUser({ isMobile }) {
         fecha_publicacion: book.first_publish_year?.toString() || null
       };
 
-      const res = await fetch("http://10.17.0.32:8000/wishlist/add", {
+      const res = await fetch("http://192.168.1.2:8000/wishlist/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

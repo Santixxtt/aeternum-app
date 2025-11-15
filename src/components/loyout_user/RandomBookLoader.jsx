@@ -151,7 +151,7 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
         console.log("📦 DATOS FINALES para enviar:", libroData);
 
         console.log("📡 Enviando al backend...");
-        const res = await fetch("http://10.17.0.32:8000/wishlist/add", {
+        const res = await fetch("http://192.168.1.2:8000/wishlist/add", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

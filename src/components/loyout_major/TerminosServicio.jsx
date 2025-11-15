@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import "../../assets/css/TerminosServicio.css"
+import "../../assets/css/TerminosServicio.css";
+import Bottomnav from "./Bottomnav";
 import Footer from "../loyout_reusable/footer";
 
 function TerminosServicio() {
@@ -12,6 +13,7 @@ function TerminosServicio() {
 
   return (
     <div className="terms-page">
+      <Bottomnav />
       <main className="terms-container">
         <nav className="back-nav">
           <button onClick={() => navigate(-1)} className="back-link">
