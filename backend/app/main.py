@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+from app.dependencias.redis import init_redis, close_redis, redis_client
 from app.scheduler import start_scheduler, stop_scheduler
+from fastapi.staticfiles import StaticFiles
 
-# Importar routers
 from app.routes import (
     auth_routes,
     users_me,
@@ -16,14 +17,9 @@ from app.routes import (
     estadisticas_router,
 )
 from app.routes.bibliotecario import users_router, book_router, catalogs, upload_routes
-
 from app.config.database import init_db, close_db
-from app.dependencias.redis import r
 
 app = FastAPI(title="Aeternum API", version="1.0.0")
-
-
-# Configuración CORS
 
 origins = [
     "http://localhost",
@@ -31,7 +27,6 @@ origins = [
     "http://192.168.1.2:5173",  
     "http://192.168.1.2:8000",
     "http://127.0.0.1:5173",
-    "http://192.168.1.2:8000"
 ]
 
 app.add_middleware(
@@ -43,31 +38,26 @@ app.add_middleware(
     expose_headers=["Content-Disposition"]  
 )
 
-# Eventos de inicio y cierre
 @app.on_event("startup")
 async def startup_event():
-    print(" Iniciando aplicación Aeternum...")
     await init_db(app)
-    FastAPICache.init(InMemoryBackend())  # cache local segura
-    print(" Cache en memoria inicializada.")
-
-@app.on_event("startup")
-async def startup_event():
-    start_scheduler()
-    print("✅ Aplicación iniciada con scheduler activo")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    stop_scheduler()
-    print("🛑 Aplicación detenida")
+    await init_redis()
+    FastAPICache.init(InMemoryBackend())
+    
+    try:
+        start_scheduler()
+    except Exception as e:
+        print(f"Error iniciando scheduler: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    try:
+        stop_scheduler()
+    except Exception as e:
+        print(f"Error deteniendo scheduler: {e}")
+    
+    await close_redis()
     await close_db()
-    print("🧹 Aplicación detenida correctamente.")
-
-
-#  Rutas principales
 
 app.include_router(auth_routes.router)
 app.include_router(users_me.router)
@@ -81,13 +71,25 @@ app.include_router(users_router.router)
 app.include_router(book_router.router)
 app.include_router(catalogs.router)
 app.include_router(upload_routes.router)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-
-#  Ruta raíz (necesaria para Railway)
 @app.get("/")
 async def root():
+    redis_status = "Desconectado"
+    if redis_client:
+        try:
+            await redis_client.ping()
+            redis_status = "Conectado"
+        except:
+            redis_status = "Error de conexión"
+    
     return {
-        "message": "🚀 Aeternum API desplegada correctamente en Railway",
-        "database": "✅ Conectada",
-        "redis": "✅ Disponible" if hasattr(r, "ping") else "⚠️ Fallback local",
+        "message": "Aeternum API",
+        "status": "online",
+        "version": "1.0.0",
+        "services": {
+            "database": "Conectada",
+            "redis": redis_status,
+            "cache": "Activo",
+        }
     }

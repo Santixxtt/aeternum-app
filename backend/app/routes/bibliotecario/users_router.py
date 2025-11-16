@@ -5,8 +5,7 @@ from app.utils.security import get_current_user
 from app.config.database import get_cursor
 from io import BytesIO
 from datetime import datetime
-from app.dependencias.redis import r
-
+import asyncio
 
 # Importaciones condicionales para evitar errores si no están instaladas
 try:
@@ -30,6 +29,46 @@ router = APIRouter(prefix="/admin/users", tags=["Admin - Users"])
 def verify_librarian_role(current_user: dict):
     if current_user.get("rol") != "bibliotecario":
         raise HTTPException(status_code=403, detail="Acceso denegado: se requiere rol de bibliotecario.")
+
+
+# ✅ FUNCIÓN HELPER PARA LIMPIAR CACHÉ DE FORMA ASYNC
+async def clear_user_cache_async(user_id: int):
+    """Limpia el caché del usuario de forma asíncrona"""
+    from app.dependencias.redis import r
+    
+    # Ejecutar operaciones de Redis en un thread pool para no bloquear
+    def _clear_cache():
+        try:
+            keys_to_delete = [
+                f"user_session_invalid:{user_id}",
+                f"login_attempts:{user_id}",
+                f"account_locked:{user_id}",
+                f"prestamos_fisicos_usuario:{user_id}",
+                f"user_data:{user_id}"
+            ]
+            for key in keys_to_delete:
+                r.delete(key)
+        except Exception as e:
+            print(f"⚠️ Error limpiando caché: {e}")
+    
+    # Ejecutar en background sin bloquear
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _clear_cache)
+
+
+# ✅ FUNCIÓN HELPER PARA MARCAR SESIÓN INVÁLIDA
+async def invalidate_session_async(user_id: int):
+    """Invalida la sesión del usuario de forma asíncrona"""
+    from app.dependencias.redis import r
+    
+    def _invalidate():
+        try:
+            r.setex(f"user_session_invalid:{user_id}", 3600, "1")
+        except Exception as e:
+            print(f"⚠️ Error invalidando sesión: {e}")
+    
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _invalidate)
 
 
 # 📋 Obtener todos los usuarios (OPTIMIZADO)
@@ -108,6 +147,9 @@ async def update_user_by_admin(
             
             await conn.commit()
 
+            # 🔥 Limpiar caché de forma asíncrona
+            await clear_user_cache_async(user_id)
+
             # Obtener usuario actualizado
             await cursor.execute("""
                 SELECT id, nombre, apellido, correo, rol, estado, tipo_identificacion, num_identificacion
@@ -123,6 +165,7 @@ async def update_user_by_admin(
         except Exception as e:
             await conn.rollback()
             raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")
+
 
 @router.put("/desactivar/{user_id}")
 async def deactivate_user_by_admin(
@@ -165,14 +208,11 @@ async def deactivate_user_by_admin(
             
             await conn.commit()
 
-            # 🔥 NUEVO: Marcar sesión como inválida en Redis
-            r.setex(f"user_session_invalid:{user_id}", 3600, "1")  # 1 hora de bloqueo
-            
-            # Limpiar caché
-            r.delete(f"login_attempts:{user_id}")
-            r.delete(f"account_locked:{user_id}")
-            r.delete(f"prestamos_fisicos_usuario:{user_id}")
-            r.delete(f"user_data:{user_id}")  # ✅ Limpiar caché de usuario
+            # 🔥 OPTIMIZADO: Operaciones de caché en paralelo y async
+            await asyncio.gather(
+                invalidate_session_async(user_id),
+                clear_user_cache_async(user_id)
+            )
 
             return {
                 "status": "success", 
@@ -215,11 +255,8 @@ async def reactivate_user_by_admin(
             
             await conn.commit()
 
-            # 🔥 NUEVO: Limpiar marca de sesión inválida
-            r.delete(f"user_session_invalid:{user_id}")
-            r.delete(f"login_attempts:{user_id}")
-            r.delete(f"account_locked:{user_id}")
-            r.delete(f"user_data:{user_id}")  # ✅ Limpiar caché de usuario
+            # 🔥 OPTIMIZADO: Limpiar caché de forma asíncrona
+            await clear_user_cache_async(user_id)
 
             return {"status": "success", "message": f"Usuario {user_id} reactivado correctamente"}
 
@@ -243,7 +280,6 @@ async def export_users_excel(current_user: dict = Depends(get_current_user)):
         )
 
     async with get_cursor() as (conn, cursor):
-        # ✅ ELIMINADO created_at de la query
         await cursor.execute("""
             SELECT 
                 id as 'ID',
@@ -318,7 +354,6 @@ async def export_users_pdf(current_user: dict = Depends(get_current_user)):
         )
 
     async with get_cursor() as (conn, cursor):
-        # ✅ ELIMINADO created_at de la query
         await cursor.execute("""
             SELECT 
                 id,

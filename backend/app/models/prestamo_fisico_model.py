@@ -130,16 +130,34 @@ async def obtener_prestamos_usuario(usuario_id: int):
         try:
             await cursor.execute("""
                 SELECT 
-                    id, libro_id, titulo, autor, openlibrary_key, fecha_solicitud,
-                    fecha_recogida, fecha_devolucion, fecha_devolucion_real,
-                    estado, correo_confirmacion_enviado, correo_recordatorio_enviado,
-                    correo_atrasado_enviado, created_at
-                FROM prestamos_fisicos
-                WHERE usuario_id = %s
-                ORDER BY created_at DESC
+                    pf.id,
+                    pf.libro_id,
+                    pf.titulo,
+                    pf.autor,
+                    pf.openlibrary_key,
+                    pf.fecha_solicitud,
+                    pf.fecha_recogida,
+                    pf.fecha_devolucion,
+                    pf.fecha_devolucion_real,
+                    pf.estado,
+                    pf.correo_confirmacion_enviado,
+                    pf.correo_recordatorio_enviado,
+                    pf.correo_atrasado_enviado,
+                    pf.created_at,
+
+                    -- SOLO LOS CAMPOS QUE EXISTEN EN TU TABLA LIBROS
+                    l.cover_id,
+                    l.imagen_local
+
+                FROM prestamos_fisicos pf
+                JOIN libros l ON pf.libro_id = l.id
+                WHERE pf.usuario_id = %s
+                ORDER BY pf.created_at DESC
             """, (usuario_id,))
+
             prestamos = await cursor.fetchall()
             return {"status": "success", "prestamos": prestamos}
+
         except Exception as e:
             print(f"❌ Error obtener_prestamos_usuario:", e)
             return {"status": "error", "message": str(e)}

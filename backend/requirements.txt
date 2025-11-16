@@ -22,7 +22,7 @@ pymongo
 
 # Caché
 fastapi-cache2
-redis
+redis[asyncio]
 
 # Para Excel
 pandas==2.1.4

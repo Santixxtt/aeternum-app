@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import {
@@ -23,15 +23,21 @@ import Footer from "../loyout_reusable/footer";
 
 const Prestamos = () => {
   const navigate = useNavigate();
+  
+  // Estados
   const [prestamosFisicos, setPrestamosFisicos] = useState([]);
   const [prestamosDigitales, setPrestamosDigitales] = useState([]);
   const [estadisticas, setEstadisticas] = useState(null);
   const [graficaData, setGraficaData] = useState([]);
   const [librosPopulares, setLibrosPopulares] = useState([]);
   const [librosDigitalesPopulares, setLibrosDigitalesPopulares] = useState([]);
+  
+  // Filtros
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("todos");
   const [fechaFiltro, setFechaFiltro] = useState("todos");
+  
+  // UI
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("fisicos");
   const [processingId, setProcessingId] = useState(null);
@@ -44,7 +50,7 @@ const Prestamos = () => {
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
 
-  // ✅ Cargar datos del usuario actual
+  // ✅ Cargar usuario actual
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -59,7 +65,6 @@ const Prestamos = () => {
         });
 
         if (!response.ok) throw new Error("Error obteniendo usuario");
-
         const data = await response.json();
         setUsuario(data);
       } catch (error) {
@@ -71,7 +76,6 @@ const Prestamos = () => {
     fetchCurrentUser();
   }, [navigate]);
 
-  // ✅ Función handleLogout
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("access_token");
@@ -79,119 +83,74 @@ const Prestamos = () => {
     navigate("/");
   };
 
-  useEffect(() => {
-    fetchPrestamosFisicos();
-    fetchPrestamosDigitales();
-    fetchEstadisticas();
-    fetchGraficaData();
-    fetchLibrosPopulares();
-    fetchLibrosDigitalesPopulares();
-  }, []);
-
-  const fetchPrestamosFisicos = async () => {
+  // 🔥 OPTIMIZACIÓN: Cargar todos los datos en paralelo
+  const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
       const token = getToken();
-      const res = await fetch(`${STATS_BASE}/prestamos-recientes?limit=100`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const timestamp = Date.now(); // Para evitar caché del navegador
 
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-      const json = await res.json();
+      // ✅ Ejecutar todas las peticiones en paralelo
+      const [
+        fisicosRes,
+        digitalesRes,
+        statsRes,
+        graficaRes,
+        popularesRes,
+        digitalesPopRes
+      ] = await Promise.all([
+        fetch(`${STATS_BASE}/prestamos-recientes?limit=100&_t=${timestamp}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE}/prestamos/all-digital?_t=${timestamp}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${STATS_BASE}/generales?_t=${timestamp}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${STATS_BASE}/grafica-prestamos?_t=${timestamp}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${STATS_BASE}/libros-populares?tipo=prestamos&_t=${timestamp}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE}/prestamos/digitales-populares?limit=10&_t=${timestamp}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      ]);
 
-      setPrestamosFisicos(json.prestamos || []);
+      // Procesar respuestas
+      const [fisicos, digitales, stats, grafica, populares, digitalesPop] = await Promise.all([
+        fisicosRes.json(),
+        digitalesRes.json(),
+        statsRes.json(),
+        graficaRes.json(),
+        popularesRes.json(),
+        digitalesPopRes.json()
+      ]);
+
+      setPrestamosFisicos(fisicos.prestamos || []);
+      setPrestamosDigitales(digitales.prestamos || []);
+      setEstadisticas(stats.estadisticas || null);
+      setGraficaData(grafica.grafica || []);
+      setLibrosPopulares(populares.libros || []);
+      setLibrosDigitalesPopulares(digitalesPop.libros || []);
+
     } catch (err) {
-      console.error("Error fetchPrestamosFisicos:", err);
-      setPrestamosFisicos([]);
+      console.error("Error cargando datos:", err);
+      showNotification("Error al cargar datos", "error");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchPrestamosDigitales = async () => {
-    try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/prestamos/all-digital`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-      const json = await res.json();
-
-      setPrestamosDigitales(json.prestamos || []);
-    } catch (err) {
-      console.error("Error fetchPrestamosDigitales:", err);
-      setPrestamosDigitales([]);
-    }
-  };
-
-  const fetchLibrosDigitalesPopulares = async () => {
-    try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/prestamos/digitales-populares?limit=10`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-      const json = await res.json();
-
-      setLibrosDigitalesPopulares(json.libros || []);
-    } catch (err) {
-      console.error("Error fetchLibrosDigitalesPopulares:", err);
-    }
-  };
-
-  const fetchEstadisticas = async () => {
-    try {
-      const token = getToken();
-      const res = await fetch(`${STATS_BASE}/generales`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-      const json = await res.json();
-
-      setEstadisticas(json.estadisticas || null);
-    } catch (err) {
-      console.error("Error fetchEstadisticas:", err);
-    }
-  };
-
-  const fetchGraficaData = async () => {
-    try {
-      const token = getToken();
-      const res = await fetch(`${STATS_BASE}/grafica-prestamos`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-      const json = await res.json();
-
-      setGraficaData(json.grafica || []);
-    } catch (err) {
-      console.error("Error fetchGraficaData:", err);
-    }
-  };
-
-  const fetchLibrosPopulares = async () => {
-    try {
-      const token = getToken();
-      const res = await fetch(`${STATS_BASE}/libros-populares?tipo=prestamos`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-      const json = await res.json();
-
-      setLibrosPopulares(json.libros || []);
-    } catch (err) {
-      console.error("Error fetchLibrosPopulares:", err);
-    }
-  };
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
   const handleChangeStatus = async (prestamo, nuevoEstado) => {
     if (processingId === prestamo.id) return;
-
     if (!window.confirm(`¿Cambiar estado a "${nuevoEstado}"?`)) return;
 
     setProcessingId(prestamo.id);
@@ -208,22 +167,33 @@ const Prestamos = () => {
       });
 
       if (!res.ok) {
-        throw new Error(`Error ${res.status}`);
+        const errorData = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
+        throw new Error(errorData.detail || `Error ${res.status}`);
       }
 
       const data = await res.json();
 
       if (data.status === "success") {
+        // ✅ Actualizar estado local inmediatamente
         setPrestamosFisicos((prev) =>
           prev.map((p) => (p.id === prestamo.id ? { ...p, estado: nuevoEstado } : p))
         );
         showNotification(`Estado actualizado a "${nuevoEstado}"`, "success");
-        fetchEstadisticas();
+        
+        // Solo recargar estadísticas (más ligero)
+        try {
+          const statsRes = await fetch(`${STATS_BASE}/generales?_t=${Date.now()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const stats = await statsRes.json();
+          setEstadisticas(stats.estadisticas || null);
+        } catch (e) {
+          console.error("Error actualizando estadísticas:", e);
+        }
       }
     } catch (err) {
       console.error("Error handleChangeStatus:", err);
-      showNotification("Error al cambiar estado: " + err.message, "error");
-      await fetchPrestamosFisicos();
+      showNotification("Error: " + err.message, "error");
     } finally {
       setProcessingId(null);
     }
@@ -233,46 +203,64 @@ const Prestamos = () => {
     const toast = document.createElement("div");
     toast.className = `notification ${type}`;
     toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === "success" ? "#4caf50" : "#f44336"};
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    `;
     document.body.appendChild(toast);
 
-    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => (toast.style.opacity = "1"), 100);
     setTimeout(() => {
-      toast.classList.remove("show");
+      toast.style.opacity = "0";
       setTimeout(() => toast.remove(), 300);
-    }, 2000);
+    }, 2500);
   };
 
   const getToday = () => new Date().toISOString().split("T")[0];
 
-  const filteredPrestamos = prestamosFisicos.filter((p) => {
-    const coincideBusqueda = `${p.titulo || ""} ${p.nombre || ""} ${p.apellido || ""} ${p.correo || ""}`
-      .toLowerCase()
-      .includes(busqueda.toLowerCase());
+  // 🔥 OPTIMIZACIÓN: Usar useMemo para filtros pesados
+  const filteredPrestamos = useMemo(() => {
+    return prestamosFisicos.filter((p) => {
+      const coincideBusqueda = `${p.titulo || ""} ${p.nombre || ""} ${p.apellido || ""} ${p.correo || ""}`
+        .toLowerCase()
+        .includes(busqueda.toLowerCase());
 
-    const coincideEstado =
-      estadoFiltro === "todos" ||
-      (p.estado && p.estado.toLowerCase() === estadoFiltro.toLowerCase());
+      const coincideEstado =
+        estadoFiltro === "todos" ||
+        (p.estado && p.estado.toLowerCase() === estadoFiltro.toLowerCase());
 
-    const hoy = getToday();
-    let coincideFecha = true;
+      const hoy = getToday();
+      let coincideFecha = true;
 
-    if (fechaFiltro === "hoy_recoger") {
-      coincideFecha = p.fecha_recogida === hoy && p.estado === "activo";
-    } else if (fechaFiltro === "hoy_devolver") {
-      coincideFecha = p.fecha_devolucion === hoy && p.estado === "activo";
-    } else if (fechaFiltro === "vencidos") {
-      coincideFecha = p.fecha_devolucion < hoy && (p.estado === "activo" || p.estado === "atrasado");
-    }
+      if (fechaFiltro === "hoy_recoger") {
+        coincideFecha = p.fecha_recogida === hoy && p.estado === "activo";
+      } else if (fechaFiltro === "hoy_devolver") {
+        coincideFecha = p.fecha_devolucion === hoy && p.estado === "activo";
+      } else if (fechaFiltro === "vencidos") {
+        coincideFecha = p.fecha_devolucion < hoy && (p.estado === "activo" || p.estado === "atrasado");
+      }
 
-    return coincideBusqueda && coincideEstado && coincideFecha;
-  });
+      return coincideBusqueda && coincideEstado && coincideFecha;
+    });
+  }, [prestamosFisicos, busqueda, estadoFiltro, fechaFiltro]);
 
-  const filteredDigitales = prestamosDigitales.filter((p) => {
-    const coincideBusqueda = `${p.titulo || ""} ${p.usuario_nombre || ""} ${p.usuario_apellido || ""} ${p.usuario_correo || ""}`
-      .toLowerCase()
-      .includes(busqueda.toLowerCase());
-    return coincideBusqueda;
-  });
+  const filteredDigitales = useMemo(() => {
+    return prestamosDigitales.filter((p) => {
+      const coincideBusqueda = `${p.titulo || ""} ${p.usuario_nombre || ""} ${p.usuario_apellido || ""} ${p.usuario_correo || ""}`
+        .toLowerCase()
+        .includes(busqueda.toLowerCase());
+      return coincideBusqueda;
+    });
+  }, [prestamosDigitales, busqueda]);
 
   const getEstadoColor = (estado) => {
     const colores = {
@@ -286,7 +274,7 @@ const Prestamos = () => {
     return colores[estado] || "#9e9e9e";
   };
 
-  const getPieData = () => {
+  const getPieData = useMemo(() => {
     const estados = {
       pendiente: 0,
       activo: 0,
@@ -306,9 +294,10 @@ const Prestamos = () => {
       value: cantidad,
       color: getEstadoColor(estado),
     }));
-  };
+  }, [prestamosFisicos]);
 
   const [isMobile, setIsMobile] = useState(false);
+  
   useEffect(() => {
     const checkDevice = () => {
       const mobile =
@@ -338,13 +327,13 @@ const Prestamos = () => {
               className={`tab-btn ${activeTab === "fisicos" ? "active" : ""}`}
               onClick={() => setActiveTab("fisicos")}
             >
-              <i className="bx bx-book"></i> Físicos
+              <i className="bx bx-book"></i> Físicos ({filteredPrestamos.length})
             </button>
             <button
               className={`tab-btn ${activeTab === "digitales" ? "active" : ""}`}
               onClick={() => setActiveTab("digitales")}
             >
-              <i className="bx bx-laptop"></i> Digitales
+              <i className="bx bx-laptop"></i> Digitales ({filteredDigitales.length})
             </button>
             <button
               className={`tab-btn ${activeTab === "estadisticas" ? "active" : ""}`}
@@ -595,7 +584,7 @@ const Prestamos = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={getPieData()}
+                      data={getPieData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -604,7 +593,7 @@ const Prestamos = () => {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {getPieData().map((entry, index) => (
+                      {getPieData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
