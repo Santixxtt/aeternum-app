@@ -106,26 +106,46 @@
   font-weight: 500;
 }
 
-/* 🧾 Tabla */
 .usuarios-table-wrapper {
   background: #fff;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: auto; /* scroll horizontal y vertical */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  max-height: 500px;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  max-height: 600px;
+  position: relative;
 }
+
+/* Scrollbar personalizado */
+.usuarios-table-wrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.usuarios-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.usuarios-table-wrapper::-webkit-scrollbar-thumb {
+  background: #b150a8;
+  border-radius: 10px;
+}
+
+.usuarios-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #8a3d80;
+}
+
 
 .usuarios-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 1100px;
 }
 
 .usuarios-table thead {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3;
   background-color: #b150a8;
   color: #fff;
 }
@@ -540,4 +560,170 @@
     font-size: 0.75rem;
   }
 }
+}
+
+/* ========================================
+   🔥 ESTADOS DE PROCESAMIENTO MEJORADOS
+   Agregar esto AL FINAL de usuarios.css
+   ======================================== */
+
+/* 🔄 Botón en estado de procesamiento con animación shimmer */
+.estado-toggle-btn.processing {
+  background: linear-gradient(90deg, #666 0%, #999 50%, #666 100%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.5s infinite !important;
+  cursor: wait !important;
+  pointer-events: none !important;
+  color: #fff !important;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 🔄 Spinner más visible y suave */
+.estado-toggle-btn.processing .bx-spin {
+  font-size: 20px;
+  animation: spin-smooth 1.2s linear infinite;
+}
+
+@keyframes spin-smooth {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 📋 Fila de tabla en procesamiento - efecto visual suave */
+.usuarios-table tbody tr.processing {
+  background-color: rgba(177, 80, 168, 0.1) !important;
+  position: relative;
+  animation: pulse-row 2s infinite;
+}
+
+@keyframes pulse-row {
+  0%, 100% { 
+    background-color: rgba(177, 80, 168, 0.08);
+  }
+  50% { 
+    background-color: rgba(177, 80, 168, 0.15);
+  }
+}
+
+.usuarios-table tbody tr.processing td {
+  opacity: 0.75;
+}
+
+/* 🚫 Deshabilitar TODOS los botones toggle mientras uno procesa */
+/* SIN cambiar los colores originales */
+.estado-toggle-btn:disabled:not(.processing) {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.7);
+  pointer-events: none !important;
+  /* NO sobrescribir background-color ni color */
+}
+
+/* 🚫 Deshabilitar botones de editar mientras procesa */
+/* SIN cambiar los colores originales */
+.accion-btn.edit:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.7);
+  pointer-events: none !important;
+  /* NO sobrescribir background-color ni color */
+}
+
+/* ⚠️ Notificación de advertencia (warning) */
+.notification.warning {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.5);
+  font-weight: 600;
+}
+
+/* ℹ️ Notificación de info (azul) */
+.notification.info {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.5);
+  font-weight: 600;
+}
+
+/* 🎨 Mejor transición para estados activo/inactivo */
+.estado-toggle-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto ripple al hacer clic */
+.estado-toggle-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%);
+  transition: width 0.5s, height 0.5s;
+}
+
+.estado-toggle-btn:active:not(:disabled):not(.processing)::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* 🎯 Mantener los estilos originales de hover para activo/inactivo */
+.estado-toggle-btn.active:not(:disabled):not(.processing):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.estado-toggle-btn.inactive:not(:disabled):not(.processing):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+}
+
+/* 📱 Responsive para móvil - ajustes de procesamiento */
+@media (max-width: 768px) {
+  .estado-toggle-btn.processing {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.8rem;
+  }
+  
+  .estado-toggle-btn.processing .bx-spin {
+    font-size: 18px;
+  }
+  
+  .notification {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* 🔥 Efecto de "cargando" en toda la fila */
+.usuarios-table tbody tr.processing::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(177, 80, 168, 0.1) 50%, 
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: loading-sweep 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes loading-sweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

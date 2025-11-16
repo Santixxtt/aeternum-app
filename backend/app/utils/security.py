@@ -28,45 +28,79 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         if rol is None:
             raise HTTPException(status_code=401, detail="Token sin rol asignado.")
         
-        # 🔥 NUEVO: Verificar si la sesión fue invalidada manualmente
+        # 🔥 CRÍTICO: Verificar sesión invalidada ANTES de consultar BD
         from app.dependencias.redis import r
-        if r.get(f"user_session_invalid:{user_id}"):
+        session_invalid_key = f"user_session_invalid:{user_id}"
+        
+        session_invalid_value = r.get(session_invalid_key)
+        print(f"🔍 Verificando sesión usuario {user_id}: user_session_invalid={session_invalid_value}")
+        
+        if session_invalid_value:
+            print(f"⛔ Usuario {user_id} tiene sesión invalidada en Redis")
             raise HTTPException(
                 status_code=401, 
                 detail="Tu sesión ha sido cerrada por el administrador. Inicia sesión nuevamente."
             )
         
-        # Verificar estado actual del usuario en BD
+        # 🔥 IMPORTANTE: SIEMPRE consultar BD - NO usar caché aquí
         async with get_cursor() as (conn, cursor):
-            await cursor.execute(
-                "SELECT estado, motivo_bloqueo FROM usuarios WHERE id = %s",
-                (int(user_id),)
-            )
+            # 🔍 LOG: Ver query exacta
+            query = "SELECT estado, motivo_bloqueo FROM usuarios WHERE id = %s"
+            print(f"🔍 Ejecutando query: {query} con user_id={user_id}")
+            
+            await cursor.execute(query, (int(user_id),))
             user_data = await cursor.fetchone()
             
             if not user_data:
+                print(f"⚠️ Usuario {user_id} NO encontrado en BD")
                 raise HTTPException(status_code=401, detail="Usuario no encontrado.")
             
-            if user_data["estado"] == "Desactivado":
+            estado_actual = user_data["estado"]
+            print(f"🔍 Usuario {user_id} - Estado en BD: {estado_actual}")
+            
+            # 🔥 NUEVO: Ver si el estado cambió desde el último check
+            cache_estado_key = f"last_estado_check:{user_id}"
+            ultimo_estado = r.get(cache_estado_key)
+            
+            if ultimo_estado and ultimo_estado.decode('utf-8') != estado_actual:
+                print(f"⚠️ CAMBIO DE ESTADO DETECTADO para usuario {user_id}:")
+                print(f"   - Último estado conocido: {ultimo_estado.decode('utf-8')}")
+                print(f"   - Estado actual en BD: {estado_actual}")
+            
+            # Guardar estado actual para tracking
+            r.setex(cache_estado_key, 60, estado_actual)  # 60 segundos
+            
+            if estado_actual == "Desactivado":
+                print(f"⛔ Usuario {user_id} está desactivado")
                 raise HTTPException(
                     status_code=403, 
                     detail="Tu cuenta ha sido desactivada. Contacta al administrador."
                 )
             
-            if user_data["estado"] == "Bloqueado":
+            if estado_actual == "Bloqueado":
                 motivo = user_data.get("motivo_bloqueo", "Cuenta bloqueada")
+                print(f"⛔ Usuario {user_id} está bloqueado: {motivo}")
                 raise HTTPException(
                     status_code=403, 
                     detail=f"Tu cuenta está bloqueada. Motivo: {motivo}. Contacta a la biblioteca."
                 )
         
+        print(f"✅ Usuario {user_id} validado correctamente con estado: {estado_actual}")
         return {
             "sub": user_id,
             "rol": rol
         }
         
-    except JWTError:
+    except HTTPException:
+        raise
+    except JWTError as e:
+        print(f"❌ Error JWT: {e}")
         raise HTTPException(status_code=401, detail="Token inválido o expirado.")
+    except Exception as e:
+        print(f"❌ Error inesperado en get_current_user: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Error interno del servidor.")
 
 pwd_context = CryptContext(
     schemes=["bcrypt"], 

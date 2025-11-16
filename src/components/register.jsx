@@ -209,7 +209,6 @@ export default function Registro() {
               <i className={showPassword ? "bx bx-hide" : "bx bx-show"}></i>
             </span>
 
-            {/* CÓDIGO DE BARRA DE FORTALEZA CORREGIDO */}
             <div className="register-password-strength-container">
               <div
                 className={`register-password-strength 
@@ -230,7 +229,6 @@ export default function Registro() {
               <p className="register-error-message">{errors.clave}</p>
             )}
           </div>
-          {/* FIN CÓDIGO DE BARRA DE FORTALEZA CORREGIDO */}
 
           <div className="register-consent">
             <input
@@ -241,8 +239,8 @@ export default function Registro() {
             />
             <label htmlFor="consent">
               He leído y acepto la{" "}
-              <a
-                href="politica_privacidad.html"
+              <a 
+                href="/politica-privacidad"
                 target="_blank"
                 rel="noreferrer"
               >

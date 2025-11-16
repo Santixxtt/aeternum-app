@@ -30,28 +30,52 @@ def verify_librarian_role(current_user: dict):
     if current_user.get("rol") != "bibliotecario":
         raise HTTPException(status_code=403, detail="Acceso denegado: se requiere rol de bibliotecario.")
 
-
-# ✅ FUNCIÓN HELPER PARA LIMPIAR CACHÉ DE FORMA ASYNC
-async def clear_user_cache_async(user_id: int):
-    """Limpia el caché del usuario de forma asíncrona"""
+async def clear_user_cache_async(user_id: int, include_session_invalidation: bool = False):
+    """
+    Limpia el caché del usuario de forma asíncrona
+    
+    Args:
+        user_id: ID del usuario
+        include_session_invalidation: Si True, también limpia la marca de sesión inválida
+    """
     from app.dependencias.redis import r
     
-    # Ejecutar operaciones de Redis en un thread pool para no bloquear
     def _clear_cache():
         try:
+            print(f"🧹 Iniciando limpieza de caché para usuario {user_id} (include_session_invalidation={include_session_invalidation})")
+            
+            # 🔥 Lista completa de claves posibles de caché de usuario
             keys_to_delete = [
-                f"user_session_invalid:{user_id}",
                 f"login_attempts:{user_id}",
                 f"account_locked:{user_id}",
                 f"prestamos_fisicos_usuario:{user_id}",
-                f"user_data:{user_id}"
+                f"user_data:{user_id}",
+                f"user_estado:{user_id}",
+                f"user_info:{user_id}",
+                f"user_state:{user_id}",
             ]
+            
+            # Solo limpiar sesión inválida si se especifica (al reactivar)
+            if include_session_invalidation:
+                keys_to_delete.append(f"user_session_invalid:{user_id}")
+                print(f"  ⚠️ Se incluirá limpieza de user_session_invalid:{user_id}")
+            
+            # Intentar borrar todas las claves
+            deleted_count = 0
             for key in keys_to_delete:
-                r.delete(key)
+                result = r.delete(key)
+                if result:
+                    deleted_count += 1
+                    print(f"    ✅ Eliminada: {key}")
+                
+            print(f"✅ Limpieza completada: {deleted_count} claves eliminadas de {len(keys_to_delete)} intentadas")
+            
+            # ⚠️ IMPORTANTE: NO hacer ninguna actualización de BD aquí
+            # Esta función es SOLO para Redis
+            
         except Exception as e:
-            print(f"⚠️ Error limpiando caché: {e}")
+            print(f"❌ Error limpiando caché: {e}")
     
-    # Ejecutar en background sin bloquear
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, _clear_cache)
 
@@ -166,7 +190,6 @@ async def update_user_by_admin(
             await conn.rollback()
             raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")
 
-
 @router.put("/desactivar/{user_id}")
 async def deactivate_user_by_admin(
     user_id: int,
@@ -208,10 +231,10 @@ async def deactivate_user_by_admin(
             
             await conn.commit()
 
-            # 🔥 OPTIMIZADO: Operaciones de caché en paralelo y async
+            # 🔥 CRÍTICO: Al desactivar, invalidar sesión pero NO limpiar la marca
             await asyncio.gather(
                 invalidate_session_async(user_id),
-                clear_user_cache_async(user_id)
+                clear_user_cache_async(user_id, include_session_invalidation=False)  # NO borrar marca de sesión
             )
 
             return {
@@ -227,7 +250,6 @@ async def deactivate_user_by_admin(
             await conn.rollback()
             raise HTTPException(status_code=500, detail=f"Error al desactivar: {str(e)}")
 
-
 @router.put("/reactivar/{user_id}")
 async def reactivate_user_by_admin(
     user_id: int,
@@ -237,16 +259,19 @@ async def reactivate_user_by_admin(
 
     async with get_cursor() as (conn, cursor):
         try:
+            # 1️⃣ Verificar que el usuario existe
             await cursor.execute("SELECT id, estado FROM usuarios WHERE id = %s", (user_id,))
             user = await cursor.fetchone()
             
             if not user:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+            print(f"📋 Estado ANTES de reactivar: {user['estado']}")
+
             if user["estado"] == "Activo":
                 return {"status": "warning", "message": "El usuario ya está activo"}
 
-            # Reactivar cuenta
+            # 2️⃣ Reactivar cuenta - COMMIT INMEDIATAMENTE
             await cursor.execute("""
                 UPDATE usuarios 
                 SET estado = 'Activo'
@@ -254,16 +279,69 @@ async def reactivate_user_by_admin(
             """, (user_id,))
             
             await conn.commit()
+            print(f"✅ Usuario {user_id} actualizado a 'Activo' en BD")
 
-            # 🔥 OPTIMIZADO: Limpiar caché de forma asíncrona
-            await clear_user_cache_async(user_id)
+            # 3️⃣ Verificar que se guardó correctamente
+            await cursor.execute("SELECT estado FROM usuarios WHERE id = %s", (user_id,))
+            verificacion = await cursor.fetchone()
+            print(f"🔍 Verificación post-update: Estado = {verificacion['estado']}")
 
-            return {"status": "success", "message": f"Usuario {user_id} reactivado correctamente"}
+            if verificacion['estado'] != 'Activo':
+                raise Exception(f"Error: El estado no se actualizó correctamente. Estado actual: {verificacion['estado']}")
+
+            # 4️⃣ AHORA SÍ limpiar Redis - DESPUÉS de confirmar que BD está OK
+            from app.dependencias.redis import r
+            
+            def _limpiar_sesion_completa():
+                try:
+                    keys_criticas = [
+                        f"user_session_invalid:{user_id}",
+                        f"login_attempts:{user_id}",
+                        f"account_locked:{user_id}",
+                        f"user_estado:{user_id}",
+                        f"user_data:{user_id}",
+                        f"prestamos_fisicos_usuario:{user_id}",
+                    ]
+                    
+                    deleted = 0
+                    for key in keys_criticas:
+                        result = r.delete(key)
+                        if result:
+                            deleted += 1
+                            print(f"  🗑️ Eliminada: {key}")
+                    
+                    print(f"✅ Redis limpiado para usuario {user_id} ({deleted} claves)")
+                    
+                    # Verificar que la marca de sesión inválida se eliminó
+                    if r.get(f"user_session_invalid:{user_id}"):
+                        print(f"⚠️ ALERTA: user_session_invalid:{user_id} aún existe!")
+                        r.delete(f"user_session_invalid:{user_id}")  # Forzar eliminación
+                    else:
+                        print(f"✅ Confirmado: user_session_invalid:{user_id} eliminada")
+                        
+                except Exception as e:
+                    print(f"❌ Error limpiando Redis: {e}")
+            
+            # Ejecutar limpieza de Redis
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, _limpiar_sesion_completa)
+
+            # 5️⃣ Verificación final del estado
+            await cursor.execute("SELECT estado FROM usuarios WHERE id = %s", (user_id,))
+            estado_final = await cursor.fetchone()
+            print(f"🎯 Estado FINAL del usuario {user_id}: {estado_final['estado']}")
+
+            return {
+                "status": "success", 
+                "message": f"Usuario {user_id} reactivado correctamente. Puede iniciar sesión inmediatamente.",
+                "estado_actual": estado_final['estado']
+            }
 
         except HTTPException:
             raise
         except Exception as e:
             await conn.rollback()
+            print(f"❌ Error en reactivación: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Error al reactivar: {str(e)}")
 
 

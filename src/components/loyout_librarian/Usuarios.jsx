@@ -116,58 +116,61 @@ const Usuarios = () => {
   };
 
   const handleToggleStatus = async (usuario) => {
-    const isActive = usuario.estado === "Activo";
-    const action = isActive ? "desactivar" : "reactivar";
-    const message = isActive ? "desactivar" : "reactivar";
+  // 🔥 Prevenir clics múltiples
+  if (processingId === usuario.id) {
+    showNotification("⏳ Espera a que termine la operación anterior", "warning");
+    return;
+  }
 
-    if (!window.confirm(`¿Seguro que deseas ${message} este usuario?`)) return;
+  const isActive = usuario.estado === "Activo";
+  const action = isActive ? "desactivar" : "reactivar";
+  const message = isActive ? "desactivar" : "reactivar";
 
-    setProcessingId(usuario.id);
+  if (!window.confirm(`¿Seguro que deseas ${message} este usuario?`)) return;
 
-    const nuevoEstado = isActive ? "Desactivado" : "Activo";
-    const estadoOriginal = usuario.estado;
+  // Marcar como procesando ANTES de cualquier cambio
+  setProcessingId(usuario.id);
+
+  const nuevoEstado = isActive ? "Desactivado" : "Activo";
+
+  try {
+    const token = getToken();
+    const res = await fetch(`${ADMIN_USERS_BASE}/${action}/${usuario.id}`, {
+      method: "PUT",
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      throw new Error(errorData?.detail || `Error ${res.status}`);
+    }
+
+    const data = await res.json();
     
+    // ✅ SOLO actualizar UI después de confirmación del servidor
     setUsuarios((prev) =>
       prev.map((u) =>
         u.id === usuario.id ? { ...u, estado: nuevoEstado } : u
       )
     );
-
-    try {
-      const token = getToken();
-      const res = await fetch(`${ADMIN_USERS_BASE}/${action}/${usuario.id}`, {
-        method: "PUT",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-      });
-
-      if (!res.ok) {
-        setUsuarios((prev) =>
-          prev.map((u) =>
-            u.id === usuario.id ? { ...u, estado: estadoOriginal } : u
-          )
-        );
-        const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.detail || `Error ${res.status}`);
-      }
-
-      const data = await res.json();
-      
-      if (data.status !== "warning") {
-        showNotification(
-          `Usuario ${nuevoEstado.toLowerCase()} correctamente`,
-          "success"
-        );
-      }
-    } catch (err) {
-      console.error("handleToggleStatus error:", err);
-      showNotification(`Error al ${message} usuario: ${err.message}`, "error");
-    } finally {
-      setProcessingId(null);
+    
+    if (data.status !== "warning") {
+      showNotification(
+        `✅ Usuario ${nuevoEstado.toLowerCase()} correctamente`,
+        "success"
+      );
     }
-  };
+  } catch (err) {
+    console.error("handleToggleStatus error:", err);
+    showNotification(`❌ Error al ${message} usuario: ${err.message}`, "error");
+  } finally {
+    // Liberar el bloqueo
+    setProcessingId(null);
+  }
+};
 
   const handleEdit = (usuario) => {
     setEditingUser(usuario);
@@ -479,24 +482,33 @@ const Usuarios = () => {
                           <button
                             className={`estado-toggle-btn ${
                               u.estado === "Activo" ? "active" : "inactive"
-                            }`}
+                            } ${processingId === u.id ? "processing" : ""}`}
                             onClick={() => handleToggleStatus(u)}
-                            disabled={processingId === u.id}
+                            disabled={processingId !== null} // Deshabilita TODOS cuando hay uno procesando
+                            style={{
+                              opacity: processingId !== null && processingId !== u.id ? 0.4 : 1,
+                              cursor: processingId !== null ? 'not-allowed' : 'pointer'
+                            }}
                           >
                             {processingId === u.id ? (
-                              <i className="bx bx-loader-alt bx-spin"></i>
+                              <>
+                                <i className="bx bx-loader-alt bx-spin"></i>
+                                <span>Procesando...</span>
+                              </>
                             ) : (
-                              <i
-                                className={`bx ${
-                                  u.estado === "Activo"
-                                    ? "bx-toggle-right"
-                                    : "bx-toggle-left"
-                                }`}
-                              ></i>
+                              <>
+                                <i
+                                  className={`bx ${
+                                    u.estado === "Activo"
+                                      ? "bx-toggle-right"
+                                      : "bx-toggle-left"
+                                  }`}
+                                ></i>
+                                <span>
+                                  {u.estado === "Activo" ? "Activo" : "Inactivo"}
+                                </span>
+                              </>
                             )}
-                            <span>
-                              {u.estado === "Activo" ? "Activo" : "Inactivo"}
-                            </span>
                           </button>
                         </div>
                       </td>

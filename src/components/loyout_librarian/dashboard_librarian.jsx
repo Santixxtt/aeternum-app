@@ -6,6 +6,7 @@ import EstadisticasGenerales from "./EstadisticasGenerales";
 import Alertas from "./Alertas";
 import GraficaPrestamos from "./GraficaPrestamos";
 import Footer from "../loyout_reusable/footer";
+import AeternumBienvenida from "../loyout_major/AeternumBienvenida";
 import LibrosPopulares from "./LibrosPopulares";
 
 const DashboardLibrarian = () => {
@@ -60,42 +61,44 @@ const DashboardLibrarian = () => {
   };
 
   return (
-    <div className="dashboard-user">
-      {/* 🔹 Header cambia automáticamente según el dispositivo */}
-      {isMobile ? (
-        <HeaderMovil onLogout={handleLogout} usuario={usuario}/>
-      ) : (
-        <Header onLogout={handleLogout} usuario={usuario} />
-      )}
+    <AeternumBienvenida>
+      <div className="dashboard-user">
+        {/* 🔹 Header cambia automáticamente según el dispositivo */}
+        {isMobile ? (
+          <HeaderMovil onLogout={handleLogout} usuario={usuario}/>
+        ) : (
+          <Header onLogout={handleLogout} usuario={usuario} />
+        )}
 
-      <main>
-        <div className="text-center p-5">
-          <h1>Hola, {usuario?.nombre} {usuario?.apellido}</h1>
-          <p>Aquí puedes ver, editar y eliminar todo lo de la página 😁.</p>
-        </div>
+        <main>
+          <div className="text-center p-5">
+            <h1>Hola, {usuario?.nombre} {usuario?.apellido}</h1>
+            <p>Aquí puedes ver, editar y eliminar todo lo de la página 😁.</p>
+          </div>
 
-        <div className="dashboard-row">
-          <div className="dashboard-left">
-            <EstadisticasGenerales />
+          <div className="dashboard-row">
+            <div className="dashboard-left">
+              <EstadisticasGenerales />
+            </div>
+            <div className="dashboard-right">
+              <GraficaPrestamos />
+            </div>
           </div>
-          <div className="dashboard-right">
-            <GraficaPrestamos />
-          </div>
-        </div>
 
-        {/* FILA 2 */}
-        <div className="dashboard-row">
-          <div className="dashboard-left">
-            <Alertas />
+          {/* FILA 2 */}
+          <div className="dashboard-row">
+            <div className="dashboard-left">
+              <Alertas />
+            </div>
+            <div className="dashboard-right">
+              <LibrosPopulares />
+            </div>
           </div>
-          <div className="dashboard-right">
-            <LibrosPopulares />
-          </div>
-        </div>
-      </main>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </AeternumBienvenida>
   );
 };
 

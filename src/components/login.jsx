@@ -16,31 +16,32 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setError(""); // 🔥 Limpiar errores previos
 
-    if (!validateEmail(correo)) {
-      setError("Formato de correo inválido");
-      return;
-    }
+  // Validaciones locales
+  if (!validateEmail(correo)) {
+    setError("❌ Formato de correo inválido");
+    return;
+  }
 
-    if (clave.length < 4) {
-      setError("La contraseña es muy corta");
-      return;
-    }
+  if (clave.length < 4) {
+    setError("❌ La contraseña es muy corta");
+    return;
+  }
 
-    try {
-      // Llamada al backend de Python
-      const response = await fetch("http://192.168.1.2:8000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo, clave }),
-      });
+  try {
+    const response = await fetch("http://192.168.1.2:8000/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo, clave }),
+    });
 
-      const data = await response.json();
-      console.log("📦 Respuesta del backend:", data);
+    const data = await response.json();
+    console.log("📦 Respuesta del backend:", data);
 
-      if (response.ok) {
-      // ✅ CAMBIO AQUÍ: data.token → data.access_token
+    if (response.ok) {
+      // ✅ Login exitoso
       if (!data.access_token) {
         console.error("❌ No se recibió token:", data);
         setError("Error del servidor: token no disponible");
@@ -48,29 +49,45 @@ const Login = () => {
       }
 
       // Guardar token en localStorage
-      localStorage.setItem("token", data.access_token); // 👈 CAMBIO: data.token → data.access_token
+      localStorage.setItem("token", data.access_token);
       localStorage.setItem("userRole", data.rol);
       
-      // ✅ Guardar user solo si existe
-      if (data.user) {
-        localStorage.setItem("userData", JSON.stringify(data.user));
+      // ✅ Guardar datos del usuario si existen
+      if (data.usuario) {
+        localStorage.setItem("userData", JSON.stringify(data.usuario));
       }
 
-      console.log("✅ Token guardado:", data.access_token.substring(0, 30) + '...');
+      console.log("✅ Login exitoso. Token guardado.");
 
-      alert("Inicio de sesión exitoso");
-
+      // Redirigir según rol
       if (data.rol === "bibliotecario") {
         navigate("/loyout_librarian/dashboard_librarian"); 
       } else if (data.rol === "usuario") {
         navigate("/loyout_user/dashboard_user"); 
-      } 
+      } else {
+        setError("Rol desconocido. Contacta al administrador.");
+      }
     } else {
-      setError(data.detail || "Error al iniciar sesión. Intentalo de nuevo."); 
+      // ❌ Error del backend (401, 403, etc.)
+      const errorMsg = data.detail || "Error al iniciar sesión";
+      
+      // 🔥 Mostrar error según código de estado
+      if (response.status === 401) {
+        // Credenciales incorrectas
+        setError(`🔒 ${errorMsg}`);
+      } else if (response.status === 403) {
+        // Cuenta bloqueada, desactivada o sin permisos
+        setError(`⛔ ${errorMsg}`);
+      } else {
+        // Otro error
+        setError(`❌ ${errorMsg}`);
+      }
+      
+      console.error(`❌ Error ${response.status}:`, errorMsg);
     }
   } catch (err) {
-    console.error("Error de conexión:", err);
-    setError("No se pudo conectar con el servidor");
+    console.error("❌ Error de conexión:", err);
+    setError("🌐 No se pudo conectar con el servidor. Verifica tu conexión.");
   }
 };
 
@@ -84,7 +101,7 @@ const Login = () => {
           <h1>Inicio de Sesión</h1>
           <p>Inicia sesión con tu cuenta de <strong>Aeternum.</strong></p>
 
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <div className="login-error"><p>{error}</p></div>}
 
           <form onSubmit={handleSubmit}>
             <div className="login-form-group">

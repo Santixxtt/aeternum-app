@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "./header";
 import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
+import AeternumBienvenida from "../loyout_major/AeternumBienvenida";
 import SearchResults from "./SearchResults";
 import RandomBookLoader from "./RandomBookLoader";
 import PhysicalLoanModal from "./PhysicalLoanModal";
@@ -125,7 +126,7 @@ export default function DashboardUser({ isMobile }) {
       } else {
         setCurrentBookIndex((prev) => (prev + 1) % carouselBooks.length);
       }
-    }, 8000); // Cambia cada 8 segundos
+    }, 8000);
 
     return () => clearInterval(interval);
   }, [carouselBooks.length, showWelcome, query]);
@@ -152,7 +153,7 @@ export default function DashboardUser({ isMobile }) {
   const handleSearch = (q) => {
     setQuery(q);
     searchBooks(q);
-    setShowWelcome(true); // Resetear bienvenida al buscar
+    setShowWelcome(true);
   };
 
   const handleAddToWishlist = useCallback(async (book) => {
@@ -271,153 +272,155 @@ export default function DashboardUser({ isMobile }) {
   const currentBook = carouselBooks[currentBookIndex];
   const currentDescription = currentBook ? bookDescriptions[currentBook.key] : "";
 
+  // 🔥 CORRECCIÓN: Envolver TODO con AeternumBienvenida
   return (
-    <div className="dashboard-user">
-      {isMobile ? (
-        <HeaderMovil
-          onSearch={handleSearch}
-          onLogout={handleLogout}
-          usuario={usuario}
-        />
-      ) : (
-        <Header
-          onSearch={handleSearch}
-          onLogout={handleLogout}
-          usuario={usuario}
-        />
-      )}
-
-      <main>
-        {usuario && query.length === 0 && (
-          <section className="carousel-container">
-            <button className="carousel-nav carousel-nav-left" onClick={handlePrevBook}>
-              <i className='bx bx-chevron-left'></i>
-            </button>
-
-            <div className="carousel-content">
-              {showWelcome ? (
-                <div className="carousel-welcome">
-                  <h1>Bienvenid@ {usuario.nombre} {usuario.apellido}</h1>
-                  <p>
-                    ¡Qué bueno tenerte aquí! ¿Estás listo para leer? Es hora de explorar nuevos
-                    libros y dejarte llevar por historias fascinantes. No es solo leer, es vivir mil vidas
-                    desde la comodidad de tus propios pensamientos. ¡Empieza ahora tu viaje hacia lo extraordinario!
-                  </p>
-                  <a href="/loyout_user/lista_deseos" className="cta-button">
-                    Mira tu Lista de Deseos
-                  </a>
-                </div>
-              ) : carouselLoading ? (
-                <div className="carousel-loading">
-                  <div className="loader"></div>
-                  <p>Cargando recomendaciones...</p>
-                </div>
-              ) : currentBook ? (
-                <div className="carousel-book">
-                  <div className="carousel-book-image">
-                    <img
-                      src={currentBook.cover_i 
-                        ? `https://covers.openlibrary.org/b/id/${currentBook.cover_i}-L.jpg`
-                        : defaultImage}
-                      alt={currentBook.title}
-                      onError={(e) => {
-                        if (e.target.src !== defaultImage) {
-                          e.target.src = defaultImage;
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="carousel-book-info">
-                    <h2>{currentBook.title}</h2>
-                    <p className="carousel-author">
-                      <strong>Autor:</strong> {currentBook.author_name?.[0] || "Desconocido"}
-                    </p>
-                    {currentBook.first_publish_year && (
-                      <p className="carousel-year">
-                        <strong>Año:</strong> {currentBook.first_publish_year}
-                      </p>
-                    )}
-                    <div className="carousel-description">
-                      <h3>Resumen</h3>
-                      <p>{currentDescription ? truncateText(currentDescription) : "Cargando resumen..."}</p>
-                    </div>
-                    <div className="carousel-actions">
-                      <button 
-                        className="btn-wishlist"
-                        onClick={() => handleAddToWishlist(currentBook)}
-                      >
-                        <i className='bxs-star'></i> Lista de Deseos
-                      </button>
-                      <button 
-                        className="btn-physical-loan"
-                        onClick={() => handlePhysicalBorrow(currentBook)}
-                      >
-                        <i className='bxs-book'></i> Préstamo Físico
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <button className="carousel-nav carousel-nav-right" onClick={handleNextBook}>
-              <i className='bx bx-chevron-right'></i>
-            </button>
-
-            {/* Indicadores de posición */}
-            <div className="carousel-indicators">
-              <span 
-                className={showWelcome ? "indicator active" : "indicator"}
-                onClick={() => setShowWelcome(true)}
-              ></span>
-              {carouselBooks.map((_, index) => (
-                <span
-                  key={index}
-                  className={!showWelcome && index === currentBookIndex ? "indicator active" : "indicator"}
-                  onClick={() => {
-                    setShowWelcome(false);
-                    setCurrentBookIndex(index);
-                  }}
-                ></span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <hr />
-
-        {query.length >= 3 ? (
-          <SearchResults
-            libros={resultados}
-            loading={loading}
-            usuario={usuario}  
-            onAddToWishlist={handleAddToWishlist}
-            onBorrow={handleBorrow}
-            handleGuestAction={handleGuestAction}  
+    <AeternumBienvenida>
+      <div className="dashboard-user">
+        {isMobile ? (
+          <HeaderMovil
+            onSearch={handleSearch}
+            onLogout={handleLogout}
+            usuario={usuario}
           />
         ) : (
-          <RandomBookLoader
+          <Header
+            onSearch={handleSearch}
+            onLogout={handleLogout}
             usuario={usuario}
-            onAddToWishlist={handleAddToWishlist}
-            onBorrow={handleBorrow}
-            handleGuestAction={handleGuestAction}
           />
         )}
-      </main>
-      
-      <hr />
-      <Footer />
 
-      {showPhysicalLoanModal && selectedBook && (
-        <PhysicalLoanModal
-          book={selectedBook}
-          usuario={usuario}
-          onClose={() => {
-            setShowPhysicalLoanModal(false);
-            setSelectedBook(null);
-          }}
-        />
-      )}
-    </div>
+        <main>
+          {usuario && query.length === 0 && (
+            <section className="carousel-container">
+              <button className="carousel-nav carousel-nav-left" onClick={handlePrevBook}>
+                <i className='bx bx-chevron-left'></i>
+              </button>
+
+              <div className="carousel-content">
+                {showWelcome ? (
+                  <div className="carousel-welcome">
+                    <h1>Bienvenid@ {usuario.nombre} {usuario.apellido}</h1>
+                    <p>
+                      ¡Qué bueno tenerte aquí! ¿Estás listo para leer? Es hora de explorar nuevos
+                      libros y dejarte llevar por historias fascinantes. No es solo leer, es vivir mil vidas
+                      desde la comodidad de tus propios pensamientos. ¡Empieza ahora tu viaje hacia lo extraordinario!
+                    </p>
+                    <a href="/loyout_user/lista_deseos" className="cta-button">
+                      Mira tu Lista de Deseos
+                    </a>
+                  </div>
+                ) : carouselLoading ? (
+                  <div className="carousel-loading">
+                    <div className="loader"></div>
+                    <p>Cargando recomendaciones...</p>
+                  </div>
+                ) : currentBook ? (
+                  <div className="carousel-book">
+                    <div className="carousel-book-image">
+                      <img
+                        src={currentBook.cover_i 
+                          ? `https://covers.openlibrary.org/b/id/${currentBook.cover_i}-L.jpg`
+                          : defaultImage}
+                        alt={currentBook.title}
+                        onError={(e) => {
+                          if (e.target.src !== defaultImage) {
+                            e.target.src = defaultImage;
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="carousel-book-info">
+                      <h2>{currentBook.title}</h2>
+                      <p className="carousel-author">
+                        <strong>Autor:</strong> {currentBook.author_name?.[0] || "Desconocido"}
+                      </p>
+                      {currentBook.first_publish_year && (
+                        <p className="carousel-year">
+                          <strong>Año:</strong> {currentBook.first_publish_year}
+                        </p>
+                      )}
+                      <div className="carousel-description">
+                        <h3>Resumen</h3>
+                        <p>{currentDescription ? truncateText(currentDescription) : "Cargando resumen..."}</p>
+                      </div>
+                      <div className="carousel-actions">
+                        <button 
+                          className="btn-wishlist"
+                          onClick={() => handleAddToWishlist(currentBook)}
+                        >
+                          <i className='bxs-star'></i> Lista de Deseos
+                        </button>
+                        <button 
+                          className="btn-physical-loan"
+                          onClick={() => handlePhysicalBorrow(currentBook)}
+                        >
+                          <i className='bxs-book'></i> Préstamo Físico
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <button className="carousel-nav carousel-nav-right" onClick={handleNextBook}>
+                <i className='bx bx-chevron-right'></i>
+              </button>
+
+              <div className="carousel-indicators">
+                <span 
+                  className={showWelcome ? "indicator active" : "indicator"}
+                  onClick={() => setShowWelcome(true)}
+                ></span>
+                {carouselBooks.map((_, index) => (
+                  <span
+                    key={index}
+                    className={!showWelcome && index === currentBookIndex ? "indicator active" : "indicator"}
+                    onClick={() => {
+                      setShowWelcome(false);
+                      setCurrentBookIndex(index);
+                    }}
+                  ></span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <hr />
+
+          {query.length >= 3 ? (
+            <SearchResults
+              libros={resultados}
+              loading={loading}
+              usuario={usuario}  
+              onAddToWishlist={handleAddToWishlist}
+              onBorrow={handleBorrow}
+              handleGuestAction={handleGuestAction}  
+            />
+          ) : (
+            <RandomBookLoader
+              usuario={usuario}
+              onAddToWishlist={handleAddToWishlist}
+              onBorrow={handleBorrow}
+              handleGuestAction={handleGuestAction}
+            />
+          )}
+        </main>
+        
+        <hr />
+        <Footer />
+
+        {showPhysicalLoanModal && selectedBook && (
+          <PhysicalLoanModal
+            book={selectedBook}
+            usuario={usuario}
+            onClose={() => {
+              setShowPhysicalLoanModal(false);
+              setSelectedBook(null);
+            }}
+          />
+        )}
+      </div>
+    </AeternumBienvenida>
   );
 }
