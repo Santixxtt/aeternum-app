@@ -1,28 +1,22 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import logging
 import os
+import requests
 
 logger = logging.getLogger(__name__)
 
-# 🔥 Configuración segura: sin valores por defecto
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-SMTP_LOGIN = os.getenv("SMTP_LOGIN")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp-relay.brevo.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_NAME = os.getenv("SENDER_NAME")
 
 def send_password_recovery_email(recipient_email: str, recovery_url: str):
     """
-    Envía un correo electrónico con el enlace de recuperación usando Brevo SMTP relay.
+    Envía un correo electrónico usando la API de Brevo (no SMTP).
     """
     logger.info(f"📧 Preparando email para: {recipient_email}")
-    logger.info(f"📡 SMTP Config: {SMTP_HOST}:{SMTP_PORT}")
+    logger.info(f"📡 Usando Brevo API (HTTP)")
     logger.info(f"👤 From: {SENDER_EMAIL}")
     
-    subject = "Restablece tu contraseña de Aeternum"
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -81,50 +75,55 @@ def send_password_recovery_email(recipient_email: str, recovery_url: str):
     </html>
     """
     
-    message = MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"] = f"Aeternum <{SENDER_EMAIL}>"
-    message["To"] = recipient_email
-    message["Reply-To"] = SENDER_EMAIL
+    # Payload para la API de Brevo
+    payload = {
+        "sender": {
+            "name": SENDER_NAME,
+            "email": SENDER_EMAIL
+        },
+        "to": [
+            {
+                "email": recipient_email,
+                "name": recipient_email.split("@")[0]
+            }
+        ],
+        "subject": "Restablece tu contraseña de Aeternum",
+        "htmlContent": html_content
+    }
     
-    part = MIMEText(html_content, "html", "utf-8")
-    message.attach(part)
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
     
     try:
-        logger.info("🔌 Conectando a servidor SMTP Brevo...")
+        logger.info("📤 Enviando email vía Brevo API...")
         
-        # Usar STARTTLS en puerto 587 (más compatible que SSL 465)
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
-            logger.info("✅ Conectado a SMTP")
-            
-            # Iniciar conexión segura
-            server.starttls()
-            logger.info("🔐 TLS iniciado")
-            
-            # Autenticar
-            logger.info(f"🔑 Autenticando con: {SMTP_LOGIN}")
-            server.login(SMTP_LOGIN, SMTP_PASSWORD)
-            logger.info("✅ Autenticación exitosa")
-            
-            # Enviar
-            logger.info("📤 Enviando email...")
-            server.sendmail(SENDER_EMAIL, recipient_email, message.as_string())
-            logger.info("✅ Email enviado exitosamente")
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            json=payload,
+            headers=headers,
+            timeout=10
+        )
         
-        return True, "Correo enviado exitosamente"
+        if response.status_code == 201:
+            result = response.json()
+            message_id = result.get("messageId", "N/A")
+            logger.info(f"✅ Email enviado exitosamente. ID: {message_id}")
+            return True, "Correo enviado exitosamente"
+        else:
+            error_msg = f"Error {response.status_code}: {response.text}"
+            logger.error(f"❌ {error_msg}")
+            return False, error_msg
     
-    except smtplib.SMTPAuthenticationError as e:
-        error_msg = f"Error de autenticación: {str(e)}"
+    except requests.exceptions.Timeout as e:
+        error_msg = f"Timeout en API: {str(e)}"
         logger.error(f"❌ {error_msg}")
         return False, error_msg
     
-    except smtplib.SMTPException as e:
-        error_msg = f"Error SMTP: {str(e)}"
-        logger.error(f"❌ {error_msg}")
-        return False, error_msg
-    
-    except TimeoutError as e:
-        error_msg = f"Timeout: {str(e)}"
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Error de red: {str(e)}"
         logger.error(f"❌ {error_msg}")
         return False, error_msg
     
