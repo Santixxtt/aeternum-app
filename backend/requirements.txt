@@ -13,7 +13,6 @@ email-validator
 requests
 werkzeug
 pytz
-resend
 
 # Base de datos
 sqlalchemy
