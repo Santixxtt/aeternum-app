@@ -34,7 +34,7 @@ async def send_verification(email: str):
     r.setex(token_key, 24 * 60 * 60, token)  # 24 horas
     
     # Construir URL de verificación
-    frontend_url = "http://localhost:5173"  # 🔹 Cambiar según tu dominio
+    frontend_url = "https://aeternum-app-production.up.railway.app"
     verification_url = f"{frontend_url}/verificar-email?token={token}&user_id={user_id}"
     
     # Enviar correo
