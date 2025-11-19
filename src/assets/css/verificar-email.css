@@ -1,0 +1,140 @@
+/*
+|----------------------------------------------------------
+| Email Verification Page Styles
+|----------------------------------------------------------
+*/
+.verify-email-container {
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a1a1a;
+  padding: 20px;
+}
+
+.verify-email-card {
+  background: #292929;
+  padding: 50px 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #333;
+  border-top: 5px solid #EF53EC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.success-icon i,
+.error-icon i {
+  font-size: 80px;
+  margin-bottom: 20px;
+}
+
+.success-icon i {
+  color: #28a745;
+}
+
+.error-icon i {
+  color: #dc3545;
+}
+
+.verify-email-card h2 {
+  font-size: 28px;
+  margin-bottom: 15px;
+  color: #f0f0f0;
+}
+
+.verify-email-card p {
+  font-size: 16px;
+  color: #ccc;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.countdown-text {
+  font-size: 14px;
+  color: #EF53EC;
+  font-weight: 500;
+  margin-bottom: 30px;
+}
+
+.countdown-text strong {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.verify-btn {
+  background-image: linear-gradient(to right, #EF53EC, #993A90);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 5px;
+}
+
+.verify-btn:hover {
+  background-image: linear-gradient(to right, #f779f5, #b150a8);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(239, 83, 236, 0.3);
+}
+
+.verify-btn.secondary {
+  background: #444;
+  background-image: none;
+}
+
+.verify-btn.secondary:hover {
+  background: #555;
+}
+
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .verify-email-card {
+    padding: 40px 25px;
+  }
+
+  .verify-email-card h2 {
+    font-size: 24px;
+  }
+
+  .success-icon i,
+  .error-icon i {
+    font-size: 60px;
+  }
+}

@@ -26,12 +26,15 @@ async def id_exists(numeroId: str) -> bool:
         return exists is not None
 
 
-# 🔹 Crear un nuevo usuario
+# 🔹 Crear un nuevo usuario (✅ MODIFICADO para soportar estado)
 async def create_user(data: dict) -> int:
     async with get_cursor() as (conn, cursor):
+        # Si no se especifica estado, usar 'Activo' por defecto (retrocompatibilidad)
+        estado = data.get("estado", "Activo")
+        
         sql = """
-            INSERT INTO usuarios (nombre, apellido, tipo_identificacion, num_identificacion, correo, clave, rol)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO usuarios (nombre, apellido, tipo_identificacion, num_identificacion, correo, clave, rol, estado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         await cursor.execute(sql, (
             data["nombre"],
@@ -40,7 +43,8 @@ async def create_user(data: dict) -> int:
             data["num_identificacion"],
             data["correo"],
             data["clave"],
-            data["rol"]
+            data["rol"],
+            estado
         ))
         await conn.commit()
         return cursor.lastrowid
@@ -91,16 +95,18 @@ async def reset_login_attempts(user_id: int):
         await conn.commit()
 
 
-# 🔹 Obtener usuario por ID
+# 🔹 Obtener usuario por ID (✅ FUNCIÓN ÚNICA)
 async def get_user_by_id(user_id: int):
     async with get_cursor() as (conn, cursor):
         await cursor.execute(
-            "SELECT id, nombre, apellido, correo, rol, tipo_identificacion, num_identificacion, estado FROM usuarios WHERE id = %s",
+            "SELECT * FROM usuarios WHERE id = %s",
             (user_id,)
         )
         user = await cursor.fetchone()
         return user
 
+
+# 🔹 Actualizar contraseña
 async def update_password(user_id: int, hashed_password: str) -> bool:
     async with get_cursor() as (conn, cursor):
         try:
@@ -112,6 +118,8 @@ async def update_password(user_id: int, hashed_password: str) -> bool:
             await conn.rollback()
             return False
 
+
+# 🔹 Actualizar datos del usuario
 async def update_user_by_id(
     user_id: int,
     nombre: str,
@@ -126,7 +134,6 @@ async def update_user_by_id(
     """
     async with get_cursor() as (conn, cursor):
         try:
-            # Construimos query dinámica para no sobrescribir con NULL cuando no viene
             fields = ["nombre = %s", "apellido = %s", "correo = %s"]
             params = [nombre, apellido, correo]
 
@@ -150,6 +157,7 @@ async def update_user_by_id(
             return False
 
 
+# 🔹 Desactivar usuario
 async def deactivate_user_by_id(user_id: int) -> bool:
     """
     Marca el usuario como 'Desactivado'.
@@ -165,7 +173,9 @@ async def deactivate_user_by_id(user_id: int) -> bool:
             await conn.rollback()
             print("❌ Error deactivate_user_by_id:", e)
             return False
-        
+
+
+# 🔹 Reactivar usuario
 async def reactivate_user_by_id(user_id: int) -> bool:
     """
     Cambia el estado del usuario a 'Activo'.
@@ -180,4 +190,39 @@ async def reactivate_user_by_id(user_id: int) -> bool:
         except Exception as e:
             await conn.rollback()
             print("❌ Error reactivate_user_by_id:", e)
+            return False
+
+
+# 🔹 Actualizar estado del usuario (✅ NUEVA - Para verificación de email)
+async def update_user_status(user_id: int, new_status: str) -> bool:
+    """
+    Actualiza el estado de un usuario.
+    """
+    async with get_cursor() as (conn, cursor):
+        try:
+            await cursor.execute(
+                "UPDATE usuarios SET estado = %s WHERE id = %s", 
+                (new_status, user_id)
+            )
+            await conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            await conn.rollback()
+            print("❌ Error update_user_status:", e)
+            return False
+
+
+# 🔹 Eliminar usuario (✅ NUEVA - Para rollback si falla el email)
+async def delete_user(user_id: int) -> bool:
+    """
+    Elimina un usuario (usado para rollback si falla el envío de email).
+    """
+    async with get_cursor() as (conn, cursor):
+        try:
+            await cursor.execute("DELETE FROM usuarios WHERE id = %s", (user_id,))
+            await conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            await conn.rollback()
+            print("❌ Error delete_user:", e)
             return False

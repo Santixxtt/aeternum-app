@@ -21,6 +21,7 @@ export default function Registro() {
   const [showPassword, setShowPassword] = useState(false);
   const [strength, setStrength] = useState({ nivel: 0, texto: "" });
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // --- Calcula la fortaleza de la contraseña ---
   const calcularFortaleza = (pass) => {
@@ -98,8 +99,9 @@ export default function Registro() {
         "https://backend-production-9f93.up.railway.app/auth/register",
         form
       );
-      alert(response.data.message || "¡Cuenta creada con éxito!");
-      navigate("/login");
+      
+      // ✅ Mostrar modal de éxito en lugar de alerta
+      setShowSuccessModal(true);
     } catch (err) {
       const msg = err.response?.data?.detail || "Error al registrar usuario.";
       alert(msg);
@@ -108,8 +110,37 @@ export default function Registro() {
     }
   };
 
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    navigate("/login");
+  };
+
   return (
     <div className="register-body">
+      {/* ✅ Modal de éxito */}
+      {showSuccessModal && (
+        <div className="success-modal-overlay">
+          <div className="success-modal">
+            <div className="success-icon-modal">
+              <i className="bx bx-check-circle"></i>
+            </div>
+            <h2>¡Registro exitoso!</h2>
+            <p>
+              Se ha enviado un correo de verificación a <strong>{form.correo}</strong>
+            </p>
+            <p className="modal-instruction">
+              Por favor revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta.
+            </p>
+            <p className="modal-note">
+              <i className="bx bx-info-circle"></i> No olvides revisar tu carpeta de spam si no lo encuentras.
+            </p>
+            <button onClick={handleCloseModal} className="modal-btn">
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="register-container">
         <div className="register-login-section">
           <a href="/login" className="register-back-button">
