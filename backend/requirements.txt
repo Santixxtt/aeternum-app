@@ -35,3 +35,6 @@ fpdf2==2.7.9
 pydantic
 starlette
 
+#SCHEDULER
+
+APScheduler==3.10.4
