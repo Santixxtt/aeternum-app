@@ -4,12 +4,11 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_NAME = os.getenv("SENDER_NAME")
 
-def send_password_recovery_email(recipient_email: str, recovery_url: str):
+def send_password_recovery_email(recipient_email: str, recovery_url: str, user_name: str = None):
     """
     Envía un correo electrónico usando la API de Brevo (no SMTP).
     """
@@ -17,61 +16,31 @@ def send_password_recovery_email(recipient_email: str, recovery_url: str):
     logger.info(f"📡 Usando Brevo API (HTTP)")
     logger.info(f"👤 From: {SENDER_EMAIL}")
     
+    # Si no hay nombre, usar la parte antes del @ del email
+    if not user_name:
+        user_name = recipient_email.split("@")[0].capitalize()
+    
     html_content = f"""
-    <!DOCTYPE html>
     <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }}
-            .container {{ background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
-            .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #007bff; }}
-            .button {{ background-color: #007bff; color: white !important; padding: 14px 35px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; }}
-            .button:hover {{ background-color: #0056b3; }}
-            .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px; text-align: center; }}
-            .warning {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0; }}
-            .danger {{ background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 12px; margin: 20px 0; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h2 style="color: #007bff; margin: 0;"> Aeternum</h2>
-            </div>
-            
-            <h3 style="color: #333; margin-top: 25px;">Solicitud de Restablecimiento de Contraseña</h3>
-            
-            <p style="color: #555; line-height: 1.6;">
-                Hola,<br><br>
-                Recibimos una solicitud para restablecer la contraseña asociada a tu cuenta en Aeternum.
-            </p>
-            
-            <p style="text-align: center; margin: 35px 0;">
-                <a href="{recovery_url}" class="button">Restablecer mi Contraseña</a>
-            </p>
-            
-            <p style="font-size: 13px; color: #666; background-color: #f8f9fa; padding: 10px; border-radius: 4px;">
-                <strong>📎 Enlace alternativo:</strong><br>
-                Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-                <a href="{recovery_url}" style="color: #007bff; word-break: break-all;">{recovery_url}</a>
-            </p>
-            
-            <div class="warning">
-                <strong>⚠️ Importante:</strong> Si no solicitaste este cambio, ignora este mensaje. 
-                Tu contraseña no cambiará hasta que accedas al enlace y crees una nueva.
-            </div>
-            
-            <div class="danger">
-                <strong>⏱ Este enlace expirará en 1 hora</strong> por razones de seguridad.
-            </div>
-            
-            <div class="footer">
-                <p><strong>Aeternum</strong> - Sistema de Gestión</p>
-                <p style="color: #999; font-size: 11px;">
-                    Este es un correo automático, por favor no respondas a este mensaje.
+        <body>
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 600px; margin: auto;">
+                <h2 style="color: #B6407D;">Solicitud de Restablecimiento de Contraseña</h2>
+                <p>Hola <strong>{user_name}</strong>,</p>
+                <p>Recibimos una solicitud para restablecer la contraseña asociada a tu cuenta.</p>
+                
+                <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+                
+                <p style="text-align: center;">
+                    <a href="{recovery_url}" style="display: inline-block; padding: 10px 20px; color: white; background-color: #B6407D; border-radius: 5px; text-decoration: none; font-weight: bold;">
+                        Restablecer Contraseña
+                    </a>
                 </p>
+                
+                <p>Si no solicitaste este cambio, ignora este mensaje. Tu contraseña no cambiará hasta que accedas al enlace y crees una nueva.</p>
+                
+                <p style="font-size: 0.8em; color: #999;">El enlace caducará en 1 hora.</p>
             </div>
-        </div>
-    </body>
+        </body>
     </html>
     """
     
@@ -84,7 +53,7 @@ def send_password_recovery_email(recipient_email: str, recovery_url: str):
         "to": [
             {
                 "email": recipient_email,
-                "name": recipient_email.split("@")[0]
+                "name": user_name
             }
         ],
         "subject": "Restablece tu contraseña de Aeternum",
