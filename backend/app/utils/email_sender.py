@@ -35,7 +35,7 @@ def send_password_recovery_email(recipient_email: str, recovery_url: str):
     <body>
         <div class="container">
             <div class="header">
-                <h2 style="color: #007bff; margin: 0;">🔐 Aeternum</h2>
+                <h2 style="color: #007bff; margin: 0;"> Aeternum</h2>
             </div>
             
             <h3 style="color: #333; margin-top: 25px;">Solicitud de Restablecimiento de Contraseña</h3>
@@ -61,7 +61,7 @@ def send_password_recovery_email(recipient_email: str, recovery_url: str):
             </div>
             
             <div class="danger">
-                <strong>⏱️ Este enlace expirará en 1 hora</strong> por razones de seguridad.
+                <strong>⏱ Este enlace expirará en 1 hora</strong> por razones de seguridad.
             </div>
             
             <div class="footer">
@@ -91,11 +91,19 @@ def send_password_recovery_email(recipient_email: str, recovery_url: str):
         "htmlContent": html_content
     }
     
+    # Validar que la API key existe
+    if not BREVO_API_KEY or BREVO_API_KEY == "":
+        error_msg = "BREVO_API_KEY no está configurada"
+        logger.error(f"❌ {error_msg}")
+        return False, error_msg
+    
     headers = {
         "accept": "application/json",
         "api-key": BREVO_API_KEY,
         "content-type": "application/json"
     }
+    
+    logger.info(f"🔑 Usando API Key: {BREVO_API_KEY[:20]}...")
     
     try:
         logger.info("📤 Enviando email vía Brevo API...")

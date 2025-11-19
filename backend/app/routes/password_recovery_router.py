@@ -6,6 +6,7 @@ from typing import Annotated
 from app.dependencias.redis import r
 import secrets
 import logging
+import os
 
 # 🔥 CONFIGURA LOGGING
 logging.basicConfig(level=logging.INFO)
@@ -13,16 +14,16 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/password", tags=["PasswordRecovery"])
 
-FRONTEND_BASE_URL = "http://localhost:5173"
+FRONTEND_BASE_URL = os.getenv("FRONTEND_URL", "https://aeternum-app-production.up.railway.app")
 RESET_PATH = "/restablecer-contrasena"
 
 
 # 🔥 WRAPPER PARA LOGUEAR ERRORES EN BACKGROUND
-def send_email_with_logging(correo: str, recovery_url: str):
+def send_email_with_logging(correo: str, recovery_url: str, user_name: str = None):
     """Envía email y loguea el resultado"""
     try:
         logger.info(f"🔵 Iniciando envío de email a: {correo}")
-        success, message = send_password_recovery_email(correo, recovery_url)
+        success, message = send_password_recovery_email(correo, recovery_url, user_name)
         
         if success:
             logger.info(f"✅ Email enviado exitosamente a {correo}")
@@ -61,9 +62,21 @@ async def solicitar_recuperacion(
     recovery_url = f"{FRONTEND_BASE_URL}{RESET_PATH}?token={token}"
     logger.info(f"🔗 URL de recuperación: {recovery_url}")
     
-    # 🔥 USA EL WRAPPER CON LOGGING
-    background_tasks.add_task(send_email_with_logging, correo, recovery_url)
-    logger.info("📤 Tarea de email agregada a background")
+    # 🔥 Obtener el nombre completo del usuario para personalizar el email
+    nombre = user.get("nombre", "")
+    apellido = user.get("apellido", "")
+    
+    # Construir nombre completo o usar email como fallback
+    if nombre and apellido:
+        user_name = f"{nombre} {apellido}"
+    elif nombre:
+        user_name = nombre
+    else:
+        user_name = correo.split("@")[0].capitalize()
+    
+    # 🔥 USA EL WRAPPER CON LOGGING Y NOMBRE
+    background_tasks.add_task(send_email_with_logging, correo, recovery_url, user_name)
+    logger.info(f"📤 Tarea de email agregada a background para {user_name}")
     
     return {"message": "Si este correo está registrado, recibirás un enlace para restablecer tu contraseña."}
 
