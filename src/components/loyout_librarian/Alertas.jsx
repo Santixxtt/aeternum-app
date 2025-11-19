@@ -18,7 +18,7 @@ const Alertas = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://10.17.0.28:8000/estadisticas/bibliotecario/alertas', {
+      const response = await fetch('https://backend-production-9f93.up.railway.app/estadisticas/bibliotecario/alertas', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

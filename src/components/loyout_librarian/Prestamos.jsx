@@ -43,7 +43,7 @@ const Prestamos = () => {
   const [processingId, setProcessingId] = useState(null);
   const [usuario, setUsuario] = useState(null);
 
-  const API_BASE = "http://10.17.0.28:8000";
+  const API_BASE = "https://backend-production-9f93.up.railway.app";
   const PRESTAMOS_BASE = `${API_BASE}/prestamos-fisicos`;
   const STATS_BASE = `${API_BASE}/estadisticas/bibliotecario`;
 

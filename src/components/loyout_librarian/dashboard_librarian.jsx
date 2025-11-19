@@ -37,7 +37,7 @@ const DashboardLibrarian = () => {
 
     const fetchUser = async () => {
       try {
-        const response = await fetch("http://10.17.0.28:8000/users/me", {
+        const response = await fetch("https://backend-production-9f93.up.railway.app/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

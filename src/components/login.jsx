@@ -31,7 +31,7 @@ const Login = () => {
   }
 
   try {
-    const response = await fetch("http://10.17.0.28:8000/auth/login", {
+    const response = await fetch("https://backend-production-9f93.up.railway.app/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ correo, clave }),

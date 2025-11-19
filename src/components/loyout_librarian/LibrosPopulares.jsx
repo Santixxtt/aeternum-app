@@ -19,7 +19,7 @@ const LibrosPopulares = ({ tipo = "prestamos" }) => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://10.17.0.28:8000/estadisticas/bibliotecario/libros-populares?tipo=${tipo}`,
+        `https://backend-production-9f93.up.railway.app/estadisticas/bibliotecario/libros-populares?tipo=${tipo}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

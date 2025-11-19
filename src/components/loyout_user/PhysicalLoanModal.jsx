@@ -33,7 +33,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       const token = localStorage.getItem("token");
       
       try {
-        const res = await fetch("http://10.17.0.28:8000/prestamos-fisicos/puede-solicitar", {
+        const res = await fetch("https://backend-production-9f93.up.railway.app/prestamos-fisicos/puede-solicitar", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -76,7 +76,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       try {
         // Buscar si existe
         const searchRes = await fetch(
-          `http://10.17.0.28:8000/wishlist/buscar-libro/${openlibrary_key}`,
+          `https://backend-production-9f93.up.railway.app/wishlist/buscar-libro/${openlibrary_key}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -95,7 +95,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
         }
 
         // Crear si no existe
-        const createRes = await fetch("http://10.17.0.28:8000/wishlist/ensure-book-for-loan", {
+        const createRes = await fetch("https://backend-production-9f93.up.railway.app/wishlist/ensure-book-for-loan", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -136,7 +136,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
   const imageUrl = (() => {
     // Prioridad 1: Imagen local (si existe)
     if (book.imagen_local) {
-      return `http://10.17.0.28:8000/uploads/${book.imagen_local}`;
+      return `https://backend-production-9f93.up.railway.app/uploads/${book.imagen_local}`;
     }
     
     // Prioridad 2: Cover de OpenLibrary
@@ -177,7 +177,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     console.log("📤 Solicitando préstamo:", requestBody);
 
     try {
-      const res = await fetch("http://10.17.0.28:8000/prestamos-fisicos/solicitar", {
+      const res = await fetch("https://backend-production-9f93.up.railway.app/prestamos-fisicos/solicitar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

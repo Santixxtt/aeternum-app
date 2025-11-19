@@ -16,7 +16,7 @@ const GraficaPrestamos = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://10.17.0.28:8000/estadisticas/bibliotecario/grafica-prestamos', {
+      const response = await fetch('https://backend-production-9f93.up.railway.app/estadisticas/bibliotecario/grafica-prestamos', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

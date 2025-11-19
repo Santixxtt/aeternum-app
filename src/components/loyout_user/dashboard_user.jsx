@@ -35,7 +35,7 @@ export default function DashboardUser({ isMobile }) {
 
     const fetchUserData = async () => {
       try {
-        const res = await fetch("http://10.17.0.28:8000/users/me", {
+        const res = await fetch("https://backend-production-9f93.up.railway.app/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -141,7 +141,7 @@ export default function DashboardUser({ isMobile }) {
     
     try {
       const res = await fetch(
-        `http://10.17.0.28:8000/search/books?q=${encodeURIComponent(q)}&limit=20`
+        `https://backend-production-9f93.up.railway.app/search/books?q=${encodeURIComponent(q)}&limit=20`
       );
       
       if (!res.ok) {
@@ -232,7 +232,7 @@ export default function DashboardUser({ isMobile }) {
         fecha_publicacion: book.first_publish_year?.toString() || null
       };
 
-      const res = await fetch("http://10.17.0.28:8000/wishlist/add", {
+      const res = await fetch("https://backend-production-9f93.up.railway.app/wishlist/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -95,7 +95,7 @@ export default function Registro() {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://10.17.0.28:8000/auth/register",
+        "https://backend-production-9f93.up.railway.app/auth/register",
         form
       );
       alert(response.data.message || "¡Cuenta creada con éxito!");

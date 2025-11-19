@@ -30,9 +30,9 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://192.168.1.2:5173",  
-    "http://10.17.0.28:8000",
+    "https://backend-production-9f93.up.railway.app",
     "http://127.0.0.1:5173",
-    "http://10.17.0.28:8000"
+    "https://backend-production-9f93.up.railway.app"
 ]
 
 app.add_middleware(
