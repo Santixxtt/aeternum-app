@@ -14,6 +14,7 @@ from app.routes import (
     prestamo_router,
     prestamo_fisico_router,
     estadisticas_router,
+    search_router
 )
 from app.routes.bibliotecario import users_router, book_router, catalogs, upload_routes
 
@@ -29,9 +30,9 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://192.168.1.2:5173",  
-    "http://192.168.1.2:8000",
+    "http://192.168.1.5:8000",
     "http://127.0.0.1:5173",
-    "http://192.168.1.2:8000"
+    "http://192.168.1.5:8000"
 ]
 
 app.add_middleware(
@@ -81,6 +82,7 @@ app.include_router(users_router.router)
 app.include_router(book_router.router)
 app.include_router(catalogs.router)
 app.include_router(upload_routes.router)
+app.include_router(search_router.router)
 
 
 #  Ruta raíz (necesaria para Railway)

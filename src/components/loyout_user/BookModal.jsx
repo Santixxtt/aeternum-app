@@ -102,7 +102,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         const key = cleanOlKey(olKey);
         
         try {
-            const userRatingRes = await fetch(`http://192.168.1.2:8000/reviews/user-rating/${key}`, {
+            const userRatingRes = await fetch(`http://192.168.1.5:8000/reviews/user-rating/${key}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -122,12 +122,12 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         try {
             await fetchUserRating(olKey);
 
-            const ratingsRes = await fetch(`http://192.168.1.2:8000/reviews/ratings/${key}`);
+            const ratingsRes = await fetch(`http://192.168.1.5:8000/reviews/ratings/${key}`);
             const ratingsData = await ratingsRes.json();
             setAverageRating(ratingsData.promedio || 0.0);
             setTotalVotes(ratingsData.total_votos || 0);
 
-            const commentsRes = await fetch(`http://192.168.1.2:8000/reviews/comments/${key}`);
+            const commentsRes = await fetch(`http://192.168.1.5:8000/reviews/comments/${key}`);
             const commentsData = await commentsRes.json();
             setComments(commentsData.comments || []);
             
@@ -142,6 +142,18 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
         const fetchDescription = async () => {
             setLoading(true);
             try {
+                if (book.es_local && book.descripcion_local) {
+                    setDescription(book.descripcion_local || "No hay resumen disponible.");
+                    setLoading(false);
+                    return;
+                }
+                
+                if (!book.key) {
+                    setDescription("No hay resumen disponible.");
+                    setLoading(false);
+                    return;
+                }
+                
                 const url = `https://openlibrary.org${book.key}.json`;
                 const res = await fetch(url);
                 const data = await res.json();
@@ -164,9 +176,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
             }
         };
 
-        if (book?.key) {
-            fetchDescription();
-        }
+        fetchDescription();
     }, [book]);
 
     useEffect(() => {
@@ -311,7 +321,7 @@ const handleDownload = () => {
     setRating(newRating);
 
     try {
-        const res = await fetch("http://192.168.1.2:8000/reviews/rate", {
+        const res = await fetch("http://192.168.1.5:8000/reviews/rate", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -360,7 +370,7 @@ const handleSubmitComment = async (e) => {
   }
 
   try {
-    const res = await fetch("http://192.168.1.2:8000/reviews/comment", {
+    const res = await fetch("http://192.168.1.5:8000/reviews/comment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -427,7 +437,7 @@ useEffect(() => {
         try {
             setLoadingReviews(true); 
             
-            const res = await fetch(`http://192.168.1.2:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://192.168.1.5:8000/reviews/comment/${commentId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -465,7 +475,7 @@ useEffect(() => {
             setLoadingReviews(true);
             setActiveCommentMenu(null); 
 
-            const res = await fetch(`http://192.168.1.2:8000/reviews/comment/${commentId}`, {
+            const res = await fetch(`http://192.168.1.5:8000/reviews/comment/${commentId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -493,9 +503,17 @@ useEffect(() => {
         }
     };
 
-    const imageUrl = book.cover_i
-        ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-        : defaultImage;
+    const imageUrl = (() => {
+        if (book.es_local && book.imagen_local) {
+            return `http://192.168.1.5:8000/uploads/${book.imagen_local}`;
+        }
+        
+        if (book.cover_i) {
+            return `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`;
+        }
+        
+        return defaultImage;
+    })();
     
     const renderDescription = () => {
         if (loading) return <p>Cargando el resumen...</p>;
@@ -592,7 +610,7 @@ useEffect(() => {
         // ✅ Verificar límite de préstamos antes de abrir el modal
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch("http://192.168.1.2:8000/prestamos-fisicos/mis-prestamos", {
+            const res = await fetch("http://192.168.1.5:8000/prestamos-fisicos/mis-prestamos", {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -625,7 +643,7 @@ const handleDigitalBorrow = async () => {
     const token = localStorage.getItem("token");
     
     try {
-        const res = await fetch("http://192.168.1.2:8000/prestamos/digital", {
+        const res = await fetch("http://192.168.1.5:8000/prestamos/digital", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

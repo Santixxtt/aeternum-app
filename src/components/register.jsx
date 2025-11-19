@@ -54,6 +54,13 @@ export default function Registro() {
       const f = calcularFortaleza(value);
       setStrength(f);
     }
+
+    if (name === "num_identificacion") {
+      const onlyNumbers = value.replace(/[^0-9]/g, '');
+      const limited = onlyNumbers.slice(0, 12);
+      setForm((prev) => ({ ...prev, [name]: limited }));
+      return; 
+    }
   };
 
   // --- Validaciones del formulario ---
@@ -65,9 +72,9 @@ export default function Registro() {
       newErrors.apellido = "Debe tener al menos 3 caracteres";
     if (!form.tipo_identificacion)
       newErrors.tipo_identificacion = "Seleccione un tipo de identificación";
-    if (!/^[0-9]{8,10}$/.test(form.num_identificacion.trim()))
+    if (!/^[0-9]{8,12}$/.test(form.num_identificacion.trim()))
       newErrors.num_identificacion =
-        "El número debe tener entre 8 y 10 dígitos.";
+        "El número debe tener entre 8 y 12 dígitos.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo))
       newErrors.correo = "Formato de correo inválido";
     if (form.clave.length < 8)
@@ -88,7 +95,7 @@ export default function Registro() {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://192.168.1.2:8000/auth/register",
+        "http://192.168.1.5:8000/auth/register",
         form
       );
       alert(response.data.message || "¡Cuenta creada con éxito!");
@@ -104,173 +111,194 @@ export default function Registro() {
   return (
     <div className="register-body">
       <div className="register-container">
-      <div className="register-login-section">
-        <a href="/login" className="register-back-button">
-          <i className="bx bx-chevron-left"></i>
-        </a>
-        <h1>Registro</h1>
-        <p>
-          Ingrese sus datos para registrarse a <strong>Aeternum</strong>
-        </p>
+        <div className="register-login-section">
+          <a href="/login" className="register-back-button">
+            <i className="bx bx-chevron-left"></i>
+          </a>
+          <h1>Registro</h1>
+          <p>
+            Ingrese sus datos para registrarse a <strong>Aeternum</strong>
+          </p>
 
-        <form onSubmit={handleSubmit}>
-          <div className="register-form-group">
-            <label htmlFor="nombre">Nombres</label>
-            <input
-              type="text"
-              name="nombre"
-              placeholder="Ingresa tus nombres"
-              value={form.nombre}
-              onChange={handleChange}
-            />
-            {errors.nombre && (
-              <p className="register-error-message">{errors.nombre}</p>
-            )}
-          </div>
-
-          <div className="register-form-group">
-            <label htmlFor="apellido">Apellidos</label>
-            <input
-              type="text"
-              name="apellido"
-              placeholder="Ingresa tus apellidos"
-              value={form.apellido}
-              onChange={handleChange}
-            />
-            {errors.apellido && (
-              <p className="register-error-message">{errors.apellido}</p>
-            )}
-          </div>
-
-          <div className="register-form-group">
-            <label htmlFor="tipo_identificacion">Tipo de Identificación</label>
-            <select
-              name="tipo_identificacion"
-              value={form.tipo_identificacion}
-              onChange={handleChange}
-            >
-              <option value="">Seleccione un tipo</option>
-              <option value="CC">Cédula de Ciudadanía</option>
-              <option value="CE">Cédula Extranjera</option>
-              <option value="TI">Tarjeta de Identidad</option>
-            </select>
-            {errors.tipo_identificacion && (
-              <p className="register-error-message">
-                {errors.tipo_identificacion}
-              </p>
-            )}
-          </div>
-
-          <div className="register-form-group">
-            <label htmlFor="num_identificacion">
-              Número de Identificación
-            </label>
-            <input
-              type="number"
-              name="num_identificacion"
-              placeholder="Ej. 1234567890"
-              value={form.num_identificacion}
-              onChange={handleChange}
-            />
-            {errors.num_identificacion && (
-              <p className="register-error-message">
-                {errors.num_identificacion}
-              </p>
-            )}
-          </div>
-
-          <div className="register-form-group">
-            <label htmlFor="correo">Correo electrónico</label>
-            <input
-              type="email"
-              name="correo"
-              placeholder="hey@tuemail.com"
-              value={form.correo}
-              onChange={handleChange}
-            />
-            {errors.correo && (
-              <p className="register-error-message">{errors.correo}</p>
-            )}
-          </div>
-
-          <div className="register-form-group password-wrapper">
-            <label htmlFor="clave">Contraseña</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              name="clave"
-              placeholder="Crea una contraseña"
-              value={form.clave}
-              onChange={handleChange}
-            />
-            <span
-              className="register-toggle-password"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              <i className={showPassword ? "bx bx-hide" : "bx bx-show"}></i>
-            </span>
-
-            <div className="register-password-strength-container">
-              <div
-                className={`register-password-strength 
-                    ${
-                        strength.nivel > 0
-                            ? ["weak", "medium", "strong", "very-strong"][strength.nivel - 1]
-                            : '' 
-                    }`}
-                style={{
-                    width: `${(strength.nivel / 4) * 100}%` 
-                }}
-              ></div>
-              <small className={`register-strength-text strength-${strength.nivel}`}>
-                  {strength.texto && `Fortaleza: ${strength.texto}`}
-              </small>
+          <form onSubmit={handleSubmit}>
+            {/* Nombres */}
+            <div className="register-form-group">
+              <label htmlFor="nombre">
+                Nombres <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="nombre"
+                placeholder="Ingresa tus nombres"
+                value={form.nombre}
+                onChange={handleChange}
+              />
+              {errors.nombre && (
+                <p className="register-error-message">{errors.nombre}</p>
+              )}
             </div>
-            {errors.clave && (
-              <p className="register-error-message">{errors.clave}</p>
-            )}
-          </div>
 
-          <div className="register-consent">
-            <input
-              type="checkbox"
-              name="consent"
-              checked={form.consent}
-              onChange={handleChange}
-            />
-            <label htmlFor="consent">
-              He leído y acepto la{" "}
-              <a 
-                href="/politica-privacidad"
-                target="_blank"
-                rel="noreferrer"
+            {/* Apellidos */}
+            <div className="register-form-group">
+              <label htmlFor="apellido">
+                Apellidos <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="apellido"
+                placeholder="Ingresa tus apellidos"
+                value={form.apellido}
+                onChange={handleChange}
+              />
+              {errors.apellido && (
+                <p className="register-error-message">{errors.apellido}</p>
+              )}
+            </div>
+
+            {/* Tipo de Identificación */}
+            <div className="register-form-group">
+              <label htmlFor="tipo_identificacion">
+                Tipo de Identificación <span style={{ color: 'red' }}>*</span>
+              </label>
+              <select
+                name="tipo_identificacion"
+                value={form.tipo_identificacion}
+                onChange={handleChange}
               >
-                Política de Privacidad
-              </a>
-              .
-            </label>
-          </div>
-          {errors.consent && (
-            <p className="register-error-message">{errors.consent}</p>
-          )}
+                <option value="">Seleccione un tipo</option>
+                <option value="CC">Cédula de Ciudadanía</option>
+                <option value="CE">Cédula Extranjera</option>
+                <option value="TI">Tarjeta de Identidad</option>
+              </select>
+              {errors.tipo_identificacion && (
+                <p className="register-error-message">
+                  {errors.tipo_identificacion}
+                </p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            className="register-login-button"
-            disabled={loading}
-          >
-            {loading ? "Creando cuenta..." : "Crear cuenta"}
-          </button>
-        </form>
+            {/* Número de Identificación */}
+            <div className="register-form-group">
+              <label htmlFor="num_identificacion">
+                Número de Identificación <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="num_identificacion"
+                placeholder="Ej. 1234567890"
+                value={form.num_identificacion}
+                onChange={handleChange}
+                maxLength={12}
+                minLength={8}
+                pattern="[0-9]*"
+                inputMode="numeric"
+              />
+              {errors.num_identificacion && (
+                <p className="register-error-message">
+                  {errors.num_identificacion}
+                </p>
+              )}
+            </div>
 
-        <p className="register-register-link">
-          ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
-        </p>
+            {/* Correo electrónico */}
+            <div className="register-form-group">
+              <label htmlFor="correo">
+                Correo electrónico <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type="email"
+                name="correo"
+                placeholder="hey@tuemail.com"
+                value={form.correo}
+                onChange={handleChange}
+              />
+              {errors.correo && (
+                <p className="register-error-message">{errors.correo}</p>
+              )}
+            </div>
+
+            {/* Contraseña */}
+            <div className="register-form-group password-wrapper">
+              <label htmlFor="clave">
+                Contraseña <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="clave"
+                placeholder="Crea una contraseña"
+                value={form.clave}
+                onChange={handleChange}
+              />
+              <span
+                className="register-toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <i className={showPassword ? "bx bx-hide" : "bx bx-show"}></i>
+              </span>
+
+              <div className="register-password-strength-container">
+                <div
+                  className={`register-password-strength 
+                      ${
+                          strength.nivel > 0
+                              ? ["weak", "medium", "strong", "very-strong"][strength.nivel - 1]
+                              : '' 
+                      }`}
+                  style={{
+                      width: `${(strength.nivel / 4) * 100}%` 
+                  }}
+                ></div>
+                <small className={`register-strength-text strength-${strength.nivel}`}>
+                    {strength.texto && `Fortaleza: ${strength.texto}`}
+                </small>
+              </div>
+              {errors.clave && (
+                <p className="register-error-message">{errors.clave}</p>
+              )}
+            </div>
+
+            {/* Consentimiento */}
+            <div className="register-consent">
+              <input
+                type="checkbox"
+                name="consent"
+                checked={form.consent}
+                onChange={handleChange}
+              />
+              <label htmlFor="consent">
+                He leído y acepto la{" "}
+                <a 
+                  href="/politica-privacidad"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Política de Privacidad
+                </a>{" "}
+                <span style={{ color: 'red' }}>*</span>
+              </label>
+            </div>
+            {errors.consent && (
+              <p className="register-error-message">{errors.consent}</p>
+            )}
+
+            <button
+              type="submit"
+              className="register-login-button"
+              disabled={loading}
+            >
+              {loading ? "Creando cuenta..." : "Crear cuenta"}
+            </button>
+          </form>
+
+          <p className="register-register-link">
+            ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+          </p>
+        </div>
+
+        <div className="register-image-section">
+          <img src={Registerimg} alt="Registro Aeternum" />
+        </div>
       </div>
-
-      <div className="register-image-section">
-        <img src={Registerimg} alt="Registro Aeternum" />
-      </div>
-    </div>
     </div>
   );
 }

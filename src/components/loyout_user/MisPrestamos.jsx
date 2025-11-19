@@ -27,7 +27,7 @@ export default function Prestamos({ isMobile }) {
         if (!token) return;
 
         try {
-            const res = await fetch("http://192.168.1.2:8000/users/me", {
+            const res = await fetch("http://192.168.1.5:8000/users/me", {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -50,7 +50,7 @@ export default function Prestamos({ isMobile }) {
 
         try {
             const timestamp = new Date().getTime();
-            const res = await fetch(`http://192.168.1.2:8000/prestamos-fisicos/mis-prestamos?_t=${timestamp}`, {
+            const res = await fetch(`http://192.168.1.5:8000/prestamos-fisicos/mis-prestamos?_t=${timestamp}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -82,7 +82,7 @@ export default function Prestamos({ isMobile }) {
 
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`http://192.168.1.2:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
+            const res = await fetch(`http://192.168.1.5:8000/prestamos-fisicos/cancelar/${prestamoId}`, {
                 method: "PUT",
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -182,7 +182,7 @@ export default function Prestamos({ isMobile }) {
             return `https://covers.openlibrary.org/b/id/${prestamo.cover_id}-M.jpg`;
         }
         if (prestamo.imagen_local) {
-            return `http://192.168.1.2:8000/${prestamo.imagen_local}`;
+            return `http://192.168.1.5:8000/${prestamo.imagen_local}`;
         }
         return defaultImage;
     };

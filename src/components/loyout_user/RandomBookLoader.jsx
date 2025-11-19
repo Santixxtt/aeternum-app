@@ -9,15 +9,12 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
   const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // ✅ Estados para el mensaje flotante
   const [mensaje, setMensaje] = useState("");
   const [tipoMensaje, setTipoMensaje] = useState("exito");
 
-  // ✅ Usar useRef para mantener el offset actualizado
   const offsetRef = useRef(0);
   const LIBROS_POR_PAGINA = 12;
 
-  // ✅ Función para cargar libros (reutilizable) - SIN dependencias problemáticas
   const fetchRecomendaciones = useCallback(async (isLoadingMore = false) => {
     if (isLoadingMore) {
       setLoadingMore(true);
@@ -28,13 +25,28 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
     setError(false);
     
     try {
+      const currentOffset = isLoadingMore ? offsetRef.current : 0;
+      
+      // Obtener libros locales primero
+      let librosLocales = [];
+      try {
+        const localRes = await fetch(
+          `http://192.168.1.5:8000/search/books/local-only?limit=6&offset=${Math.floor(currentOffset / 2)}`
+        );
+        
+        if (localRes.ok) {
+          const localData = await localRes.json();
+          librosLocales = localData.docs || [];
+          console.log(`🏠 Libros locales obtenidos: ${librosLocales.length}`);
+        }
+      } catch (localError) {
+        console.log("⚠️ No se pudieron cargar libros locales, continuando solo con OpenLibrary");
+      }
+      
       const queries = ["fantasy", "science", "love", "history", "mystery", "adventure", "thriller"];
       const randomQuery = queries[Math.floor(Math.random() * queries.length)];
       
-      // ✅ Usar el ref para el offset actual
-      const currentOffset = isLoadingMore ? offsetRef.current : 0;
-      
-      console.log(`📚 Cargando libros: query="${randomQuery}", offset=${currentOffset}, limit=${LIBROS_POR_PAGINA}`);
+      console.log(`📚 Cargando de OpenLibrary: query="${randomQuery}", offset=${currentOffset}`);
       
       const res = await fetch(
         `https://openlibrary.org/search.json?q=${randomQuery}&limit=${LIBROS_POR_PAGINA}&offset=${currentOffset}`
@@ -45,22 +57,41 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
       }
 
       const data = await res.json();
-      const nuevosLibros = data.docs || [];
+      let librosOpenLibrary = (data.docs || []).map(doc => ({
+        ...doc,
+        es_local: false
+      }));
       
-      console.log(`✅ Libros recibidos: ${nuevosLibros.length}`);
+      console.log(`📚 Libros de OpenLibrary: ${librosOpenLibrary.length}`);
+      
+      let nuevoLibros = [];
+      let localIndex = 0;
+      
+      for (let i = 0; i < librosOpenLibrary.length; i++) {
+        nuevoLibros.push(librosOpenLibrary[i]);
+        
+        if ((i + 1) % 3 === 0 && localIndex < librosLocales.length) {
+          nuevoLibros.push(librosLocales[localIndex]);
+          localIndex++;
+        }
+      }
+      
+      while (localIndex < librosLocales.length) {
+        nuevoLibros.push(librosLocales[localIndex]);
+        localIndex++;
+      }
+      
+      console.log(`✅ Total mezclado: ${nuevoLibros.length} (${librosLocales.length} locales + ${librosOpenLibrary.length} OL)`);
       
       if (isLoadingMore) {
-        // ✅ Agregar libros nuevos a la lista existente
-        setLibros(prev => [...prev, ...nuevosLibros]);
+        setLibros(prev => [...prev, ...nuevoLibros]);
         offsetRef.current += LIBROS_POR_PAGINA;
       } else {
-        // ✅ Primera carga: reemplazar libros
-        setLibros(nuevosLibros);
+        setLibros(nuevoLibros);
         offsetRef.current = LIBROS_POR_PAGINA;
       }
       
-      // ✅ Verificar si hay más libros disponibles
-      setHasMore(nuevosLibros.length === LIBROS_POR_PAGINA);
+      setHasMore(librosOpenLibrary.length === LIBROS_POR_PAGINA || librosLocales.length > 0);
       
     } catch (e) {
       console.error("❌ Error al cargar recomendaciones:", e);
@@ -69,7 +100,7 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
       setLoading(false);
       setLoadingMore(false);
     }
-  }, []); // ✅ Sin dependencias - usa refs internos
+  }, []);
 
   // ✅ Carga inicial
   useEffect(() => {
@@ -151,7 +182,7 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
         console.log("📦 DATOS FINALES para enviar:", libroData);
 
         console.log("📡 Enviando al backend...");
-        const res = await fetch("http://192.168.1.2:8000/wishlist/add", {
+        const res = await fetch("http://192.168.1.5:8000/wishlist/add", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

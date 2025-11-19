@@ -6,7 +6,7 @@ import EstadisticasGenerales from "./EstadisticasGenerales";
 import Alertas from "./Alertas";
 import GraficaPrestamos from "./GraficaPrestamos";
 import Footer from "../loyout_reusable/footer";
-import AeternumBienvenida from "../loyout_major/AeternumBienvenida";
+import AeternumBienvenida from "../loyout_reusable/AeternumBienvenida";
 import LibrosPopulares from "./LibrosPopulares";
 
 const DashboardLibrarian = () => {
@@ -37,7 +37,7 @@ const DashboardLibrarian = () => {
 
     const fetchUser = async () => {
       try {
-        const response = await fetch("http://192.168.1.2:8000/users/me", {
+        const response = await fetch("http://192.168.1.5:8000/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

@@ -14,11 +14,24 @@ const BookCard = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  const initialSrc = book.cover_i
-    ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-    : defaultImage;
+  // 🔥 Determinar la imagen según si es local o de OpenLibrary
+  const getImageSrc = () => {
+    // Si es libro local Y tiene imagen local
+    if (book.es_local && book.imagen_local) {
+      return `http://192.168.1.5:8000/uploads/${book.imagen_local}`;
+    }
+    
+    // Si tiene cover_i de OpenLibrary
+    if (book.cover_i) {
+      return `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`;
+    }
+    
+    // Imagen por defecto
+    return defaultImage;
+  };
 
-  // Funciones de acción seguras para invitados
+  const initialSrc = getImageSrc();
+
   const handleWishlistClick = () => {
     if (!usuario) return handleGuestAction();
     onAddToWishlist && onAddToWishlist(book);
@@ -31,19 +44,16 @@ const BookCard = ({
 
   const handleDownloadClick = () => {
     if (!usuario) return handleGuestAction();
-    // Aquí podrías implementar descarga real si quieres
     alert("Descargando libro..."); 
   };
 
   const handleRateClick = () => {
     if (!usuario) return handleGuestAction();
-    // Aquí iría lógica de calificación
     alert("Califica este libro"); 
   };
 
   return (
     <>
-      {/* Carta del libro */}
       <div
         onClick={() => setOpen(true)}
         className="dashboard-user book-card cursor-pointer"
@@ -57,11 +67,11 @@ const BookCard = ({
             }
           }}
         />
+        
         <h3>{book.title}</h3>
         <p>{book.author_name?.[0] || "Autor desconocido"}</p>
       </div>
 
-      {/* Modal con TODAS las props necesarias */}
       {open && (
         <BookModal
           book={book}
@@ -74,7 +84,7 @@ const BookCard = ({
           onRate={handleRateClick}
           isBookSaved={isBookSaved}
           onRemoveFromWishlist={onRemoveFromWishlist}
-          libro_id={libro_id}
+          libro_id={libro_id || book.libro_id}
         />
       )}
     </>

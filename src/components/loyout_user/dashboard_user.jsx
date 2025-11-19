@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "./header";
 import HeaderMovil from "./HeaderMovil";
 import Footer from "../loyout_reusable/footer";
-import AeternumBienvenida from "../loyout_major/AeternumBienvenida";
+import AeternumBienvenida from "../loyout_reusable/AeternumBienvenida";
 import SearchResults from "./SearchResults";
 import RandomBookLoader from "./RandomBookLoader";
 import PhysicalLoanModal from "./PhysicalLoanModal";
@@ -35,7 +35,7 @@ export default function DashboardUser({ isMobile }) {
 
     const fetchUserData = async () => {
       try {
-        const res = await fetch("http://192.168.1.2:8000/users/me", {
+        const res = await fetch("http://192.168.1.5:8000/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -136,15 +136,44 @@ export default function DashboardUser({ isMobile }) {
       setResultados([]);
       return;
     }
+    
     setLoading(true);
+    
     try {
       const res = await fetch(
-        `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20`
+        `http://192.168.1.5:8000/search/books?q=${encodeURIComponent(q)}&limit=20`
       );
+      
+      if (!res.ok) {
+        throw new Error(`Error al buscar: ${res.status}`);
+      }
+      
       const data = await res.json();
+      
+      console.log(`📚 Búsqueda: "${q}" - ${data.total_local} locales + ${data.total_openlibrary} OpenLibrary`);
+      
       setResultados(data.docs || []);
+      
     } catch (error) {
       console.error("Error al buscar libros:", error);
+      
+      try {
+        console.log("⚠️ Usando fallback de OpenLibrary...");
+        const fallbackRes = await fetch(
+          `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20`
+        );
+        const fallbackData = await fallbackRes.json();
+        
+        const docs = (fallbackData.docs || []).map(doc => ({
+          ...doc,
+          es_local: false
+        }));
+        
+        setResultados(docs);
+      } catch (fallbackError) {
+        console.error("Error en fallback:", fallbackError);
+        setResultados([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -203,7 +232,7 @@ export default function DashboardUser({ isMobile }) {
         fecha_publicacion: book.first_publish_year?.toString() || null
       };
 
-      const res = await fetch("http://192.168.1.2:8000/wishlist/add", {
+      const res = await fetch("http://192.168.1.5:8000/wishlist/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
