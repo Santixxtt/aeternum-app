@@ -46,27 +46,18 @@ app.add_middleware(
 
 # Eventos de inicio y cierre
 @app.on_event("startup")
-async def startup_event():
+async def on_startup():
     print(" Iniciando aplicación Aeternum...")
     await init_db(app)
-    FastAPICache.init(InMemoryBackend())  # cache local segura
-    print(" Cache en memoria inicializada.")
-
-@app.on_event("startup")
-async def startup_event():
+    FastAPICache.init(InMemoryBackend())  
     start_scheduler()
-    print("✅ Aplicación iniciada con scheduler activo")
+    print("🚀 Aeternum iniciada con scheduler y cache")
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def on_shutdown():
     stop_scheduler()
-    print("🛑 Aplicación detenida")
-
-@app.on_event("shutdown")
-async def shutdown_event():
     await close_db()
-    print("🧹 Aplicación detenida correctamente.")
-
+    print("🛑 Aplicación detenida correctamente.")
 
 #  Rutas principales
 
