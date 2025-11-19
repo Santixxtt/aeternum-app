@@ -2,8 +2,8 @@
 fastapi[all]
 
 # Seguridad y autenticación
-passlib
-bcrypt
+bcrypt==3.2.0
+passlib==1.7.4
 pyjwt
 python-jose
 
