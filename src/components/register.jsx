@@ -95,7 +95,7 @@ export default function Registro() {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://192.168.1.5:8000/auth/register",
+        "http://10.17.0.28:8000/auth/register",
         form
       );
       alert(response.data.message || "¡Cuenta creada con éxito!");

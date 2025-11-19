@@ -53,19 +53,17 @@
     color: #B6407D;
 }
 
-/* Estilo para el enlace de navegación ACTIVO */
-.dashboard-user .nav ul li.active {
-    color: #B6407D; /* Color del texto primario */
+/* Header invitado */
+.header .nav ul li.active {
+    color: #B6407D;
     font-weight: 600;
-    /* Indicador visual: borde inferior morado */
-    border-bottom: 2px solid #B6407D; 
-    /* Necesitas que el elemento padre (li) tenga el padding adecuado si quieres que el borde se vea bien */
+    border-bottom: 2px solid #B6407D;
 }
 
-/* Aseguramos que el color del texto del link dentro del li activo sea morado */
-.dashboard-user .nav ul li.active a {
+.header .nav ul li.active i {
     color: #B6407D;
 }
+
 
 /* Search Bar */
 .dashboard-user .search-bar {
@@ -265,7 +263,8 @@
     justify-content: center;
     align-items: center;
     z-index: 1050; 
-    padding: 20px; 
+    padding: 20px;
+}
 
 .modal-content {
     background: #ffffff;
@@ -382,7 +381,7 @@
   gap: 15px; 
   margin-top: 25px;
   width: 100%;
-}}
+}
 
 .modal-actions button {
     border: none;

@@ -31,7 +31,7 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
       let librosLocales = [];
       try {
         const localRes = await fetch(
-          `http://192.168.1.5:8000/search/books/local-only?limit=6&offset=${Math.floor(currentOffset / 2)}`
+          `http://10.17.0.28:8000/search/books/local-only?limit=6&offset=${Math.floor(currentOffset / 2)}`
         );
         
         if (localRes.ok) {
@@ -182,7 +182,7 @@ export default function RandomBookLoader({ onAddToWishlist, onBorrow, usuario, h
         console.log("📦 DATOS FINALES para enviar:", libroData);
 
         console.log("📡 Enviando al backend...");
-        const res = await fetch("http://192.168.1.5:8000/wishlist/add", {
+        const res = await fetch("http://10.17.0.28:8000/wishlist/add", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

@@ -9,12 +9,10 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
   const [checkingBook, setCheckingBook] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   
-  // 🆕 Estados para límite de préstamos
   const [canRequest, setCanRequest] = useState(true);
   const [activeLoans, setActiveLoans] = useState(0);
   const [checkingLimit, setCheckingLimit] = useState(true);
 
-  // Calcular fecha de devolución (+12 días)
   const calcularFechaDevolucion = (fechaRec) => {
     if (!fechaRec) return "";
     const fecha = new Date(fechaRec + "T00:00:00");
@@ -24,22 +22,19 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
 
   const fechaDevolucion = calcularFechaDevolucion(fechaRecogida);
 
-  // Fecha mínima (hoy) y máxima (30 días)
   const hoy = new Date().toISOString().split("T")[0];
   const maxFecha = new Date();
   maxFecha.setDate(maxFecha.getDate() + 30);
   const maxFechaStr = maxFecha.toISOString().split("T")[0];
 
-  // 🆕 VERIFICAR LÍMITE DE PRÉSTAMOS
+  // VERIFICAR LÍMITE DE PRÉSTAMOS
   useEffect(() => {
     const verificarLimite = async () => {
       const token = localStorage.getItem("token");
       
       try {
-        const res = await fetch("http://192.168.1.5:8000/prestamos-fisicos/puede-solicitar", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await fetch("http://10.17.0.28:8000/prestamos-fisicos/puede-solicitar", {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.ok) {
@@ -61,30 +56,33 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     verificarLimite();
   }, []);
 
-  // ✅ VERIFICAR/CREAR LIBRO AL MONTAR EL COMPONENTE
+  // VERIFICAR/CREAR LIBRO - OPTIMIZADO
   useEffect(() => {
     const verificarOCrearLibro = async () => {
       const token = localStorage.getItem("token");
+      
+      // 🚀 DETECCIÓN RÁPIDA: Si el libro YA tiene libro_id, usarlo directamente
+      if (book.libro_id) {
+        console.log("⚡ Libro con ID directo:", book.libro_id);
+        setLibroId(book.libro_id);
+        setCheckingBook(false);
+        return;
+      }
+      
+      // Para libros de OpenLibrary sin libro_id, buscar/crear
       const openlibrary_key = book.key?.replace("/works/", "") || book.openlibrary_key;
-
-      console.log("🔍 Verificando libro en BD con key:", openlibrary_key);
+      console.log("🔍 Verificando libro OpenLibrary:", openlibrary_key);
 
       try {
-        // 1️⃣ Intentar buscar el libro por openlibrary_key
+        // Buscar si existe
         const searchRes = await fetch(
-          `http://192.168.1.5:8000/wishlist/buscar-libro/${openlibrary_key}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `http://10.17.0.28:8000/wishlist/buscar-libro/${openlibrary_key}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (searchRes.ok) {
           const data = await searchRes.json();
-          console.log("✅ Libro encontrado en BD:", data);
           
-          // Verificar si tiene cantidad disponible
           if (data.libro?.cantidad_disponible > 0) {
             setLibroId(data.libro_id || data.libro?.id);
             setCheckingBook(false);
@@ -96,9 +94,8 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
           }
         }
 
-        console.log(" Libro no encontrado, creando en BD...");
-        
-        const createRes = await fetch("http://192.168.1.5:8000/wishlist/ensure-book-for-loan", {
+        // Crear si no existe
+        const createRes = await fetch("http://10.17.0.28:8000/wishlist/ensure-book-for-loan", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -108,13 +105,12 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
             titulo: book.title,
             autor: book.author_name?.[0] || "Desconocido",
             openlibrary_key: openlibrary_key,
-            cover_id: book.cover_i || null,
+            cover_id: book.cover_i || 0,
           }),
         });
 
         if (createRes.ok) {
           const createData = await createRes.json();
-          console.log("✅ Libro procesado exitosamente:", createData);
           
           if (createData.cantidad_disponible > 0) {
             setLibroId(createData.libro_id);
@@ -122,13 +118,11 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
             setErrorMessage("Este libro no tiene copias disponibles para préstamo físico");
           }
         } else {
-          const errorData = await createRes.json();
-          console.error("❌ Error al procesar libro:", errorData);
           setErrorMessage("No se pudo registrar el libro en la biblioteca");
         }
 
       } catch (error) {
-        console.error("❌ Error verificando/creando libro:", error);
+        console.error("❌ Error verificando libro:", error);
         setErrorMessage("Error de conexión al verificar disponibilidad");
       } finally {
         setCheckingBook(false);
@@ -138,10 +132,25 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     verificarOCrearLibro();
   }, [book]);
 
+  // URL de la imagen - SOPORTE PARA LIBROS LOCALES Y OPENLIBRARY
+  const imageUrl = (() => {
+    // Prioridad 1: Imagen local (si existe)
+    if (book.imagen_local) {
+      return `http://10.17.0.28:8000/uploads/${book.imagen_local}`;
+    }
+    
+    // Prioridad 2: Cover de OpenLibrary
+    if (book.cover_i) {
+      return `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`;
+    }
+    
+    // Fallback
+    return defaultImage;
+  })();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 🆕 Verificar límite antes de enviar
     if (!canRequest) {
       alert("⚠️ Has alcanzado el límite de 2 préstamos físicos activos.\nDevuelve o cancela un préstamo para solicitar uno nuevo.");
       return;
@@ -165,10 +174,10 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       fecha_recogida: fechaRecogida,
     };
 
-    console.log("📤 Body a enviar:", requestBody);
+    console.log("📤 Solicitando préstamo:", requestBody);
 
     try {
-      const res = await fetch("http://192.168.1.5:8000/prestamos-fisicos/solicitar", {
+      const res = await fetch("http://10.17.0.28:8000/prestamos-fisicos/solicitar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -178,10 +187,8 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       });
 
       const data = await res.json();
-      console.log("📥 Respuesta:", data);
 
       if (!res.ok) {
-        console.error("❌ Error del servidor:", data);
         const errorMsg = data.detail?.[0]?.msg || data.detail || data.message || "Error desconocido";
         throw new Error(errorMsg);
       }
@@ -190,7 +197,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
       onClose();
 
     } catch (error) {
-      console.error("Error al solicitar préstamo físico:", error);
+      console.error("Error al solicitar préstamo:", error);
       alert(`❌ ${error.message}\n\nNo se pudo procesar tu solicitud.`);
     } finally {
       setLoading(false);
@@ -203,11 +210,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     }
   };
 
-  const imageUrl = book.cover_i
-    ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-    : defaultImage;
-
-  // ✅ MOSTRAR LOADING MIENTRAS VERIFICA
+  // LOADING
   if (checkingBook || checkingLimit) {
     return (
       <div className="physical-loan-overlay" onClick={handleOverlayClick} style={{ alignItems: 'center' }}>
@@ -225,7 +228,7 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
     );
   }
 
-  // ✅ MOSTRAR ERROR SI HAY ALGÚN PROBLEMA
+  // ERROR
   if (errorMessage) {
     return (
       <div className="physical-loan-overlay" onClick={handleOverlayClick} style={{ alignItems: 'center' }}>
@@ -271,7 +274,6 @@ export default function PhysicalLoanModal({ book, usuario, onClose }) {
 
         <h2 className="physical-loan-title">Solicitud de Préstamo Físico</h2>
 
-        {/* 🆕 ALERTA DE PRÉSTAMOS ACTIVOS */}
         {activeLoans > 0 && (
           <div style={{
             background: activeLoans >= 2 ? '#fff3cd' : '#d1ecf1',

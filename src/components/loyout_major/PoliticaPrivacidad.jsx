@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import "../../assets/css/PoliticaPrivacidad.css";
 import Bottomnav from "./Bottomnav"; 
+import Header from "../loyout_major/header";
 import Footer from "../loyout_reusable/footer";
 
 function PoliticaPrivacidad() {
@@ -13,6 +14,7 @@ function PoliticaPrivacidad() {
 
   return (
     <div className="privacy-page">
+      <Header />
       <Bottomnav />
       
       <main className="privacy-container">

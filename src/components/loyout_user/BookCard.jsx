@@ -18,7 +18,7 @@ const BookCard = ({
   const getImageSrc = () => {
     // Si es libro local Y tiene imagen local
     if (book.es_local && book.imagen_local) {
-      return `http://192.168.1.5:8000/uploads/${book.imagen_local}`;
+      return `http://10.17.0.28:8000/uploads/${book.imagen_local}`;
     }
     
     // Si tiene cover_i de OpenLibrary

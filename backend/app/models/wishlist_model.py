@@ -193,7 +193,7 @@ async def ensure_book_is_persisted(libro_data: dict) -> int | None:
     async with get_cursor() as (conn, cursor):
         try:
             await cursor.execute(
-                "SELECT id, genero_id, editorial_id FROM libros WHERE openlibrary_key = %s",
+                "SELECT id FROM libros WHERE openlibrary_key = %s",
                 (normalized_key,)
             )
             libro_existente = await cursor.fetchone()
@@ -208,7 +208,12 @@ async def ensure_book_is_persisted(libro_data: dict) -> int | None:
     # ✅ Si no existe, crear el libro
     titulo = libro_data.get("titulo")
     descripcion = libro_data.get("descripcion", "")
+    
+    # 🔥 FIX CRÍTICO: Manejo de cover_id NULL
     cover_id = libro_data.get("cover_id")
+    if cover_id is None or cover_id == 0:
+        cover_id = 0  # Usar 0 en lugar de NULL
+    
     fecha_publicacion = libro_data.get("fecha_publicacion", None)
 
     # 🧩 Normalización segura de la fecha_publicacion
@@ -243,7 +248,7 @@ async def ensure_book_is_persisted(libro_data: dict) -> int | None:
     async with get_cursor() as (conn, cursor):
         try:
             print(f"📝 Creando nuevo libro: {titulo}")
-            print(f"📝 Con: genero_id={genero_id}, editorial_id={editorial_id}, fecha_publicacion={fecha_publicacion}")
+            print(f"📝 Con: genero_id={genero_id}, editorial_id={editorial_id}, fecha_publicacion={fecha_publicacion}, cover_id={cover_id}")
 
             await cursor.execute(
                 """
@@ -267,11 +272,11 @@ async def ensure_book_is_persisted(libro_data: dict) -> int | None:
             return None
 
 
+# También actualiza ensure_book_for_loan (línea ~265):
 async def ensure_book_for_loan(libro_data: dict) -> dict | None:
     """
     Garantiza que el libro exista en la DB para préstamos físicos.
     """
-    # 1. Obtener/Crear Autor, Género y Editorial
     nombre_autor, apellido_autor = split_autor_name(libro_data.get("autor", "Desconocido"))
     autor_id = await get_or_create_autor(nombre_autor, apellido_autor)
     
@@ -285,12 +290,17 @@ async def ensure_book_for_loan(libro_data: dict) -> dict | None:
     
     titulo = libro_data.get("titulo")
     descripcion = libro_data.get("descripcion", "")
+    
+    # 🔥 FIX: Manejo de cover_id NULL
     cover_id = libro_data.get("cover_id")
+    if cover_id is None or cover_id == 0:
+        cover_id = 0
+    
     fecha_publicacion = libro_data.get("fecha_publicacion", None)
 
     async with get_cursor() as (conn, cursor):
         try:
-            # 2. Buscar libro existente
+            # Buscar libro existente
             await cursor.execute(
                 "SELECT id, cantidad_disponible FROM libros WHERE openlibrary_key = %s",
                 (normalized_key,)
@@ -303,7 +313,7 @@ async def ensure_book_for_loan(libro_data: dict) -> dict | None:
                     "cantidad_disponible": libro["cantidad_disponible"] or 0
                 }
 
-            # 3. Crear libro si no existe (con cantidad_disponible = 1 por defecto)
+            # Crear libro si no existe
             await cursor.execute(
                 """
                 INSERT INTO libros 
@@ -322,6 +332,8 @@ async def ensure_book_for_loan(libro_data: dict) -> dict | None:
         except Exception as e:
             await conn.rollback()
             print(f"❌ Error en ensure_book_for_loan: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
 async def eliminar_de_lista_deseos(usuario_id: int, libro_id: int):

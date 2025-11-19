@@ -28,7 +28,7 @@ export default function ListaDeseos({ isMobile }) {
 
         const fetchUserData = async () => {
             try {
-                const res = await fetch("http://192.168.1.5:8000/users/me", {
+                const res = await fetch("http://10.17.0.28:8000/users/me", {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -59,7 +59,7 @@ export default function ListaDeseos({ isMobile }) {
     if (!token) return;
 
     try {
-        const res = await fetch("http://192.168.1.5:8000/wishlist/list", {
+        const res = await fetch("http://10.17.0.28:8000/wishlist/list", {
             headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -118,7 +118,7 @@ export default function ListaDeseos({ isMobile }) {
   setSelectedBook(null);
 
   try {
-    const res = await fetch(`http://192.168.1.5:8000/wishlist/delete/${bookId}`, {
+    const res = await fetch(`http://10.17.0.28:8000/wishlist/delete/${bookId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

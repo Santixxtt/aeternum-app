@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../../assets/css/Contacto.css";
+import Bottomnav from "./Bottomnav"; 
+import Header from "../loyout_major/header";
 import Footer from "../loyout_reusable/footer";
 
 function Contacto() {
@@ -122,6 +124,10 @@ function Contacto() {
   };
 
   return (
+    <>
+    < Header />
+    <Bottomnav />
+
     <div className="contact-page">
       <main className="contact-container">
         <nav className="back-nav">
@@ -297,6 +303,7 @@ function Contacto() {
       </main>
       <Footer />
     </div>
+    </>
   );
 }
 
