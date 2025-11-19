@@ -16,7 +16,7 @@
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
     "boxicons": "^2.1.4",
-    "express": "^5.1.0",
+    "express": "^4.21.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.548.0",
     "react": "^19.1.1",
