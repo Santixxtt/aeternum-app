@@ -1,14 +1,12 @@
-import smtplib
-import asyncio
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from concurrent.futures import ThreadPoolExecutor
+import logging
+import os
+import requests
 
-SENDER_EMAIL = "aeternum538@gmail.com"
-SENDER_PASSWORD = "wuby uikp lilt rfkq"
+logger = logging.getLogger(__name__)
 
-# Pool de threads para operaciones de envío de correo
-email_pool = ThreadPoolExecutor(max_workers=3)
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_NAME = os.getenv("SENDER_NAME")
 
 
 async def send_prestamo_confirmacion(
@@ -18,7 +16,8 @@ async def send_prestamo_confirmacion(
     fecha_recogida: str,
     fecha_devolucion: str
 ):
-   
+    """Envía correo de confirmación de préstamo"""
+    
     subject = "Préstamo Confirmado - Aeternum"
     
     html_content = f"""
@@ -55,7 +54,7 @@ async def send_prestamo_confirmacion(
     </html>
     """
 
-    return await _send_email_async(recipient_email, subject, html_content)
+    return await _send_email_brevo(recipient_email, subject, html_content, nombre_usuario)
 
 
 async def send_prestamo_cancelado(
@@ -63,9 +62,8 @@ async def send_prestamo_cancelado(
     nombre_usuario: str,
     titulo_libro: str
 ):
-    """
-    Envía correo cuando un usuario cancela un préstamo.
-    """
+    """Envía correo cuando un usuario cancela un préstamo"""
+    
     subject = "Préstamo Cancelado - Aeternum"
     
     html_content = f"""
@@ -87,7 +85,7 @@ async def send_prestamo_cancelado(
                 
                 <p>Si cambias de opinión, puedes solicitar el préstamo nuevamente desde nuestro catálogo.</p>
                 
-                <p style="margin-top: 30px;">¡Gracias por usar Aeternum! </p>
+                <p style="margin-top: 30px;">¡Gracias por usar Aeternum!</p>
                 
                 <p style="font-size: 0.8em; color: #999; margin-top: 30px;">
                     Este es un correo automático. Por favor, no respondas a este mensaje.
@@ -97,7 +95,7 @@ async def send_prestamo_cancelado(
     </html>
     """
 
-    return await _send_email_async(recipient_email, subject, html_content)
+    return await _send_email_brevo(recipient_email, subject, html_content, nombre_usuario)
 
 
 async def send_recordatorio_devolucion(
@@ -107,10 +105,9 @@ async def send_recordatorio_devolucion(
     fecha_devolucion: str,
     dias_restantes: int
 ):
-    """
-    Envía recordatorio de devolución próxima.
-    """
-    subject = " Recordatorio de Devolución - Aeternum"
+    """Envía recordatorio de devolución próxima"""
+    
+    subject = "⏰ Recordatorio de Devolución - Aeternum"
     
     html_content = f"""
     <html>
@@ -143,43 +140,8 @@ async def send_recordatorio_devolucion(
     </html>
     """
 
-    return await _send_email_async(recipient_email, subject, html_content)
+    return await _send_email_brevo(recipient_email, subject, html_content, nombre_usuario)
 
-
-def _send_email_sync(recipient_email: str, subject: str, html_content: str):
-
-    message = MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"] = SENDER_EMAIL
-    message["To"] = recipient_email
-
-    part = MIMEText(html_content, "html")
-    message.attach(part)
-
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.sendmail(SENDER_EMAIL, recipient_email, message.as_string())
-        
-        print(f"✅ Correo enviado a {recipient_email}")
-        return True, "Correo enviado exitosamente"
-    except Exception as e:
-        print(f"❌ Error al enviar correo: {e}")
-        return False, str(e)
-
-
-async def _send_email_async(recipient_email: str, subject: str, html_content: str):
-    """
-    Wrapper asíncrono que ejecuta el envío de correo en el pool de threads.
-    """
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(
-        email_pool,
-        _send_email_sync,
-        recipient_email,
-        subject,
-        html_content
-    )
 
 async def send_prestamo_atrasado(
     recipient_email: str,
@@ -187,9 +149,8 @@ async def send_prestamo_atrasado(
     titulo_libro: str,
     fecha_devolucion: str
 ):
-    """
-    Envía correo cuando un préstamo pasa a estado atrasado.
-    """
+    """Envía correo cuando un préstamo pasa a estado atrasado"""
+    
     subject = "⛔ Préstamo Atrasado - Aeternum"
     
     html_content = f"""
@@ -219,7 +180,8 @@ async def send_prestamo_atrasado(
     </html>
     """
 
-    return await _send_email_async(recipient_email, subject, html_content)
+    return await _send_email_brevo(recipient_email, subject, html_content, nombre_usuario)
+
 
 async def send_prestamo_cancelado_bibliotecario(
     recipient_email: str,
@@ -227,9 +189,8 @@ async def send_prestamo_cancelado_bibliotecario(
     titulo_libro: str,
     motivo: str = None
 ):
-    """
-    Envía correo cuando un BIBLIOTECARIO cancela un préstamo.
-    """
+    """Envía correo cuando un BIBLIOTECARIO cancela un préstamo"""
+    
     subject = "⚠️ Préstamo Cancelado por Biblioteca - Aeternum"
     
     motivo_html = ""
@@ -244,11 +205,11 @@ async def send_prestamo_cancelado_bibliotecario(
     <html>
         <body>
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 600px; margin: auto;">
-                <h2 style="color: #d9534f;"> Préstamo Cancelado</h2>
+                <h2 style="color: #d9534f;">⚠️ Préstamo Cancelado</h2>
                 
                 <p>Hola <strong>{nombre_usuario}</strong>,</p>
                 
-                <p>Te informamos que tu préstamo físico ha sido <strong>cancelado por la libreria</strong>.</p>
+                <p>Te informamos que tu préstamo físico ha sido <strong>cancelado por la librería</strong>.</p>
                 
                 <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #d9534f;">
                     <h3 style="margin-top: 0; color: #721c24;">Libro Cancelado:</h3>
@@ -257,13 +218,13 @@ async def send_prestamo_cancelado_bibliotecario(
                 
                 {motivo_html}
 
-                <p>El libro fue cancelado por no venir en la fecha que se selecciono, por este motivo se cancelo su préstamo.</p>
+                <p>El libro fue cancelado por no venir en la fecha que se seleccionó, por este motivo se canceló su préstamo.</p>
                 
                 <p>El libro ha sido liberado y ya está disponible para otros usuarios.</p>
                 
                 <p>Si tienes alguna pregunta o necesitas más información, por favor contacta con la biblioteca.</p>
                 
-                <p style="margin-top: 30px;">Gracias por usar Aeternum </p>
+                <p style="margin-top: 30px;">Gracias por usar Aeternum</p>
                 
                 <p style="font-size: 0.8em; color: #999; margin-top: 30px;">
                     Este es un correo automático. Por favor, no respondas a este mensaje.
@@ -273,4 +234,62 @@ async def send_prestamo_cancelado_bibliotecario(
     </html>
     """
 
-    return await _send_email_async(recipient_email, subject, html_content)
+    return await _send_email_brevo(recipient_email, subject, html_content, nombre_usuario)
+
+
+# 🔥 Función auxiliar para enviar emails con Brevo
+async def _send_email_brevo(recipient_email: str, subject: str, html_content: str, user_name: str = None):
+    """Envía email usando la API de Brevo"""
+    
+    logger.info(f"📧 Enviando email a: {recipient_email}")
+    
+    if not user_name:
+        user_name = recipient_email.split("@")[0].capitalize()
+    
+    payload = {
+        "sender": {
+            "name": SENDER_NAME,
+            "email": SENDER_EMAIL
+        },
+        "to": [
+            {
+                "email": recipient_email,
+                "name": user_name
+            }
+        ],
+        "subject": subject,
+        "htmlContent": html_content
+    }
+    
+    if not BREVO_API_KEY:
+        logger.error("❌ BREVO_API_KEY no está configurada")
+        return False, "BREVO_API_KEY no configurada"
+    
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+    
+    try:
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            json=payload,
+            headers=headers,
+            timeout=10
+        )
+        
+        if response.status_code == 201:
+            result = response.json()
+            message_id = result.get("messageId", "N/A")
+            logger.info(f"✅ Email enviado exitosamente. ID: {message_id}")
+            return True, "Correo enviado exitosamente"
+        else:
+            error_msg = f"Error {response.status_code}: {response.text}"
+            logger.error(f"❌ {error_msg}")
+            return False, error_msg
+    
+    except Exception as e:
+        error_msg = f"Error: {str(e)}"
+        logger.error(f"❌ {error_msg}")
+        return False, error_msg

@@ -1,17 +1,15 @@
+import logging
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 from datetime import datetime
-from dotenv import load_dotenv
 
-load_dotenv()
+logger = logging.getLogger(__name__)
 
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USER)
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_NAME = os.getenv("SENDER_NAME")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://aeternum-app-production.up.railway.app")
+
 
 async def send_cuenta_bloqueada_mora(
     recipient_email: str,
@@ -29,7 +27,7 @@ async def send_cuenta_bloqueada_mora(
         dias_mora: Días transcurridos desde el vencimiento más antiguo
     """
     
-    subject = "Cuenta bloqueada - Préstamos vencidos - Biblioteca Aeternum"
+    subject = "⛔ Cuenta bloqueada - Préstamos vencidos - Biblioteca Aeternum"
     
     # Generar lista de libros vencidos
     libros_html = ""
@@ -61,7 +59,7 @@ async def send_cuenta_bloqueada_mora(
     <body>
         <div class="container">
             <div class="header">
-                <h1>Cuenta Bloqueada Temporalmente</h1>
+                <h1>⛔ Cuenta Bloqueada Temporalmente</h1>
             </div>
             <div class="content">
                 <p>Hola <strong>{nombre_usuario}</strong>,</p>
@@ -80,7 +78,7 @@ async def send_cuenta_bloqueada_mora(
                 <ol style="line-height: 1.8;">
                     <li>Devuelve los libros pendientes lo antes posible</li>
                     <li>Contacta a la biblioteca si necesitas renovar el préstamo</li>
-                    <li>Una vez devueltos, el bibliotecario activara tu cuenta al instante</li>
+                    <li>Una vez devueltos, el bibliotecario activará tu cuenta al instante</li>
                 </ol>
                 
                 <p style="margin-top: 30px;">
@@ -90,7 +88,7 @@ async def send_cuenta_bloqueada_mora(
                 </p>
                 
                 <div style="text-align: center;">
-                    <a href="http://localhost:5173/loyout_user/mis-prestamos" class="button">
+                    <a href="{FRONTEND_URL}/loyout_user/mis-prestamos" class="button">
                         Ver Mis Préstamos
                     </a>
                 </div>
@@ -104,23 +102,60 @@ async def send_cuenta_bloqueada_mora(
     </html>
     """
     
+    return await _send_email_brevo(recipient_email, subject, html_body, nombre_usuario)
+
+
+async def _send_email_brevo(recipient_email: str, subject: str, html_content: str, user_name: str = None):
+    """Envía email usando la API de Brevo"""
+    
+    logger.info(f"📧 Enviando email de bloqueo a: {recipient_email}")
+    
+    if not user_name:
+        user_name = recipient_email.split("@")[0].capitalize()
+    
+    payload = {
+        "sender": {
+            "name": SENDER_NAME,
+            "email": SENDER_EMAIL
+        },
+        "to": [
+            {
+                "email": recipient_email,
+                "name": user_name
+            }
+        ],
+        "subject": subject,
+        "htmlContent": html_content
+    }
+    
+    if not BREVO_API_KEY:
+        logger.error("❌ BREVO_API_KEY no está configurada")
+        return False
+    
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+    
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = FROM_EMAIL
-        msg["To"] = recipient_email
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            json=payload,
+            headers=headers,
+            timeout=10
+        )
         
-        html_part = MIMEText(html_body, "html")
-        msg.attach(html_part)
-        
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
-        
-        print(f"✅ Correo de bloqueo enviado a {recipient_email}")
-        return True
-        
+        if response.status_code == 201:
+            result = response.json()
+            message_id = result.get("messageId", "N/A")
+            logger.info(f"✅ Correo de bloqueo enviado. ID: {message_id}")
+            return True
+        else:
+            error_msg = f"Error {response.status_code}: {response.text}"
+            logger.error(f"❌ {error_msg}")
+            return False
+    
     except Exception as e:
-        print(f"❌ Error enviando correo de bloqueo: {e}")
+        logger.error(f"❌ Error enviando correo de bloqueo: {e}")
         return False

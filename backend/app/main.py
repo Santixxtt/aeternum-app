@@ -76,11 +76,17 @@ app.include_router(upload_routes.router)
 app.include_router(search_router.router)
 
 
-#  Ruta raíz (necesaria para Railway)
 @app.get("/")
 async def root():
+    disponible = False
+    try:
+        r.ping()
+        disponible = True
+    except:
+        disponible = False
+
     return {
         "message": "🚀 Aeternum API desplegada correctamente en Railway",
         "database": "✅ Conectada",
-        "redis": "✅ Disponible" if hasattr(r, "ping") else "⚠️ Fallback local",
+        "redis": "✅ Disponible" if disponible else "⚠️ Fallback local",
     }
