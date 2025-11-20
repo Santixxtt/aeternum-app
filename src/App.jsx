@@ -14,6 +14,7 @@ import PoliticaPrivacidad from "./components/loyout_major/PoliticaPrivacidad";
 import TerminosServicio from "./components/loyout_major/TerminosServicio";
 import Contacto from "./components/loyout_major/Contacto";
 import VerificarEmail from "./components/loyout_reusable/VerificarEmail";
+import ReenviarVerificacion from "./components/loyout_reusable/ReenviarVerificacion";
 
 
 // Dashboard (usuario)
@@ -58,6 +59,7 @@ function App() {
         <Route path="/terminos-servicio" element={<TerminosServicio />} />
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/verificar-email" element={<VerificarEmail />} />
+        <Route path="/reenviar-verificacion" element={<ReenviarVerificacion />} />
 
         {/* 🔒 Rutas protegidas dentro del AuthProvider */}
         <Route

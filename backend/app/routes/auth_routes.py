@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
+from pydantic import BaseModel, EmailStr
 from app.models import user_model
 from app.utils.security import verify_password, hash_password, create_access_token
 from datetime import datetime
@@ -6,11 +7,19 @@ from app.schemas.user_schema import UserLogin, UserRegister
 from app.utils.email_welcome import send_verification_email
 from app.dependencias.redis import r
 import secrets
+import os
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 MAX_ATTEMPTS = 3
 LOCK_TIME_SECONDS = 15 * 60  # 15 min
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://aeternum-app-production.up.railway.app")
+
+
+# 📧 Request model para reenviar verificación
+class ReenviarVerificacionRequest(BaseModel):
+    correo: EmailStr
+
 
 @router.post("/login")
 async def login(user_data: UserLogin):
@@ -51,22 +60,26 @@ async def login(user_data: UserLogin):
             detail=f"Contraseña incorrecta. Intentos restantes: {remaining}"
         )
 
-    # 4️⃣ ✅ NUEVO: Verificar estado ANTES de generar token
+    # 4️⃣ Verificar estado ANTES de generar token
     estado = user.get("estado", "").strip()
     
     if estado == "Bloqueado":
         motivo = user.get("motivo_bloqueo", "Cuenta bloqueada por el administrador")
-        # ⚠️ NO limpiar intentos aquí - la cuenta está bloqueada permanentemente
         raise HTTPException(
             status_code=403, 
             detail=f"Tu cuenta está bloqueada. Motivo: {motivo}. Contacta a la biblioteca para más información."
         )
 
     if estado == "Desactivado":
-        # ⚠️ NO limpiar intentos - la cuenta fue desactivada por admin
         raise HTTPException(
             status_code=403, 
             detail="Tu cuenta ha sido desactivada por un administrador. Contacta con la biblioteca para reactivarla."
+        )
+    
+    if estado == "Pendiente":
+        raise HTTPException(
+            status_code=403,
+            detail="Tu cuenta no ha sido verificada. Por favor revisa tu correo y verifica tu cuenta."
         )
     
     if estado != "Activo":
@@ -82,7 +95,6 @@ async def login(user_data: UserLogin):
     # 6️⃣ Verificar si la sesión fue invalidada manualmente por admin
     session_invalid_key = f"user_session_invalid:{user_id}"
     if r.get(session_invalid_key):
-        # Limpiar la marca porque el usuario está haciendo login nuevamente
         r.delete(session_invalid_key)
         print(f"🔓 Sesión invalidada limpiada para usuario {user_id} (nuevo login)")
 
@@ -106,7 +118,6 @@ async def login(user_data: UserLogin):
     }
 
 
-# 🔹 REGISTER
 @router.post("/register")
 async def register_user(user: UserRegister, request: Request):
     if not user.consent:
@@ -129,7 +140,7 @@ async def register_user(user: UserRegister, request: Request):
         "correo": user.correo,
         "clave": hashed,
         "rol": user.rol,
-        "estado": "Pendiente"  # Usuario no activo hasta verificar email
+        "estado": "Pendiente"
     })
 
     # Guardar consentimiento
@@ -138,12 +149,12 @@ async def register_user(user: UserRegister, request: Request):
     user_agent = request.headers.get("user-agent", "")[:255]
     await user_model.save_consent(user_id, consent_text, ip, user_agent)
 
+    # Generar token
     token = secrets.token_urlsafe(32)
     token_key = f"email_verification:{user_id}"
-    r.setex(token_key, 24 * 60 * 60, token)  # Expira en 24 horas
+    r.setex(token_key, 24 * 60 * 60, token)
 
-    frontend_url = "http://localhost:5173"  # 🔹 Cambiar según tu dominio de producción
-    verification_url = f"{frontend_url}/verificar-email?token={token}&user_id={user_id}"
+    verification_url = f"{FRONTEND_URL}/verificar-email?token={token}&user_id={user_id}"
 
     user_name = f"{user.nombre} {user.apellido}"
     success, message = send_verification_email(
@@ -165,8 +176,11 @@ async def register_user(user: UserRegister, request: Request):
         "email_sent": True
     }
 
+
 @router.get("/verify-email")
 async def verify_email(token: str, user_id: int):
+    """Verifica el correo electrónico del usuario usando el token"""
+    
     token_key = f"email_verification:{user_id}"
     stored_token = r.get(token_key)
 
@@ -184,7 +198,7 @@ async def verify_email(token: str, user_id: int):
             detail="Token inválido. Solicita un nuevo enlace."
         )
 
-    # Activar usuario usando la función correcta
+    # Activar usuario
     updated = await user_model.update_user_status(user_id, "Activo")
 
     if not updated:
@@ -193,7 +207,68 @@ async def verify_email(token: str, user_id: int):
             detail="No se pudo actualizar el estado del usuario."
         )
 
-    # Eliminar token para que no pueda reutilizarse
+    # Eliminar token
     r.delete(token_key)
 
     return {"message": "Correo verificado exitosamente. Ya puedes iniciar sesión."}
+
+
+@router.post("/reenviar-verificacion")
+async def reenviar_verificacion(
+    request: ReenviarVerificacionRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Reenvía el correo de verificación a un usuario.
+    Por seguridad, siempre devuelve el mismo mensaje.
+    """
+    correo = request.correo.lower()
+    
+    # Buscar usuario
+    user = await user_model.get_user_by_email(correo)
+    
+    # Mensaje genérico por seguridad
+    response_message = "Si el correo está registrado y no verificado, recibirás un nuevo enlace de verificación."
+    
+    if not user:
+        return {"message": response_message}
+    
+    # Si ya está verificado/activo
+    if user.get("estado") != "Pendiente":
+        return {"message": "Este correo ya está verificado. Puedes iniciar sesión."}
+    
+    # Generar nuevo token
+    token = secrets.token_urlsafe(32)
+    user_id = user["id"]
+    
+    # Guardar en Redis (24 horas)
+    token_key = f"email_verification:{user_id}"
+    try:
+        r.setex(token_key, 24 * 60 * 60, token)
+    except Exception as e:
+        print(f"⚠️ Redis no disponible: {e}")
+        raise HTTPException(status_code=500, detail="Error al generar token de verificación.")
+    
+    # Construir URL
+    verification_url = f"{FRONTEND_URL}/verificar-email?token={token}&user_id={user_id}"
+    
+    # Obtener nombre
+    nombre = user.get("nombre", "")
+    apellido = user.get("apellido", "")
+    
+    if nombre and apellido:
+        user_name = f"{nombre} {apellido}"
+    elif nombre:
+        user_name = nombre
+    else:
+        user_name = correo.split("@")[0].capitalize()
+    
+    # Enviar email en background
+    background_tasks.add_task(
+        send_verification_email,
+        correo,
+        verification_url,
+        user_name
+    )
+    
+    return {"message": response_message}
