@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../../assets/css/verificar-email.css";
+import "../../assets/css/verify-email.css";
 
 export default function ReenviarVerificacion() {
   const navigate = useNavigate();

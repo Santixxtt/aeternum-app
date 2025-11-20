@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../../assets/css/verificar-email.css";
+import "../../assets/css/verify-email.css";
 
 export default function VerificarEmail() {
   const [searchParams] = useSearchParams();
@@ -15,15 +15,18 @@ export default function VerificarEmail() {
     const token = searchParams.get("token");
     const userId = searchParams.get("user_id");
 
+    console.log("TOKEN OBTENIDO:", token);
+    console.log("USER ID OBTENIDO:", userId);
+
     if (!token || !userId) {
       setStatus("error");
       setMessage("Enlace de verificación inválido.");
       return;
     }
 
-    // Llamar al backend para verificar
     verifyEmail(token, userId);
   }, [searchParams]);
+
 
   // Redirigir automáticamente después de verificación exitosa
   useEffect(() => {
