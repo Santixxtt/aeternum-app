@@ -176,29 +176,51 @@ async def register_user(user: UserRegister, request: Request):
         "email_sent": True
     }
 
-
 @router.get("/verificar-email")
 async def verify_email(token: str, user_id: int):
     """Verifica el correo electrónico del usuario usando el token"""
     
+    print(f"🔍 DEBUG - User ID: {user_id}")
+    print(f"🔍 DEBUG - Token recibido: {token}")
+    
     token_key = f"email_verification:{user_id}"
-    stored_token = r.get(token_key)
+    
+    try:
+        stored_token = r.get(token_key)
+        print(f"🔍 DEBUG - Token almacenado (raw): {stored_token}")
+        print(f"🔍 DEBUG - Tipo del token almacenado: {type(stored_token)}")
+    except Exception as e:
+        print(f"❌ Error al obtener token de Redis: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Error del servidor. Por favor intenta más tarde."
+        )
 
     if not stored_token:
+        print("❌ Token no encontrado en Redis")
         raise HTTPException(
             status_code=400,
             detail="El enlace ha expirado o ya fue utilizado."
         )
 
-    stored_token = stored_token.decode("utf-8")
+    # Manejar tanto bytes como string
+    if isinstance(stored_token, bytes):
+        stored_token = stored_token.decode("utf-8")
+    
+    print(f"🔍 DEBUG - Token almacenado (procesado): {stored_token}")
+    print(f"🔍 DEBUG - ¿Tokens coinciden?: {token == stored_token}")
 
     if token != stored_token:
+        print(f"❌ Tokens NO coinciden!")
+        print(f"   Recibido: '{token}'")
+        print(f"   Esperado: '{stored_token}'")
         raise HTTPException(
             status_code=400,
             detail="Token inválido. Solicita un nuevo enlace."
         )
 
     # Activar usuario
+    print(f"✅ Token válido, activando usuario {user_id}")
     updated = await user_model.update_user_status(user_id, "Activo")
 
     if not updated:
@@ -209,66 +231,6 @@ async def verify_email(token: str, user_id: int):
 
     # Eliminar token
     r.delete(token_key)
+    print(f"✅ Usuario {user_id} verificado exitosamente")
 
     return {"message": "Correo verificado exitosamente. Ya puedes iniciar sesión."}
-
-
-@router.post("/reenviar-verificacion")
-async def reenviar_verificacion(
-    request: ReenviarVerificacionRequest,
-    background_tasks: BackgroundTasks
-):
-    """
-    Reenvía el correo de verificación a un usuario.
-    Por seguridad, siempre devuelve el mismo mensaje.
-    """
-    correo = request.correo.lower()
-    
-    # Buscar usuario
-    user = await user_model.get_user_by_email(correo)
-    
-    # Mensaje genérico por seguridad
-    response_message = "Si el correo está registrado y no verificado, recibirás un nuevo enlace de verificación."
-    
-    if not user:
-        return {"message": response_message}
-    
-    # Si ya está verificado/activo
-    if user.get("estado") != "Pendiente":
-        return {"message": "Este correo ya está verificado. Puedes iniciar sesión."}
-    
-    # Generar nuevo token
-    token = secrets.token_urlsafe(32)
-    user_id = user["id"]
-    
-    # Guardar en Redis (24 horas)
-    token_key = f"email_verification:{user_id}"
-    try:
-        r.setex(token_key, 24 * 60 * 60, token)
-    except Exception as e:
-        print(f"⚠️ Redis no disponible: {e}")
-        raise HTTPException(status_code=500, detail="Error al generar token de verificación.")
-    
-    # Construir URL
-    verification_url = f"{FRONTEND_URL}/verificar-email?token={token}&user_id={user_id}"
-    
-    # Obtener nombre
-    nombre = user.get("nombre", "")
-    apellido = user.get("apellido", "")
-    
-    if nombre and apellido:
-        user_name = f"{nombre} {apellido}"
-    elif nombre:
-        user_name = nombre
-    else:
-        user_name = correo.split("@")[0].capitalize()
-    
-    # Enviar email en background
-    background_tasks.add_task(
-        send_verification_email,
-        correo,
-        verification_url,
-        user_name
-    )
-    
-    return {"message": response_message}
