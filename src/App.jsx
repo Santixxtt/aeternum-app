@@ -58,7 +58,7 @@ function App() {
         <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
         <Route path="/terminos-servicio" element={<TerminosServicio />} />
         <Route path="/contacto" element={<Contacto />} />
-        <Route path="/verify-email" element={<VerificarEmail />} />
+        <Route path="/verificar-email" element={<VerificarEmail />} />
         <Route path="/reenviar-verificacion" element={<ReenviarVerificacion />} />
 
         {/* 🔒 Rutas protegidas dentro del AuthProvider */}
