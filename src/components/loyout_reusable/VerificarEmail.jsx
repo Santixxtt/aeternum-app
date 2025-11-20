@@ -41,7 +41,7 @@ export default function VerificarEmail() {
   const verifyEmail = async (token, userId) => {
     try {
       const response = await axios.get(
-        `https://backend-production-9f93.up.railway.app/auth/verify-email`,
+        `https://backend-production-9f93.up.railway.app/auth/verificar-email`,
         {
           params: { token, user_id: userId },
         }
@@ -59,8 +59,8 @@ export default function VerificarEmail() {
   };
 
   return (
-    <div className="verify-email-container">
-      <div className="verify-email-card">
+    <div className="verificar-email-container">
+      <div className="verificar-email-card">
         {status === "loading" && (
           <>
             <div className="spinner"></div>

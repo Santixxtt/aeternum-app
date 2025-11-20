@@ -154,7 +154,7 @@ async def register_user(user: UserRegister, request: Request):
     token_key = f"email_verification:{user_id}"
     r.setex(token_key, 24 * 60 * 60, token)
 
-    verification_url = f"{FRONTEND_URL}/verify-email?token={token}&user_id={user_id}"
+    verification_url = f"{FRONTEND_URL}/verificar-email?token={token}&user_id={user_id}"
 
     user_name = f"{user.nombre} {user.apellido}"
     success, message = send_verification_email(
@@ -177,7 +177,7 @@ async def register_user(user: UserRegister, request: Request):
     }
 
 
-@router.get("/verify-email")
+@router.get("/verificar-email")
 async def verify_email(token: str, user_id: int):
     """Verifica el correo electrónico del usuario usando el token"""
     
@@ -250,7 +250,7 @@ async def reenviar_verificacion(
         raise HTTPException(status_code=500, detail="Error al generar token de verificación.")
     
     # Construir URL
-    verification_url = f"{FRONTEND_URL}/verify-email?token={token}&user_id={user_id}"
+    verification_url = f"{FRONTEND_URL}/verificar-email?token={token}&user_id={user_id}"
     
     # Obtener nombre
     nombre = user.get("nombre", "")

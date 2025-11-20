@@ -3,7 +3,7 @@
 | Email Verification Page Styles
 |----------------------------------------------------------
 */
-.verify-email-container {
+.verificar-email-container {
   font-family: 'Poppins', sans-serif;
   min-height: 100vh;
   display: flex;
@@ -13,7 +13,7 @@
   padding: 20px;
 }
 
-.verify-email-card {
+.verificar-email-card {
   background: #292929;
   padding: 50px 40px;
   border-radius: 20px;
@@ -66,13 +66,13 @@
   color: #dc3545;
 }
 
-.verify-email-card h2 {
+.verificar-email-card h2 {
   font-size: 28px;
   margin-bottom: 15px;
   color: #f0f0f0;
 }
 
-.verify-email-card p {
+.verificar-email-card p {
   font-size: 16px;
   color: #ccc;
   margin-bottom: 20px;
@@ -127,11 +127,11 @@
 }
 
 @media (max-width: 600px) {
-  .verify-email-card {
+  .verificar-email-card {
     padding: 40px 25px;
   }
 
-  .verify-email-card h2 {
+  .verificar-email-card h2 {
     font-size: 24px;
   }
 
@@ -141,7 +141,7 @@
   }
 }
 
-/* Puedes reutilizar verify-email.css cambiando solo esto: */
+/* Puedes reutilizar verificar-email.css cambiando solo esto: */
 
 .reenviar-verificacion-container {
   min-height: 100vh;
