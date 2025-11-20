@@ -226,3 +226,47 @@ async def delete_user(user_id: int) -> bool:
             await conn.rollback()
             print("❌ Error delete_user:", e)
             return False
+
+# Agregar estos métodos al final de tu archivo user_model.py
+
+async def save_verification_token(user_id: int, token: str, expires_at):
+    """Guarda o actualiza el token de verificación de un usuario"""
+    query = """
+        INSERT INTO email_verification_tokens (user_id, token, expires_at, used)
+        VALUES (%s, %s, %s, FALSE)
+        ON DUPLICATE KEY UPDATE
+            token = VALUES(token),
+            expires_at = VALUES(expires_at),
+            used = FALSE,
+            created_at = CURRENT_TIMESTAMP
+    """
+    async with get_cursor() as (conn, cursor):
+        await cursor.execute(query, (user_id, token, expires_at))
+        await conn.commit()
+
+
+async def get_verification_token(user_id: int):
+    """Obtiene el token de verificación más reciente de un usuario"""
+    query = """
+        SELECT token, expires_at, used
+        FROM email_verification_tokens
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        LIMIT 1
+    """
+    async with get_cursor() as (conn, cursor):
+        await cursor.execute(query, (user_id,))
+        result = await cursor.fetchone()
+        return result
+
+
+async def mark_token_as_used(user_id: int):
+    """Marca el token como usado"""
+    query = """
+        UPDATE email_verification_tokens
+        SET used = TRUE
+        WHERE user_id = %s
+    """
+    async with get_cursor() as (conn, cursor):
+        await cursor.execute(query, (user_id,))
+        await conn.commit()
