@@ -33,14 +33,15 @@ print(f"📁 Directorio de uploads creado/verificado: {UPLOAD_DIR.resolve()}")
 origins = [
     "http://localhost",
     "http://localhost:5173",
-    "http://192.168.1.2:5173",  
+    "http://192.168.1.2:5173",
+    "https://aeternum-app-production.up.railway.app", 
     "https://backend-production-9f93.up.railway.app",
     "http://127.0.0.1:5173",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -45,8 +45,10 @@ const Libros = () => {
     imagen_local: null,
   });
 
-  const API_BASE = "https://backend-production-9f93.up.railway.app";
-  const BOOKS_BASE = `${API_BASE}/admin/books`; // ← SIN barra final
+  const API_BASE = window.location.hostname === 'localhost' 
+    ? "http://localhost:8000"
+    : "https://backend-production-9f93.up.railway.app";
+  const BOOKS_BASE = `${API_BASE}/admin/books`; 
   const UPLOADS_BASE = `${API_BASE}/uploads`;
 
   const getToken = () =>
