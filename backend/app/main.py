@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from app.scheduler import start_scheduler, stop_scheduler
+from pathlib import Path  # ← AGREGAR
 
 # Importar routers
 from app.routes import (
@@ -23,16 +24,18 @@ from app.dependencias.redis import r
 
 app = FastAPI(title="Aeternum API", version="1.0.0")
 
+# ← AGREGAR ESTO: Crear directorios necesarios
+UPLOAD_DIR = Path("uploads/book_covers")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+print(f"📁 Directorio de uploads creado/verificado: {UPLOAD_DIR.resolve()}")
 
 # Configuración CORS
-
 origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://192.168.1.2:5173",  
     "https://backend-production-9f93.up.railway.app",
     "http://127.0.0.1:5173",
-    "https://backend-production-9f93.up.railway.app"
 ]
 
 app.add_middleware(
@@ -47,11 +50,11 @@ app.add_middleware(
 # Eventos de inicio y cierre
 @app.on_event("startup")
 async def on_startup():
-    print(" Iniciando aplicación Aeternum...")
+    print("🚀 Iniciando aplicación Aeternum...")
     await init_db(app)
     FastAPICache.init(InMemoryBackend())  
     start_scheduler()
-    print("🚀 Aeternum iniciada con scheduler y cache")
+    print("✅ Aeternum iniciada con scheduler y cache")
 
 @app.on_event("shutdown")
 async def on_shutdown():
@@ -59,8 +62,7 @@ async def on_shutdown():
     await close_db()
     print("🛑 Aplicación detenida correctamente.")
 
-#  Rutas principales
-
+# Rutas principales
 app.include_router(auth_routes.router)
 app.include_router(users_me.router)
 app.include_router(wishlist_router.router)
@@ -74,7 +76,6 @@ app.include_router(book_router.router)
 app.include_router(catalogs.router)
 app.include_router(upload_routes.router)
 app.include_router(search_router.router)
-
 
 @app.get("/")
 async def root():

@@ -11,6 +11,8 @@ router = APIRouter(prefix="/uploads", tags=["Uploads"])
 
 # Directorio donde se guardarán las imágenes
 UPLOAD_DIR = Path("uploads/book_covers")
+
+# ← MEJORAR: Asegurar que existe cada vez
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Extensiones permitidas
@@ -38,6 +40,9 @@ async def upload_book_cover(
     """
     verify_librarian_role(current_user)
     
+    # ← AGREGAR: Asegurar que el directorio existe
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    
     # Validar extensión del archivo
     file_ext = Path(file.filename).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
@@ -47,9 +52,9 @@ async def upload_book_cover(
         )
     
     # Validar tamaño del archivo
-    file.file.seek(0, 2)  # Ir al final del archivo
-    file_size = file.file.tell()  # Obtener tamaño
-    file.file.seek(0)  # Volver al inicio
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
     
     if file_size > MAX_FILE_SIZE:
         raise HTTPException(
@@ -66,6 +71,9 @@ async def upload_book_cover(
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
+        # ← AGREGAR: Log para debug
+        print(f"✅ Archivo guardado: {file_path.resolve()}")
+        
         # Retornar la ruta relativa que se guardará en la BD
         relative_path = f"book_covers/{unique_filename}"
         
@@ -80,6 +88,7 @@ async def upload_book_cover(
         # Si hay error, eliminar el archivo si se creó
         if file_path.exists():
             file_path.unlink()
+        print(f"❌ Error al guardar archivo: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error al guardar el archivo: {str(e)}"
@@ -96,7 +105,11 @@ async def get_uploaded_file(file_path: str):
     """
     full_path = UPLOAD_DIR.parent / file_path
     
+    # ← AGREGAR: Log para debug
+    print(f"🔍 Buscando archivo: {full_path.resolve()}")
+    
     if not full_path.exists() or not full_path.is_file():
+        print(f"❌ Archivo NO encontrado: {full_path.resolve()}")
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     
     # Verificar que el archivo esté dentro del directorio permitido

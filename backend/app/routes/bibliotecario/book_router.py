@@ -24,7 +24,9 @@ except ImportError:
 
 router = APIRouter(prefix="/admin/books", tags=["Admin - Books"])
 
+# ← MEJORAR: Asegurar que el directorio existe
 UPLOAD_DIR = Path("uploads/book_covers")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def verify_librarian_role(current_user: dict):
@@ -97,12 +99,17 @@ async def get_book_by_id(
     
     return book
 
-@router.post("/")
+
+# ✅ ARREGLADO: Crear libro SIN redirect
+@router.post("/", status_code=201)  # ← AGREGADO status_code
 async def create_book(
     payload: Dict[str, Any] = Body(...),
     current_user: dict = Depends(get_current_user)
 ):
     verify_librarian_role(current_user)
+    
+    # ← AGREGADO: Asegurar que el directorio existe
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     titulo = payload.get("titulo")
     descripcion = payload.get("descripcion", "")
@@ -123,13 +130,17 @@ async def create_book(
     cantidad_disponible = payload.get("cantidad_disponible", 1)
     openlibrary_key = payload.get("openlibrary_key", "") or None
     cover_id = payload.get("cover_id", 0)
-    imagen_local = payload.get("imagen_local")  
+    imagen_local = payload.get("imagen_local")
 
     if not titulo or not autor_id or not editorial_id or not genero_id:
         raise HTTPException(
             status_code=400,
             detail="Faltan campos requeridos: titulo, autor_id, editorial_id, genero_id"
         )
+
+    # ← AGREGADO: Log para debug
+    print(f"📚 Creando libro: {titulo}")
+    print(f"🖼️ Imagen local: {imagen_local}")
 
     async with get_cursor() as (conn, cursor):
         await cursor.execute("""
@@ -147,11 +158,14 @@ async def create_book(
         await conn.commit()
         libro_id = cursor.lastrowid
 
+    print(f"✅ Libro creado con ID: {libro_id}")
+
     return {
         "status": "success",
         "message": "Libro creado correctamente",
         "libro_id": libro_id
     }
+
 
 # ✏️ Actualizar un libro
 @router.put("/{book_id}")
@@ -171,7 +185,7 @@ async def update_book(
     cantidad_disponible = payload.get("cantidad_disponible", 1)
     openlibrary_key = payload.get("openlibrary_key", "") or None
     cover_id = payload.get("cover_id", 0)
-    imagen_local = payload.get("imagen_local")  # Nueva: actualizar imagen
+    imagen_local = payload.get("imagen_local")
 
     if not titulo or not autor_id or not editorial_id or not genero_id:
         raise HTTPException(
@@ -179,7 +193,6 @@ async def update_book(
             detail="Faltan campos requeridos"
         )
 
-    # ✅ Conversión del año a formato completo antes de usarlo
     if fecha_publicacion:
         if isinstance(fecha_publicacion, int):
             fecha_publicacion = str(fecha_publicacion)
@@ -189,8 +202,7 @@ async def update_book(
         fecha_publicacion = None
 
     async with get_cursor() as (conn, cursor):
-        # ✅ Manejo de imagen si se actualiza
-        if imagen_local is not None:  
+        if imagen_local is not None:
             await cursor.execute(
                 "SELECT imagen_local FROM libros WHERE id = %s",
                 (book_id,)
@@ -202,10 +214,10 @@ async def update_book(
                 if old_image_path.exists():
                     try:
                         old_image_path.unlink()
+                        print(f"🗑️ Imagen antigua eliminada: {old_image_path}")
                     except Exception as e:
                         print(f"⚠️ No se pudo eliminar imagen antigua: {e}")
 
-        # ✅ Actualización del libro
         await cursor.execute("""
             UPDATE libros 
             SET titulo = %s, descripcion = %s, autor_id = %s, editorial_id = %s, 
