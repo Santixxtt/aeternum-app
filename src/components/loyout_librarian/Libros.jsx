@@ -45,9 +45,22 @@ const Libros = () => {
     imagen_local: null,
   });
 
-  const API_BASE = "https://backend-production-9f93.up.railway.app";
-  const BOOKS_BASE = `${API_BASE}/admin/books`; 
+  // ✅ FORZAR HTTPS - Reemplazar cualquier http:// con https://
+  const getApiBase = () => {
+    const base = "https://backend-production-9f93.up.railway.app";
+    return base.replace(/^http:/, 'https:');
+  };
+
+  const API_BASE = getApiBase();
+  const BOOKS_BASE = `${API_BASE}/admin/books`;
   const UPLOADS_BASE = `${API_BASE}/uploads`;
+
+  // ✅ Log para verificar URLs
+  useEffect(() => {
+    console.log('🔍 API_BASE:', API_BASE);
+    console.log('🔍 BOOKS_BASE:', BOOKS_BASE);
+    console.log('🔍 UPLOADS_BASE:', UPLOADS_BASE);
+  }, []);
 
   const getToken = () =>
     localStorage.getItem("token") || localStorage.getItem("access_token") || "";
@@ -190,15 +203,15 @@ const Libros = () => {
     setUploadingImage(true);
     try {
       const token = getToken();
-      const formData = new FormData();
-      formData.append('file', selectedImage);
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', selectedImage);
 
       const res = await fetch(`${UPLOADS_BASE}/book-cover`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: formData,
+        body: formDataUpload,
       });
 
       if (!res.ok) {
@@ -229,10 +242,8 @@ const Libros = () => {
     return year.length === 4 ? year : year.split('-')[0];
   };
 
-  // ✅ ARREGLADO: Construcción correcta de URL de imagen
   const getBookCoverUrl = (libro) => {
     if (libro.imagen_local) {
-      // La ruta viene como "book_covers/xxxxx.jpg" desde el backend
       return `${UPLOADS_BASE}/${libro.imagen_local}`;
     } else if (libro.cover_id) {
       return `https://covers.openlibrary.org/b/id/${libro.cover_id}-M.jpg`;
@@ -423,6 +434,8 @@ const Libros = () => {
   };
 
   const handleCreateBook = async () => {
+    console.log('🔍 Intentando crear libro con URL:', `${BOOKS_BASE}/`);
+    
     if (
       !formData.titulo ||
       !formData.autor_id ||
@@ -464,8 +477,10 @@ const Libros = () => {
         imagen_local: imagePath,
       };
 
-      // ✅ ARREGLADO: POST sin barra final
-      const res = await fetch(BOOKS_BASE, {
+      console.log('📤 Payload:', payload);
+
+      // ✅ POST con barra final
+      const res = await fetch(`${BOOKS_BASE}/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -473,6 +488,8 @@ const Libros = () => {
         },
         body: JSON.stringify(payload),
       });
+
+      console.log('📥 Response status:', res.status);
 
       if (!res.ok) {
         const error = await res.json();
@@ -482,7 +499,7 @@ const Libros = () => {
 
       showNotification("Libro creado correctamente", "success");
       closeModal();
-      await fetchLibros(); // ← Espera a recargar antes de cerrar
+      await fetchLibros();
     } catch (err) {
       console.error("handleCreateBook error:", err);
       showNotification("Error al crear libro: " + err.message, "error");
@@ -658,7 +675,6 @@ const Libros = () => {
                               src={getBookCoverUrl(l)} 
                               alt={l.titulo}
                               onError={(e) => {
-                                // ✅ ARREGLADO: Placeholder que funciona
                                 e.target.src = 'https://placehold.co/50x75/EEE/999?text=Sin+portada';
                               }}
                             />
