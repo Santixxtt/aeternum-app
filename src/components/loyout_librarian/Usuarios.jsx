@@ -252,64 +252,51 @@ const Usuarios = () => {
     }
   };
 
-  const handleCreateUser = async () => {
-    if (
-      !formData.nombre ||
-      !formData.apellido ||
-      !formData.correo ||
-      !formData.clave
-    ) {
-      alert("Por favor completa todos los campos obligatorios");
-      return;
+  // En Usuarios.jsx, cambiar handleCreateUser:
+
+const handleCreateUser = async () => {
+  if (!formData.nombre || !formData.apellido || !formData.correo || !formData.clave) {
+    alert("Por favor completa todos los campos obligatorios");
+    return;
+  }
+
+  try {
+    const token = getToken();
+    const payload = {
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      correo: formData.correo,
+      clave: formData.clave,
+      rol: formData.rol || "usuario",
+      tipo_identificacion: formData.tipo_identificacion || null,
+      num_identificacion: formData.num_identificacion || null,
+    };
+
+    const res = await fetch(`${ADMIN_USERS_BASE}/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || JSON.stringify(error));
     }
 
+    // ✅ Eliminar la línea: const result = await res.json();
+    
+    showNotification("✅ Usuario creado correctamente. Puede iniciar sesión.", "success");
     closeModal();
-
-    try {
-      const payload = {
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        correo: formData.correo,
-        clave: formData.clave,
-        rol: formData.rol || "usuario",
-        tipo_identificacion: formData.tipo_identificacion || "",
-        num_identificacion: formData.num_identificacion || "",
-        consent: true,
-      };
-
-      const res = await fetch(REGISTER_BASE, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        console.error("Error del servidor:", error);
-        throw new Error(error.detail || JSON.stringify(error));
-      }
-
-      const newUser = await res.json();
-      
-      setUsuarios((prev) => [
-        {
-          id: newUser.user_id || Date.now(),
-          ...formData,
-          estado: "Activo",
-        },
-        ...prev,
-      ]);
-
-      showNotification("Usuario creado correctamente", "success");
-      setTimeout(() => fetchUsuarios(), 1000);
-    } catch (err) {
-      console.error("handleCreateUser error:", err);
-      showNotification("Error al crear usuario: " + err.message, "error");
-      await fetchUsuarios();
-    }
-  };
+    await fetchUsuarios();
+    
+  } catch (err) {
+    console.error("handleCreateUser error:", err);
+    showNotification("❌ Error al crear usuario: " + err.message, "error");
+  }
+};
 
   const showNotification = (message, type = "success") => {
     const toast = document.createElement("div");

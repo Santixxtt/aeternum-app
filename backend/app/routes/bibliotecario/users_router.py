@@ -110,6 +110,66 @@ async def get_all_users(current_user: dict = Depends(get_current_user)):
 
     return {"total": len(users), "usuarios": users}
 
+@router.post("/")  
+async def create_user_by_admin(
+    payload: Dict[str, Any] = Body(...),
+    current_user: dict = Depends(get_current_user)
+):
+    verify_librarian_role(current_user)
+    
+    # Validar campos requeridos
+    nombre = payload.get("nombre")
+    apellido = payload.get("apellido")
+    correo = payload.get("correo")
+    clave = payload.get("clave")
+    rol = payload.get("rol", "usuario")
+    tipo_identificacion = payload.get("tipo_identificacion")
+    num_identificacion = payload.get("num_identificacion")
+    
+    if not all([nombre, apellido, correo, clave]):
+        raise HTTPException(
+            status_code=400,
+            detail="Faltan campos requeridos: nombre, apellido, correo, clave"
+        )
+    
+    # Verificar duplicados
+    from app.models import user_model
+    if await user_model.email_exists(correo):
+        raise HTTPException(status_code=400, detail="El correo ya está registrado")
+    if num_identificacion and await user_model.id_exists(num_identificacion):
+        raise HTTPException(status_code=400, detail="El número de identificación ya está registrado")
+    
+    # Hash de contraseña
+    from app.utils.security import hash_password
+    hashed = hash_password(clave)
+    
+    # Crear usuario directamente como ACTIVO (sin verificación)
+    user_id = await user_model.create_user({
+        "nombre": nombre,
+        "apellido": apellido,
+        "tipo_identificacion": tipo_identificacion,
+        "num_identificacion": num_identificacion,
+        "correo": correo,
+        "clave": hashed,
+        "rol": rol,
+        "estado": "Activo"  # ← DIRECTAMENTE ACTIVO
+    })
+    
+    # Obtener usuario creado
+    async with get_cursor() as (conn, cursor):
+        await cursor.execute("""
+            SELECT id, nombre, apellido, correo, rol, estado, tipo_identificacion, num_identificacion
+            FROM usuarios
+            WHERE id = %s
+        """, (user_id,))
+        user = await cursor.fetchone()
+    
+    return {
+        "status": "success",
+        "message": "Usuario creado correctamente. Puede iniciar sesión inmediatamente.",
+        "usuario": user
+    }
+
 
 # 🔍 Obtener un usuario por ID (OPTIMIZADO)
 @router.get("/{user_id}")
