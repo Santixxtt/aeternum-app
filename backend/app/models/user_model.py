@@ -25,29 +25,40 @@ async def id_exists(numeroId: str) -> bool:
         exists = await cursor.fetchone()
         return exists is not None
 
-
-# 🔹 Crear un nuevo usuario (✅ MODIFICADO para soportar estado)
+# 🔹 Crear un nuevo usuario (✅ CON MANEJO DE ERRORES)
 async def create_user(data: dict) -> int:
     async with get_cursor() as (conn, cursor):
-        # Si no se especifica estado, usar 'Activo' por defecto (retrocompatibilidad)
-        estado = data.get("estado", "Activo")
-        
-        sql = """
-            INSERT INTO usuarios (nombre, apellido, tipo_identificacion, num_identificacion, correo, clave, rol, estado)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        await cursor.execute(sql, (
-            data["nombre"],
-            data["apellido"],
-            data["tipo_identificacion"],
-            data["num_identificacion"],
-            data["correo"],
-            data["clave"],
-            data["rol"],
-            estado
-        ))
-        await conn.commit()
-        return cursor.lastrowid
+        try:
+            # Si no se especifica estado, usar 'Activo' por defecto (retrocompatibilidad)
+            estado = data.get("estado", "Activo")
+            
+            print(f"💾 [CREATE_USER] Insertando usuario: {data.get('correo')}")
+            
+            sql = """
+                INSERT INTO usuarios (nombre, apellido, tipo_identificacion, num_identificacion, correo, clave, rol, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            await cursor.execute(sql, (
+                data["nombre"],
+                data["apellido"],
+                data.get("tipo_identificacion"),  # ✅ Cambiar a .get() por si es None
+                data.get("num_identificacion"),   # ✅ Cambiar a .get() por si es None
+                data["correo"],
+                data["clave"],
+                data["rol"],
+                estado
+            ))
+            
+            await conn.commit()
+            user_id = cursor.lastrowid
+            
+            print(f"✅ [CREATE_USER] Usuario creado con ID: {user_id}")
+            return user_id
+            
+        except Exception as e:
+            print(f"❌ [CREATE_USER] Error al crear usuario: {e}")
+            await conn.rollback()
+            raise  # Re-lanzar la excepción para que el endpoint la maneje
 
 
 # 🔹 Guardar consentimiento de privacidad
