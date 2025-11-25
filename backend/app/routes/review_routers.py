@@ -4,8 +4,6 @@ from app.models import wishlist_model, review_model
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
 
-
-# 🟢 Registrar o actualizar calificación
 @router.post("/rate")
 async def submit_rating(data: dict, current_user: dict = Depends(get_current_user)):
     usuario_id = int(current_user["sub"])
@@ -22,7 +20,14 @@ async def submit_rating(data: dict, current_user: dict = Depends(get_current_use
     if not success:
         raise HTTPException(status_code=500, detail="Error al registrar/actualizar la calificación en la base de datos.")
 
-    return {"message": "Calificación registrada con éxito"}
+    stats = await review_model.get_average_rating(libro_id)
+    user_rating = await review_model.get_user_rating(usuario_id, libro_id)
+    
+    return {
+        "message": "Calificación registrada con éxito",
+        "stats": stats,  # { promedio, total_votos }
+        "user_rating": user_rating
+    }
 
 
 # 🟢 Obtener promedio y votos de un libro - SIN CACHÉ
@@ -35,19 +40,6 @@ async def get_book_ratings(openlibrary_key: str):
     stats = await review_model.get_average_rating(libro_record["id"])
     return stats
 
-
-# 🟢 Obtener comentarios de un libro - SIN CACHÉ
-@router.get("/comments/{openlibrary_key}")
-async def get_book_comments(openlibrary_key: str):
-    libro_record = await wishlist_model.libro_exists(openlibrary_key)
-    if not libro_record:
-        return {"comments": []}
-
-    comments = await review_model.get_comments_by_book(libro_record["id"])
-    return {"comments": comments}
-
-
-# 🟢 Insertar comentario nuevo
 @router.post("/comment")
 async def submit_comment(data: dict, current_user: dict = Depends(get_current_user)):
     usuario_id = int(current_user["sub"])
@@ -64,8 +56,23 @@ async def submit_comment(data: dict, current_user: dict = Depends(get_current_us
     if not success:
         raise HTTPException(status_code=500, detail="Error al guardar el comentario en la base de datos.")
 
-    return {"message": "Comentario agregado con éxito"}
+    # ✅ NUEVO: Retornar los comentarios actualizados
+    comments = await review_model.get_comments_by_book(libro_id)
+    
+    return {
+        "message": "Comentario agregado con éxito",
+        "comments": comments
+    }
 
+# 🟢 Obtener comentarios de un libro - SIN CACHÉ
+@router.get("/comments/{openlibrary_key}")
+async def get_book_comments(openlibrary_key: str):
+    libro_record = await wishlist_model.libro_exists(openlibrary_key)
+    if not libro_record:
+        return {"comments": []}
+
+    comments = await review_model.get_comments_by_book(libro_record["id"])
+    return {"comments": comments}
 
 # 🟢 Obtener calificación de un usuario
 @router.get("/user-rating/{openlibrary_key}")

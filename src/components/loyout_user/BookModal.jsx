@@ -16,7 +16,7 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
     const [comments, setComments] = useState([]);
     const textareaRef = useRef(null);
     const [loadingReviews, setLoadingReviews] = useState(true); 
-    const [reviewsRefreshKey, setReviewsRefreshKey] = useState(0);
+    const [isSubmittingRating, setIsSubmittingRating] = useState(false);
     const [showPhysicalLoanModal, setShowPhysicalLoanModal] = useState(false);
     const token = localStorage.getItem("token");
 
@@ -32,7 +32,6 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
     const [activeCommentMenu, setActiveCommentMenu] = useState(null); 
     const [isEditing, setIsEditing] = useState(null); 
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
 
     const bookData = React.useMemo(() => ({
@@ -187,13 +186,12 @@ export default function BookModal({ book, onClose, onAddToWishlist, isBookSaved,
     }, [commentText]);
 
     useEffect(() => {
-        if (bookData.openlibrary_key) {
-            fetchUserRating(bookData.openlibrary_key);
-            fetchReviewsAndComments(bookData.openlibrary_key);
-        }
-    }, [bookData.openlibrary_key, token, reviewsRefreshKey, fetchUserRating, fetchReviewsAndComments, isEditing, currentUserId, refreshTrigger ]);
+    if (bookData.openlibrary_key) {
+        fetchUserRating(bookData.openlibrary_key);
+        fetchReviewsAndComments(bookData.openlibrary_key);
+    }
+    }, [bookData.openlibrary_key, token, fetchUserRating, fetchReviewsAndComments]);
 
-    // ✅ Reemplaza el useEffect de fetchDownloadLinks con este MEJORADO
 useEffect(() => {
     const fetchDownloadLinks = async () => {
         if (!book?.key) return;
@@ -309,16 +307,20 @@ const handleDownload = () => {
 };
 
 
-    const handleSubmitRating = async (newRating) => {
+const handleSubmitRating = async (newRating) => {
     if (!token) {
         alert("Debes iniciar sesión para calificar.");
         return;
     }
     if (newRating < 1 || newRating > 5) return;
+    if (isSubmittingRating) return; // ✅ Prevenir clicks múltiples
     
-    // ✅ Actualizar UI optimistamente (para feedback inmediato)
     const previousRating = rating;
+    const previousAverage = averageRating;
+    const previousVotes = totalVotes;
+    
     setRating(newRating);
+    setIsSubmittingRating(true); // ✅ Bloquear estrellas
 
     try {
         const res = await fetch("https://backend-production-9f93.up.railway.app/reviews/rate", {
@@ -335,26 +337,34 @@ const handleDownload = () => {
 
         if (!res.ok) {
             const err = await res.json();
-            // ✅ Si falla, revertir al rating anterior
             setRating(previousRating);
+            setAverageRating(previousAverage);
+            setTotalVotes(previousVotes);
             alert(`Error: ${err.detail || "Error al enviar la calificación."}`);
             return;
         }
 
-        // ✅ Esperar un momento para que el backend procese
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        // ✅ Recargar datos frescos del servidor
-        await fetchReviewsAndComments(bookData.openlibrary_key);
+        const data = await res.json();
         
-        console.log("Calificación actualizada exitosamente");
-        setRefreshTrigger((prev) => prev + 1);
+        if (data.stats) {
+            setAverageRating(data.stats.promedio);
+            setTotalVotes(data.stats.total_votos);
+        }
+        
+        if (data.user_rating !== undefined) {
+            setRating(data.user_rating);
+        }
+        
+        console.log("✅ Calificación actualizada exitosamente");
         
     } catch (error) {
         console.error("Error en la solicitud de calificación:", error);
-        // ✅ Si hay error de red, revertir
         setRating(previousRating);
+        setAverageRating(previousAverage);
+        setTotalVotes(previousVotes);
         alert("No se pudo conectar al servidor para calificar.");
+    } finally {
+        setIsSubmittingRating(false); // ✅ Desbloquear estrellas
     }
 };
 
@@ -368,6 +378,9 @@ const handleSubmitComment = async (e) => {
     alert("El comentario debe tener al menos 5 caracteres.");
     return;
   }
+
+  // ✅ Mostrar indicador de carga
+  setLoadingReviews(true);
 
   try {
     const res = await fetch("https://backend-production-9f93.up.railway.app/reviews/comment", {
@@ -384,32 +397,30 @@ const handleSubmitComment = async (e) => {
 
     if (!res.ok) {
       const err = await res.json();
+      setLoadingReviews(false);
       alert(`Error: ${err.detail || "Error al enviar el comentario."}`);
       return;
     }
 
-    alert("Comentario enviado con éxito.");
+    // ✅ NUEVO: Obtener comentarios actualizados del backend
+    const data = await res.json();
+    
+    if (data.comments) {
+      setComments(data.comments);
+    }
+    
+    // ✅ Limpiar textarea
     setCommentText("");
-    setRefreshTrigger((prev) => prev + 1);  
-
-    await fetchReviewsAndComments(bookData.openlibrary_key);
-    await fetchUserRating(bookData.openlibrary_key);
+    
+    console.log("✅ Comentario agregado exitosamente");
 
   } catch (error) {
     console.error("Error en la solicitud de comentario:", error);
     alert("No se pudo conectar al servidor para comentar.");
+  } finally {
+    setLoadingReviews(false);
   }
 };
-
-
-// 🔹 useEffect que recarga automáticamente los comentarios al cambiar reviewsRefreshKey
-useEffect(() => {
-  if (bookData.openlibrary_key) {
-    fetchUserRating(bookData.openlibrary_key);
-    fetchReviewsAndComments(bookData.openlibrary_key);
-  }
-}, [bookData.openlibrary_key, token, reviewsRefreshKey]);
-
 
     const startEditComment = (comment) => {
         setActiveCommentMenu(null);
@@ -720,8 +731,9 @@ const handleWishlist = () => {
                                         {[1, 2, 3, 4, 5].map((star) => (
                                             <span
                                                 key={star}
-                                                className={star <= rating ? "star-active" : "star-inactive"}
-                                                onClick={() => handleSubmitRating(star)}
+                                                className={`${star <= rating ? "star-active" : "star-inactive"} ${isSubmittingRating ? "star-disabled" : ""}`}
+                                                onClick={() => !isSubmittingRating && handleSubmitRating(star)}
+                                                style={{ cursor: isSubmittingRating ? 'wait' : 'pointer' }}
                                             >
                                                 &#9733;
                                             </span>
