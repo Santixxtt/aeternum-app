@@ -489,7 +489,7 @@ const Libros = () => {
         body: JSON.stringify(payload),
       });
 
-      console.log('📥 Response status:', res.status);
+      console.log(' Response status:', res.status);
 
       if (!res.ok) {
         const error = await res.json();

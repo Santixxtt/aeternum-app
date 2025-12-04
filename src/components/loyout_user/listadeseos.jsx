@@ -160,7 +160,7 @@ export default function ListaDeseos({ isMobile }) {
     };
     
     const openBookModal = (book) => {
-        console.log("📖 Abriendo modal para:", book);
+        console.log(" Abriendo modal para:", book);
         setSelectedBook(book);
     };
     

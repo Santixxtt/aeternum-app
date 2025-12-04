@@ -346,7 +346,7 @@ async def cancelar_prestamos_por_desactivacion_cuenta(usuario_id: int):
                 SET cantidad_disponible = cantidad_disponible + 1
                 WHERE id = %s
             """, (libro['libro_id'],))
-            print(f"📖 Libro {libro['libro_id']} liberado (préstamo {libro['prestamo_id']})")
+            print(f" Libro {libro['libro_id']} liberado (préstamo {libro['prestamo_id']})")
         
         await conn.commit()
         

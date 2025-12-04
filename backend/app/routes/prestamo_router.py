@@ -65,7 +65,7 @@ async def registrar_prestamo_route(
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
-# 📖 Obtener todos los préstamos digitales (Bibliotecario)
+#  Obtener todos los préstamos digitales (Bibliotecario)
 @router.get("/all-digital")
 async def obtener_prestamos_digitales(
     current_user: dict = Depends(get_current_user)

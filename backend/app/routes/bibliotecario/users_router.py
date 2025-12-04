@@ -405,7 +405,7 @@ async def reactivate_user_by_admin(
             raise HTTPException(status_code=500, detail=f"Error al reactivar: {str(e)}")
 
 
-# 📥 EXPORTAR A EXCEL
+#  EXPORTAR A EXCEL
 @router.get("/export/excel")
 async def export_users_excel(current_user: dict = Depends(get_current_user)):
     """Exporta todos los usuarios a un archivo Excel"""

@@ -16,7 +16,7 @@ CACHE_TTL_SECONDS = 1800  # 30 minutos
 async def add_to_wishlist_route(libro: dict, current_user: dict = Depends(get_current_user)):
     usuario_id = int(current_user["sub"])
     
-    print(f"📥 Recibido libro: {libro.get('titulo')}")
+    print(f" Recibido libro: {libro.get('titulo')}")
     
     libro_id = await wishlist_model.ensure_book_is_persisted(libro)
 

@@ -295,7 +295,7 @@ export default function BookModal({
           });
 
           console.log("✅ Libro disponible en Internet Archive:", iaId);
-          console.log("📥 Enlaces construidos:", {
+          console.log(" Enlaces construidos:", {
             pdf: `${baseUrl}.pdf`,
             epub: `${baseUrl}.epub`,
             archive: `https://archive.org/details/${iaId}`,
@@ -345,7 +345,7 @@ export default function BookModal({
       // Abrir la página de Internet Archive donde están todos los formatos
       const archiveUrl = `https://archive.org/details/${downloadInfo.iaId}`;
       window.open(archiveUrl, "_blank");
-      console.log("📥 Redirigiendo a Internet Archive:", book.title);
+      console.log(" Redirigiendo a Internet Archive:", book.title);
     } else {
       // Si no hay formatos, redirigir a Open Library
       alert(

@@ -294,7 +294,7 @@ async def activate_book(
     }
 
 
-# 📥 EXPORTAR A EXCEL
+#  EXPORTAR A EXCEL
 @router.get("/export/excel")
 async def export_books_excel(current_user: dict = Depends(get_current_user)):
     """Exporta todos los libros a un archivo Excel"""

@@ -88,7 +88,7 @@ export default function Perfil({ isMobile }) {
                 body: JSON.stringify(formData)
             });
             
-            console.log("📥 Response status:", res.status);
+            console.log(" Response status:", res.status);
             
             if (!res.ok) {
                 const errorData = await res.json();
@@ -135,7 +135,7 @@ export default function Perfil({ isMobile }) {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            console.log("📥 Response status:", res.status);
+            console.log(" Response status:", res.status);
             
             if (!res.ok) {
                 const errorData = await res.json();

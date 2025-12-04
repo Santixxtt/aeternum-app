@@ -226,7 +226,7 @@ export default function Catalogo({ isMobile }) {
     [usuario, handleGuestAction]
   );
 
-  // 📥 Descargar libro digital
+  //  Descargar libro digital
   const handleDownload = useCallback(
     (book) => {
       if (!usuario) {
