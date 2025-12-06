@@ -28,7 +28,7 @@ function Footer() {
           <ul>
             <li><Link to="/politica-privacidad">Política de Privacidad</Link></li>
             <li><Link to="/terminos-servicio">Términos de Servicio</Link></li>
-            <li><a href="https://santixxtt.github.io/Documentacion-Aeternum/" target="_blank" rel="noopener noreferrer">Ayuda</a></li>
+            <li><a href="https://santixxtt.github.io/Documentation-Aeternum/" target="_blank" rel="noopener noreferrer">Manual de Usuario</a></li>
           </ul>
         </div>
         <div className="footer-section" data-aos="fade-up" data-aos-delay="300">
