@@ -34,7 +34,8 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://192.168.1.2:5173",
-    "https://aeternum-app-production.up.railway.app", 
+    "https://aeternum-app-production.up.railway.app",
+    "https://aeternum.up.railway.app",
     "https://backend-production-9f93.up.railway.app",
     "http://127.0.0.1:5173",
 ]
@@ -91,4 +92,5 @@ async def root():
         "message": "🚀 Aeternum API desplegada correctamente en Railway",
         "database": "✅ Conectada",
         "redis": "✅ Disponible" if disponible else "⚠️ Fallback local",
+
     }
